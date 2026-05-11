@@ -1,0 +1,4318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🔮 塔罗牌占卜 · 开始连接现实世界</title>
+<style>
+
+/* 全局重置 + 移动端基础适配 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  background: linear-gradient(135deg, #121826, #2d1b69, #1f2937);
+  background-attachment: fixed;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 12px;
+  text-align: center;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+h1 {
+  font-size: 50px;
+  margin: 60px 0 15px;
+  color: #a89fff;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(168, 159, 255, 0.3);
+}
+/* 按钮区域 */
+.taro-btn__box {
+  margin: 20px 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+.taro-btn {
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #6c63ff, #8c85ff);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  cursor: pointer;
+  flex: 0 1 auto;
+  min-width: 120px;
+  font-weight: 600;
+  transition: 0.25s ease;
+  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+}
+.taro-btn:hover {
+  background: linear-gradient(135deg, #554ed9, #6c63ff);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.3);
+}
+.taro-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+.taro-btn:disabled {
+  background: #444;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* 左侧悬浮按钮 */
+.taro-float__left {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 99999;
+}
+/* 左上角悬浮按钮 */
+.taro-float__group-left {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 6px;
+}
+/* 右上角悬浮按钮 */
+.taro-float__group-right {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  display: flex;
+  gap: 6px;
+}
+/* 悬浮按钮通用样式 */
+.taro-float__btn {
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  background: linear-gradient(135deg, #6c63ff, #8c85ff);
+  color: #fff;
+  border: none;
+  transition: 0.25s ease;
+  flex: 1;
+  min-width: 100px;
+  text-align: center;
+}
+.taro-float__btn:hover {
+  background: linear-gradient(135deg, #554ed9, #6c63ff);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(108, 99, 255, 0.4);
+}
+.taro-float__btn:disabled {
+  background: #444;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.5;
+  box-shadow: none;
+}
+/* 小尺寸悬浮按钮 */
+.taro-float__btn-small {
+  padding: 6px 10px;
+  font-size: 11px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  background: linear-gradient(135deg, #6c63ff, #8c85ff);
+  color: #fff;
+  border: none;
+  transition: 0.25s ease;
+  text-align: center;
+}
+.taro-float__btn-small:hover {
+  background: linear-gradient(135deg, #554ed9, #6c63ff);
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(108, 99, 255, 0.4);
+}
+
+/* 数字输入框样式 */
+.taro-float__input {
+  width: 50px;
+  padding: 6px 20px 6px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(108, 99, 255, 0.5);
+  text-align: center;
+  outline: none;
+  transition: 0.25s ease;
+}
+
+.taro-float__input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #a89fff;
+  box-shadow: 0 0 10px rgba(108, 99, 255, 0.4);
+}
+
+.taro-float__input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 9px;
+}
+
+/* 移除输入框的默认number输入样式箭头 */
+.taro-float__input::-webkit-outer-spin-button,
+.taro-float__input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.taro-float__input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* 输入框包装器 */
+.taro-float__input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* 输入框后缀 */
+.taro-float__input-suffix {
+  position: absolute;
+  right: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 页面右上角按钮 */
+.taro-page__top-right {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+.taro-page__top-right .taro-float__btn-small {
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.taro-load__container {
+  max-width: 400px;
+  margin: 0 auto 20px;
+  display: none; /* 默认隐藏，开始加载时显示 */
+}
+.taro-load__text {
+  font-size: 13px;
+  color: #ccc;
+  margin-bottom: 6px;
+}
+.taro-load__bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.taro-load__fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6c63ff, #a89fff);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+/* 牌堆区域 - 核心动画容器（响应式） */
+.taro-stack__area {
+  position: relative;
+  width: 100%;
+  max-width: 750px;
+  max-height: 350px;
+  margin: 15px auto 15px;
+  perspective: 1000px;
+  transition: height 0.3s ease;
+  overflow: hidden;
+}
+/* 扇形牌面布局 */
+.taro-card__fan {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+  box-sizing: border-box;
+}
+.taro-card__fan-item {
+  position: absolute;
+  width: 105px;
+  height: 158px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  transform-origin: center bottom;
+  transition: 0.3s ease;
+}
+.taro-card__fan-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+/* 悬浮栏布局 */
+.taro-float__header {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, rgba(18, 24, 38, 0.95), rgba(45, 27, 105, 0.95));
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(108, 99, 255, 0.3);
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.3);
+  min-height: 90px;
+  flex-shrink: 0;
+}
+/* 悬浮栏内的左右按钮 */
+.taro-float__header .taro-float__left {
+  position: absolute;
+  left: 15px;
+  top: 10px;
+  z-index: 99999;
+}
+.taro-float__header .taro-float__right {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  z-index: 99999;
+}
+.taro-float__header .taro-float__btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid rgba(108, 99, 255, 0.5);
+  background: rgba(108, 99, 255, 0.2);
+  color: #a89fff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-weight: 500;
+}
+.taro-float__header .taro-float__btn-small:hover {
+  background: rgba(108, 99, 255, 0.4);
+  border-color: rgba(108, 99, 255, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(108, 99, 255, 0.4);
+}
+.taro-float__button-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.taro-float__info-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  max-width: 800px;
+}
+/* 悬浮栏内的卡牌选择区 */
+.taro-float__spread {
+  width: 100%;
+  max-width: 95%;
+  margin: 5px auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid rgba(108, 99, 255, 0.2);
+}
+
+#statusTip {
+  font-size: 14px;
+  color: #c0bcff;
+  font-weight: 500;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+}
+/* 补充状态闪烁动画 */
+@keyframes blink-red {
+  0%, 100% { color: #ff4444; }
+  50% { color: #a89fff; }
+}
+.blink {
+  animation: blink-red 0.5s infinite;
+}
+#supportStatus {
+  font-size: 12px;
+  color: #a89fff;
+  text-align: center;
+  line-height: 1.3;
+  margin: 0;
+  padding: 0;
+}
+/* 主内容区 */
+.taro-main__content {
+  margin-top: 20px;
+  text-align: center;
+}
+.taro-main__content h1 {
+  margin-bottom: 1px;
+}
+
+/* 卡牌基础样式 */
+.taro-card__stack {
+  width: 100px;
+  height: 150px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 0 15px rgba(108, 99, 255, 0.3);
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateZ(0); /* 新增：GPU硬件加速 */
+  backface-visibility: hidden; /* 新增：防闪烁 */
+}
+.taro-card__stack img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.taro-pile__right { transform: translateX(130px); top: 0; z-index: 3; }
+.taro-pile__mid   { transform: translateX(0); top: 0; z-index: 2; }
+.taro-pile__left  { transform: translateX(-130px); top: 0; z-index: 1; }
+
+
+#spread {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 2px;
+  padding: 8px;
+  min-height: 100px;
+  max-width: 100%;
+  margin: 0;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  position: relative;
+}
+#spread::before {
+  display: none;
+}
+#spread > * {
+  position: relative;
+  z-index: 2;
+}
+.taro-spread__card {
+  width: 100%;
+  max-width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 auto;
+  cursor: pointer;
+  transition: 0.2s ease;
+  border: 1px solid rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+.taro-spread__card:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 12px rgba(108, 99, 255, 0.6);
+  border-color: rgba(108, 99, 255, 0.8);
+  background: rgba(255, 255, 255, 0.25);
+  z-index: 10;
+}
+.taro-spread__num {
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 30px;
+  text-align: center;
+  z-index: 2;
+  box-shadow: 0 0 6px rgba(0,0,0,0.4);
+}
+.taro-spread__empty {
+  width: 100%;
+  max-width: 44px;
+  height: 44px;
+  border: 1px dashed rgba(108, 99, 255, 0.2);
+  border-radius: 8px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+}
+#spread::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(108, 99, 255, 0.1), transparent 70%);
+  border-radius: 16px;
+  z-index: 1;
+}
+#spread > * {
+  position: relative;
+  z-index: 2;
+}
+
+.taro-picked__box {
+  margin-bottom: 300px;
+  margin-top: 25px;
+  clear: both;
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+  padding: 20px 0;
+  max-width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid rgba(108, 99, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.taro-picked__box h3 {
+  margin-bottom: 20px;
+  color: #a89fff;
+  font-size: 30px;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(168, 159, 255, 0.2);
+}
+.taro-picked__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  justify-content: space-between;
+  padding: 18px 8px;
+  margin: 12px 0;
+  border-top: 1px solid rgba(108, 99, 255, 0.15);
+  box-sizing: border-box;
+}
+
+/* 电脑端大屏幕适配 */
+@media (min-width: 1024px) {
+  .taro-picked__row {
+    padding: 18px 250px;
+  }
+}
+.taro-picked__title {
+  color: #a89fff;
+  font-size: 30px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-align: center;
+  width: 100%;
+  line-height: normal;
+}
+
+.taro-picked__row:first-child {
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+/* 主牌+补充牌 垂直容器 */
+.taro-card__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1 1 calc(33.333% - 10px);
+  max-width: calc(33.333% - 2px);
+  padding: 2px;
+  margin-bottom: 40px;
+  border-radius: 12px;
+  transition: 0.25s ease;
+  position: relative;
+}
+
+
+.taro-card__group::before {
+  content: attr(data-group-number);
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 18px;
+  height: 18px;
+  background: rgba(108, 99, 255, 0.7);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+
+.taro-card__group[data-group-number="0"]::before {
+  display: none;
+}
+
+/* 补充牌尺寸 */
+.taro-card__support {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  cursor: pointer;
+  position: relative;
+  transition: 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+  max-width: 130px;
+  margin: 5px 0;
+}
+.taro-card__support:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 20px rgba(108, 99, 255, 0.4);
+}
+.taro-card__support img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+/* 补充牌包装器 */
+.taro-support__wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px 0;
+}
+/* 勾选框样式 */
+.taro-check__wrapper {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #ccc;
+}
+.taro-check__wrapper input {
+  width: 14px;
+  height: 14px;
+  accent-color: #6c63ff;
+  cursor: pointer;
+}
+.taro-check__wrapper--disabled {
+  color: #666;
+  cursor: not-allowed;
+}
+
+
+.taro-card__picked {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  cursor: pointer;
+  position: relative;
+  transition: 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.2);
+  max-width: 150px;
+}
+.taro-card__picked:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 20px rgba(108, 99, 255, 0.4);
+}
+.taro-card__picked img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.taro-card__tag {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 0;
+  z-index: 2;
+  font-weight: 500;
+}
+
+
+.taro-btn__undo {
+  margin-bottom: 4px;
+  padding: 1px 5px;
+  background: rgba(150, 150, 150, 0.2);
+  color: #ddd;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow: none;
+  width: auto;
+  min-width: unset;
+}
+.taro-btn__undo:hover {
+  background: rgba(200, 80, 80, 0.3);
+  color: #fff;
+  transform: scale(1.02);
+}
+
+.taro-btn__undo:disabled {
+  display: none !important;
+}
+#cardModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.97);
+  z-index: 99999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 20px;
+}
+#modalCard {
+  max-width: 90vw;
+  max-height: 30vh;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  border: 2px solid rgba(108, 99, 255, 0.3);
+  margin-bottom: 20px;
+}
+#closeModal {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background: #6c63ff;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+  z-index: 100000;
+  transition: 0.2s ease;
+}
+#closeModal:hover {
+  background: #554ed9;
+  transform: scale(1.1);
+}
+
+/* 历史记录弹窗 */
+#historyModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.97);
+  z-index: 99999;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+#historyModal .modal-content {
+  background: linear-gradient(135deg, rgba(18, 24, 38, 0.95), rgba(45, 27, 105, 0.95));
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid rgba(108, 99, 255, 0.3);
+}
+
+#historyModal h2 {
+  color: #a89fff;
+  margin-bottom: 20px;
+  font-size: 24px;
+  text-align: center;
+}
+
+/* 登录/注册弹窗样式 */
+#authModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.97);
+  z-index: 99999;
+  justify-content: center;
+  align-items: center;
+}
+
+#authModal.active {
+  display: flex;
+}
+
+#authModal .modal-content {
+  background: linear-gradient(135deg, rgba(18, 24, 38, 0.95), rgba(45, 27, 105, 0.95));
+  border-radius: 16px;
+  padding: 30px 25px;
+  width: 100%;
+  max-width: 380px;
+  border: 1px solid rgba(108, 99, 255, 0.3);
+  position: relative;
+}
+
+#authModal h2 {
+  color: #a89fff;
+  margin-bottom: 25px;
+  font-size: 24px;
+  text-align: center;
+}
+
+#closeAuthModal {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(108, 99, 255, 0.3);
+  color: #fff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 100000;
+  transition: 0.2s ease;
+}
+
+#closeAuthModal:hover {
+  background: #554ed9;
+  transform: scale(1.1);
+}
+
+.auth-input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.auth-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #a89fff;
+  font-size: 14px;
+}
+
+.auth-input-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(168, 159, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: 0.25s ease;
+  box-sizing: border-box;
+}
+
+.auth-input-group input:focus {
+  border-color: #6c63ff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-error {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin-bottom: 16px;
+  min-height: 20px;
+  text-align: left;
+}
+
+.auth-switch {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #999;
+  text-align: center;
+}
+
+.auth-switch-btn {
+  background: none;
+  border: none;
+  color: #6c63ff;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 5px;
+}
+
+.auth-switch-btn:hover {
+  color: #8c85ff;
+}
+
+#closeHistoryModal {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  width: 40px;
+  height: 40px;
+  background: #6c63ff;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 100000;
+  transition: 0.2s ease;
+}
+
+#closeHistoryModal:hover {
+  background: #554ed9;
+  transform: scale(1.1);
+}
+
+#historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.history-item {
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+  border: 1px solid rgba(108, 99, 255, 0.1);
+  position: relative;
+}
+
+.history-item .timestamp {
+  font-size: 12px;
+  color: #a89fff;
+  margin-bottom: 2px;
+}
+
+.history-item .rounds {
+  font-size: 10px;
+  color: #ddd;
+  line-height: 1.4;
+  text-align: left;
+  padding-left: 5px;
+}
+
+/* 历史记录头部容器 */
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+/* 标题输入框 */
+.history-title-input {
+  flex: 1;
+  min-height: 28px;
+  padding: 6px 10px;
+  background: rgba(168, 159, 255, 0.1);
+  border: 1px solid rgba(168, 159, 255, 0.3);
+  border-radius: 8px;
+  color: #a89fff;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  cursor: text;
+}
+
+.history-title-input:hover {
+  background: rgba(168, 159, 255, 0.2);
+  border-color: rgba(168, 159, 255, 0.5);
+}
+
+.history-title-input:focus {
+  background: rgba(168, 159, 255, 0.15);
+  border-color: #a89fff;
+}
+
+.history-title-input:empty::before {
+  content: attr(placeholder);
+  color: rgba(168, 159, 255, 0.5);
+}
+
+/* 删除按钮 */
+.history-delete-btn {
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  background: rgba(255, 77, 79, 0.2);
+  border: 1px solid rgba(255, 77, 79, 0.4);
+  border-radius: 50%;
+  color: #ff4d4f;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: -13px;
+  top: -10px;
+  z-index: 10;
+}
+
+.history-delete-btn:hover {
+  background: rgba(255, 77, 79, 0.3);
+  border-color: #ff4d4f;
+}
+
+/* 还原按钮 */
+.history-restore-btn {
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  background: rgba(82, 196, 26, 0.2);
+  border: 1px solid rgba(82, 196, 26, 0.4);
+  border-radius: 50%;
+  color: #52c41a;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: -13px;
+  top: -10px;
+  z-index: 10;
+}
+
+.history-restore-btn:hover {
+  background: rgba(82, 196, 26, 0.3);
+  border-color: #52c41a;
+}
+
+#cardMeaning {
+  max-width: 90vw;
+  max-height: 60vh;
+  overflow-y: auto;
+  text-align: center;
+  color: #fff;
+  line-height: 1.6;
+  padding-right: 5px;
+}
+#cardMeaning::-webkit-scrollbar {
+  width: 6px;
+}
+#cardMeaning::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+#cardMeaning::-webkit-scrollbar-thumb {
+  background: rgba(168, 159, 255, 0.4);
+  border-radius: 3px;
+}
+#cardMeaning .name {
+  font-size: 20px;
+  color: #a89fff;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+#cardMeaning .upright, #cardMeaning .reversed {
+  font-size: 18px;
+  margin: 4px 0;
+}
+#cardMeaning .pattern {
+  font-size: 16px;
+  color: rgb(168 159 255 / 50%);
+  margin-top: 8px;
+}
+
+/* 正位/逆位高亮样式 */
+.hl-upright { color: #448d22; font-weight: bold; } /* 绿色 - 正位 */
+.hl-reversed { color: #852325; font-weight: bold; } /* 红色 - 逆位 */
+#touchMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #121826, #2d1b69);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 20px;
+}
+#touchMask h2 {
+  color: #a89fff;
+  margin-bottom: 35px;
+  font-size: 28px;
+  text-shadow: 0 0 15px rgba(168, 159, 255, 0.4);
+}
+#touchMask p {
+  font-size: 19px;
+  margin-bottom: 55px;
+  line-height: 1.7;
+  color: #eee;
+}
+#touchMask .tip {
+  font-size: 16px;
+  color: #ccc;
+  margin-top: 25px;
+  opacity: 0.8;
+}
+
+
+
+@media (max-width: 768px) {
+  .taro-float__btn {
+    padding: 6px 6px;
+    font-size: 12px;
+    min-width: 80px;
+  }
+  .taro-float__button-bar {
+    gap: 5px;
+  }
+  .taro-picked__box {
+    margin-bottom: 100px;
+  }
+}
+
+
+@media (max-width: 768px) and (max-height: 668px) {
+  .taro-float__header {
+    max-height: 666px;
+    overflow-y: auto;
+  }
+}
+
+/* 快速查询模态框 - 重新设计，一屏显示 */
+#quickQueryModal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.92);
+  z-index: 1000000;
+  justify-content: center;
+  align-items: flex-start; /* 改成顶部对齐！ */
+  padding-top: 3vh; /* 这里控制往上/往下的位置！改数值就行！ */
+  box-sizing: border-box;
+}
+
+#quickQueryModal .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  height: 85vh;
+  max-width: 1000px;
+  width: 95vw;
+  background: linear-gradient(135deg, #1a142e 0%, #2d1b4a 100%);
+  border-radius: 20px;
+  border: 1px solid rgba(168, 159, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+#quickQueryModal #closeQuickQueryModal {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 10;
+}
+
+#quickQueryModal h2 {
+  text-align: center;
+  margin: 10px 15px 6px;
+  color: #a89fff;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.quick-query-content-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+#quickQueryList {
+  flex: 1; /* 左侧三分之一 */
+  max-width: 33.333%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  overflow-y: auto; /* 允许滚动，防止溢出 */
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  min-height: 0; /* 防止flex子元素溢出 */
+}
+
+#quickQueryDetail {
+  flex: 2; /* 右侧三分之二 */
+  overflow-y: auto;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+/* 响应式 - 保持左右布局，整体更紧凑 */
+@media (max-width: 768px) {
+  #quickQueryModal .modal-content {
+    max-width: 98vw;
+  }
+  #quickQueryList, #quickQueryDetail {
+    padding: 6px;
+  }
+}
+
+
+
+.quick-query-card-btn {
+  padding: 4px 8px;
+  background: linear-gradient(135deg, rgba(108, 99, 255, 0.15), rgba(61, 52, 139, 0.25));
+  border: 1px solid rgba(168, 159, 255, 0.3);
+  border-radius: 6px;
+  color: #e0dfff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: auto;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.quick-query-card-btn:hover,
+.quick-query-card-btn.active {
+  background: linear-gradient(135deg, rgba(108, 99, 255, 0.3), rgba(61, 52, 139, 0.5));
+  border-color: #a89fff;
+  tranform: scale(1.05);
+}
+
+.quick-query-group {
+  margin-bottom: 6px;
+}
+
+.quick-query-group-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #a89fff;
+  margin-bottom: 3px;
+  text-align: center;
+  padding: 2px;
+  background: rgba(168, 159, 255, 0.1);
+  border-radius: 4px;
+}
+
+.quick-query-group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.quick-query-detail {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.quick-query-detail .name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #a89fff;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.quick-query-detail .upright,
+.quick-query-detail .reversed {
+  margin-bottom: 10px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.quick-query-detail .pattern {
+  margin-top: 12px;
+  line-height: 1.5;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(168, 159, 255, 0.3);
+  font-size: 14px;
+}
+
+.quick-query-image-container {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.quick-query-card-image {
+  max-width: 140px;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(168, 159, 255, 0.3);
+}
+
+/* 可编辑牌义样式（登录用户） */
+.quick-query-detail .pattern-editable {
+  cursor: text;
+  min-height: 28px;
+  padding: 8px;
+  background: rgba(168, 159, 255, 0.08);
+  border: 1px solid rgba(168, 159, 255, 0.2);
+  border-radius: 8px;
+  outline: none;
+  transition: 0.2s;
+}
+.quick-query-detail .pattern-editable:hover {
+  background: rgba(168, 159, 255, 0.15);
+  border-color: rgba(168, 159, 255, 0.4);
+}
+.quick-query-detail .pattern-editable:focus {
+  background: rgba(168, 159, 255, 0.12);
+  border-color: #a89fff;
+}
+.quick-query-detail .pattern-editable:empty::before {
+  content: attr(placeholder);
+  color: rgba(168, 159, 255, 0.5);
+}
+
+.quick-query-empty-state {
+  text-align: center;
+  color: #a89fff;
+}
+
+/* 快速查询文字区域样式 */
+.quick-query-text-area {
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  border: 1px dashed rgba(168, 159, 255, 0.3);
+  background: rgba(168, 159, 255, 0.03);
+}
+
+.quick-query-text-area:hover {
+  background: rgba(168, 159, 255, 0.08);
+  border-color: rgba(168, 159, 255, 0.5);
+}
+
+.quick-query-hint {
+  text-align: center;
+  color: #a89fff;
+  font-size: 14px;
+  padding: 30px 10px;
+  opacity: 0.7;
+}
+
+</style>
+</head>
+<body>
+
+<!-- 页面右上角按钮 -->
+<div class="taro-page__top-right">
+  <button id="quickQueryBtn" class="taro-float__btn-small">查询</button>
+  <button id="saveBtn" class="taro-float__btn-small">保存</button>
+  <button id="historyBtn" class="taro-float__btn-small">历史</button>
+  <button id="userBtn" class="taro-float__btn-small">登录</button>
+</div>
+
+<div id="touchMask">
+  <h2>🔮 塔罗牌占卜 · 开始连接现实世界</h2>
+  <p>请触摸屏幕洗牌<br>准备开始占卜</p>
+  <div class="tip">触摸后执行真实洗牌，三分切牌，锁定排序 ✨</div>
+</div>
+
+<div class="taro-float__header">
+  <div class="taro-float__left">
+    <button id="refreshBtn" class="taro-float__btn-small">洗牌</button>
+  </div>
+  <div class="taro-float__right">
+    <button id="toggleSpreadBtn" class="taro-float__btn-small">隐藏</button>
+  </div>
+  <div class="taro-float__button-bar">
+    <button id="reSortBtn" class="taro-float__btn">🔀 补抽排序</button>
+    <button id="newRoundBtn" class="taro-float__btn">🔢 新问题</button>
+    <div class="taro-float__input-wrapper">
+      <input type="number" id="cardGroupNumberInput" class="taro-float__input" placeholder="起始编号" min="1" max="12">
+      <span class="taro-float__input-suffix">月</span>
+    </div>
+  </div>
+  <div class="taro-float__info-bar">
+    <div id="statusTip">等待触摸启动...</div>
+    <div id="supportStatus"></div>
+  </div>
+  <div class="taro-float__spread">
+    <div id="spread"></div>
+  </div>
+</div>
+
+<div class="taro-main__content">
+  <h1>塔罗牌占卜</h1>
+</div>
+
+<div class="taro-load__container" id="loadProgress">
+  <div class="taro-load__text" id="progressText">图片加载中：0/79</div>
+  <div class="taro-load__bar">
+    <div class="taro-load__fill" id="progressFill"></div>
+  </div>
+</div>
+
+<div class="taro-stack__area" id="stack"></div>
+<div class="taro-picked__box">
+  <h3>已抽牌</h3>
+  <div id="picked"></div>
+</div>
+
+<div id="cardModal">
+  <button id="closeModal">✕</button>
+  <img id="modalCard" alt="塔罗牌">
+  <div id="cardMeaning"></div>
+</div>
+
+<div id="historyModal">
+  <div class="modal-content">
+    <button id="closeHistoryModal">✕</button>
+    <h2>历史记录</h2>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<div id="quickQueryModal">
+  <div class="modal-content">
+    <button id="closeQuickQueryModal">✕</button>
+    <h2>🔮 78张塔罗牌快速查询</h2>
+    <div class="quick-query-content-wrapper">
+      <div id="quickQueryList"></div>
+      <div id="quickQueryDetail"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 登录/注册弹窗 -->
+<div id="authModal">
+  <div class="modal-content auth-modal-content">
+    <button id="closeAuthModal">✕</button>
+    <h2 id="authModalTitle">登录</h2>
+    
+    <div class="auth-form">
+      <div class="auth-input-group">
+        <label>用户名</label>
+        <input type="text" id="authUsername" placeholder="请输入用户名">
+      </div>
+      <div class="auth-input-group">
+        <label>密码</label>
+        <input type="password" id="authPassword" placeholder="请输入密码">
+      </div>
+      
+      <div class="auth-error" id="authError"></div>
+      
+      <button id="authSubmitBtn" class="taro-btn">登录</button>
+      
+      <div class="auth-switch">
+        <span id="authSwitchText">还没有账号？</span>
+        <button id="authSwitchBtn" class="auth-switch-btn">立即注册</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * 🔮 塔罗牌占卜系统 - 开发文档
+ * 
+ * 一、项目概述
+ * 基于标准韦特塔罗牌的在线占卜系统，支持完整的抽牌流程和历史记录管理。
+ * 
+ * 二、核心功能模块
+ * 
+ * 1. 卡牌资源系统
+ *    - 78张完整塔罗牌（22张大阿卡纳 + 56张小阿卡纳）
+ *    - 四大牌组：权杖、圣杯、宝剑、星币
+ *    - 每张卡牌配有专属颜色和详细释义
+ *    - 图片预加载系统，显示加载进度
+ * 
+ * 2. 抽牌流程系统
+ *    - 触摸采集：收集用户触摸位置作为随机种子
+ *    - 洗牌算法：Fisher-Yates洗牌 + Crypto API真随机数
+ *    - 扇形布局：动态生成扇形卡牌展开效果
+ *    - 数字抽牌：点击数字选择卡牌
+ *    - 智能补抽：大阿卡纳自动提示补充抽牌（最多2张）
+ *    - 多轮抽牌：支持多轮问题，上一轮自动锁定
+ * 
+ * 3. 历史记录与状态管理系统
+ *    - 手动保存：点击保存按钮创建独立记录
+ *    - 自动保存：抽第一张牌时开始，每5秒检测状态变化并覆盖保存
+ *    - 记录查看：右上角历史按钮，显示最近1000条记录
+ *    - 记录编辑：每条记录可自定义标题
+ *    - 状态还原：点击还原按钮恢复到保存时的状态
+ *    - 记录删除：左上角删除按钮快速删除
+ *    - 记录标识：区分手动保存和自动保存
+ * 
+ * 4. 用户界面系统
+ *    - 响应式设计：适配移动端和PC端
+ *    - 悬浮按钮组：右上角保存/历史按钮
+ *    - 模态弹窗：卡牌预览、历史记录
+ *    - 进度条：卡牌加载进度显示
+ *    - 状态提示：实时显示抽牌状态
+ * 
+ * 三、核心技术实现
+ * 
+ * 1. 数据结构设计
+ *    - cardMeanings: 卡牌释义数组，包含正位、逆位、牌面解析
+ *    - cardImages: 卡牌图片URL数组
+ *    - cardColors: 卡牌专属颜色数组
+ *    - STATE: 全局状态对象，管理游戏状态、抽牌记录等
+ *    - CONFIG: 配置对象，管理游戏参数
+ * 
+ * 2. 状态管理
+ *    - GAME_STATES: 游戏状态枚举（FAN/SPREAD等）
+ *    - pickRounds: 多轮抽牌记录，每轮包含主牌和补充牌
+ *    - fullDeck: 完整牌组状态，标记已抽/未抽
+ * 
+ * 3. 性能优化
+ *    - DOM缓存：DOM元素统一管理，减少重复查询
+ *    - 批量操作：使用DocumentFragment减少重绘
+ *    - 并行加载：Promise.all并行加载卡牌图片
+ *    - 防抖处理：窗口resize事件防抖
+ * 
+ * 4. 本地存储策略
+ *    - 存储键：taroHistory
+ *    - 数据结构：{id, timestamp, rounds, gameState, currentRound, type, title}
+ *    - 哈希检测：通过状态哈希避免重复保存
+ *    - 会话管理：每轮游戏使用独立的会话ID
+ * 
+ * 四、关键函数说明
+ * 
+ * 1. initSession() - 初始化会话，创建新的会话ID
+ * 2. startAutoSave() - 启动自动保存（抽第一张牌时调用）
+ * 3. smartAutoSave() - 智能自动保存，检测状态变化后覆盖
+ * 4. saveCurrentState() - 手动保存，创建新记录
+ * 5. getHistory() - 获取历史记录列表
+ * 6. showHistory() - 显示历史记录弹窗
+ * 7. restoreState() - 还原到指定的历史状态
+ * 8. deleteHistoryRecord() - 删除单条历史记录
+ * 9. saveHistoryTitle() - 保存记录标题
+ * 
+ * 五、文件结构
+ * 
+ * - HTML结构：页面布局、按钮、模态框
+ * - CSS样式：渐变背景、卡片样式、动画效果
+ * - JavaScript逻辑：
+ *   - 配置与常量：CONFIG、GAME_STATES、DOM缓存
+ *   - 卡牌数据：cardMeanings、cardImages、cardColors
+ *   - 状态管理：STATE对象
+ *   - 游戏流程：洗牌、抽牌、补抽、多轮
+ *   - 历史记录：保存、查看、还原、删除
+ *   - UI交互：弹窗、按钮、提示
+ * 
+ * 六、开发注意事项
+ * 
+ * 1. 状态同步：修改STATE后及时更新UI
+ * 2. 事件冒泡：按钮点击事件使用stopPropagation避免冲突
+ * 3. 数据深拷贝：保存历史记录时使用JSON.parse(JSON.stringify())
+ * 4. 错误处理：API请求添加try-catch
+ * 5. 性能监控：避免在频繁触发的事件中做耗时操作
+ */
+
+// 78张塔罗牌图片【已修正顺序，1:1对应释义】
+const cardImages = ["",
+  // 1~22 大牌组
+  "images/1愚人.jpg",
+  "images/2魔术师.jpg",
+  "images/3女祭司.jpg",
+  "images/4女皇.jpg",
+  "images/5皇帝.jpg",
+  "images/6教皇.jpg",
+  "images/7恋人.jpg",
+  "images/8战车.jpg",
+  "images/9力量.jpg",
+  "images/10隐者.jpg",
+  "images/11命运之轮.jpg",
+  "images/12正义.jpg",
+  "images/13倒吊人.jpg",
+  "images/14死神.jpg",
+  "images/15节制.jpg",
+  "images/16恶魔.jpg",
+  "images/17高塔.jpg",
+  "images/18星星.jpg",
+  "images/19月亮.jpg",
+  "images/20太阳.jpg",
+  "images/21审判.jpg",
+  "images/22世界.jpg",
+  // 23~36 宝剑牌组
+  "images/23宝剑一.jpg",
+  "images/24宝剑二.jpg",
+  "images/25宝剑三.jpg",
+  "images/26宝剑四.jpg",
+  "images/27宝剑五.jpg",
+  "images/28宝剑六.jpg",
+  "images/29宝剑七.jpg",
+  "images/30宝剑八.jpg",
+  "images/31宝剑九.jpg",
+  "images/32宝剑十.jpg",
+  "images/33宝剑侍从.jpg",
+  "images/34宝剑骑士.jpg",
+  "images/35宝剑女王.jpg",
+  "images/36宝剑国王.jpg",
+  // 37~50 星币牌组
+  "images/37星币一.jpg",
+  "images/38星币二.jpg",
+  "images/39星币三.jpg",
+  "images/40星币四.jpg",
+  "images/41星币五.jpg",
+  "images/42星币六.jpg",
+  "images/43星币七.jpg",
+  "images/44星币八.jpg",
+  "images/45星币九.jpg",
+  "images/46星币十.jpg",
+  "images/47星币侍从.jpg",
+  "images/48星币骑士.jpg",
+  "images/49星币女王.jpg",
+  "images/50星币国王.jpg",
+  // 51~64 权杖牌组
+  "images/51权杖一.jpg",
+  "images/52权杖二.jpg",
+  "images/53权杖三.jpg",
+  "images/54权杖四.jpg",
+  "images/55权杖五.jpg",
+  "images/56权杖六.jpg",
+  "images/57权杖七.jpg",
+  "images/58权杖八.jpg",
+  "images/59权杖九.jpg",
+  "images/60权杖十.jpg",
+  "images/61权杖侍从.jpg",
+  "images/62权杖骑士.jpg",
+  "images/63权杖女王.jpg",
+  "images/64权杖国王.jpg",
+  // 65~78 圣杯牌组
+  "images/65圣杯一.jpg",
+  "images/66圣杯二.jpg",
+  "images/67圣杯三.jpg",
+  "images/68圣杯四.jpg",
+  "images/69圣杯五.jpg",
+  "images/70圣杯六.jpg",
+  "images/71圣杯七.jpg",
+  "images/72圣杯八.jpg",
+  "images/73圣杯九.jpg",
+  "images/74圣杯十.jpg",
+  "images/75圣杯侍从.jpg",
+  "images/76圣杯骑士.jpg",
+  "images/77圣杯女王.jpg",
+  "images/78圣杯国王.jpg"
+];
+
+// 78种塔罗牌专属颜色 - 按塔罗牌色彩分析对应
+const cardColors = [
+  // 1~22 大阿卡纳 - 紫/金色系（神秘、灵性）
+  "148, 0, 211",    // 1 愚人 - 紫罗兰（灵性起点）
+  "220, 20, 60",    // 2 魔术师 - 深红（意志力）
+  "25, 25, 112",    // 3 女祭司 - 深蓝（直觉）
+  "255, 215, 0",    // 4 女皇 - 金色（丰饶）
+  "165, 28, 28",    // 5 皇帝 - 赤红（权威）
+  "139, 69, 19",    // 6 教皇 - 棕褐（传统）
+  "255, 105, 180",  // 7 恋人 - 粉红（爱）
+  "255, 69, 0",     // 8 战车 - 橙红（胜利）
+  "218, 112, 214",  // 9 力量 - 洋红（内在力量）
+  "255, 223, 0",    // 10 隐者 - 金黄（内省）
+  "255, 215, 0",    // 11 命运之轮 - 金色（命运）
+  "0, 191, 255",    // 12 正义 - 天蓝（公正）
+  "255, 255, 0",    // 13 倒吊人 - 黄色（牺牲）
+  "75, 0, 130",     // 14 死神 - 深紫（转化）
+  "0, 255, 127",    // 15 节制 - 翠绿（平衡）
+  "128, 0, 128",    // 16 恶魔 - 深紫（阴影）
+  "255, 140, 0",    // 17 塔 - 橙（揭露）
+  "135, 206, 250",  // 18 星星 - 天蓝（希望）
+  "192, 192, 192",  // 19 月亮 - 银色（直觉）
+  "255, 255, 0",    // 20 太阳 - 金黄（喜悦）
+  "255, 223, 186",  // 21 审判 - 粉金（觉醒）
+  "50, 205, 50",    // 22 世界 - 翠绿（完成）
+
+  // 23~36 宝剑牌 - 银/蓝灰色系（风元素）
+  "192, 192, 192",  // 23 宝剑一 - 银灰（气之起始）
+  "169, 169, 169",  // 24 宝剑二 - 暗灰（僵局）
+  "128, 128, 128",  // 25 宝剑三 - 灰色（悲伤）
+  "105, 105, 105",  // 26 宝剑四 - 暗灰（休息）
+  "119, 136, 153",  // 27 宝剑五 - 暗石板灰（失败）
+  "112, 128, 144",  // 28 宝剑六 - 石板灰（移动）
+  "169, 169, 169",  // 29 宝剑七 - 暗灰（策略）
+  "176, 196, 222",  // 30 宝剑八 - 浅钢蓝（限制）
+  "70, 130, 180",   // 31 宝剑九 - 钢蓝（焦虑）
+  "99, 99, 99",     // 32 宝剑十 - 深灰（痛苦）
+  "192, 192, 192",  // 33 宝剑侍者 - 银灰（好奇）
+  "128, 128, 128",  // 34 宝剑骑士 - 灰色（理智）
+  "169, 169, 169",  // 35 宝剑女王 - 暗灰（独立）
+  "105, 105, 105",  // 36 宝剑国王 - 暗灰（权威）
+
+  // 37~50 星币牌 - 绿/棕金色系（土元素）
+  "0, 128, 0",      // 37 星币一 - 绿色（土之起始）
+  "34, 139, 34",    // 38 星币二 - 森林绿（平衡）
+  "0, 100, 0",      // 39 星币三 - 深绿（技能）
+  "50, 205, 50",    // 40 星币四 - 翠绿（占有）
+  "144, 238, 144",  // 41 星币五 - 浅绿（困难）
+  "0, 128, 0",      // 42 星币六 - 绿色（慷慨）
+  "34, 139, 34",    // 43 星币七 - 森林绿（评估）
+  "50, 205, 50",    // 44 星币八 - 翠绿（工艺）
+  "0, 128, 0",      // 45 星币九 - 绿色（物质）
+  "34, 139, 34",    // 46 星币十 - 森林绿（财富）
+  "152, 251, 152",  // 47 星币侍者 - 浅绿（学习）
+  "50, 205, 50",    // 48 星币骑士 - 翠绿（效率）
+  "0, 128, 0",      // 49 星币女王 - 绿色（培养）
+  "34, 139, 34",    // 50 星币国王 - 森林绿（繁荣）
+
+  // 51~64 权杖牌 - 橙/红色系（火元素）
+  "255, 140, 0",    // 51 权杖一 - 橙（火之起始）
+  "255, 69, 0",     // 52 权杖二 - 橙红（勇气）
+  "255, 99, 71",    // 53 权杖三 - 珊瑚红（远见）
+  "255, 165, 0",    // 54 权杖四 - 橙黄（欢庆）
+  "255, 69, 0",     // 55 权杖五 - 红橙（冲突）
+  "255, 215, 0",    // 56 权杖六 - 金色（胜利）
+  "255, 165, 0",    // 57 权杖七 - 橙黄（挑战）
+  "255, 69, 0",     // 58 权杖八 - 橙红（快速行动）
+  "255, 140, 0",    // 59 权杖九 - 深橙（坚韧）
+  "255, 99, 71",    // 60 权杖十 - 珊瑚红（负担）
+  "255, 159, 0",    // 61 权杖侍者 - 橙（热忱）
+  "255, 69, 0",     // 62 权杖骑士 - 红橙（火热）
+  "255, 140, 0",    // 63 权杖女王 - 橙黄（热情）
+  "255, 165, 0",    // 64 权杖国王 - 橙金（领导力）
+
+  // 65~78 圣杯牌 - 蓝/绿色系（水元素）
+  "0, 191, 255",    // 65 圣杯一 - 天蓝（水之起始）
+  "30, 144, 255",   // 66 圣杯二 - 道奇蓝（结合）
+  "100, 149, 237",  // 67 圣杯三 - 矢车菊蓝（庆祝）
+  "65, 105, 225",   // 68 圣杯四 - 皇家蓝（不满）
+  "0, 139, 139",    // 69 圣杯五 - 深青（悲伤）
+  "70, 130, 180",   // 70 圣杯六 - 钢蓝（回忆）
+  "72, 61, 139",    // 71 圣杯七 - 暗蓝（幻想）
+  "0, 191, 255",    // 72 圣杯八 - 深天蓝（追寻）
+  "106, 90, 205",   // 73 圣杯九 - 石板蓝（愿望）
+  "30, 144, 255",   // 74 圣杯十 - 道奇蓝（喜悦）
+  "173, 216, 230",  // 75 圣杯侍者 - 淡蓝（消息）
+  "135, 206, 250",  // 76 圣杯骑士 - 浅天蓝（浪漫）
+  "135, 206, 235",  // 77 圣杯女王 - 天蓝（同情）
+  "0, 191, 255"     // 78 圣杯国王 - 深天蓝（成熟）
+];
+
+// 牌背 + 默认占位图
+const backImg = "images/back.jpg";
+const defaultImg = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzY2NiIvPjx0ZXh0IHg9IjUwIiB5PSI3NSIgZmlsbD0iI2ZmZiIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPuWQteWNjuWPlumfsDwvdGV4dD48L3N2Zz4=";
+
+// 78张卡牌释义【顺序正确，无需修改，完整保留】
+const cardMeanings = [
+  {},
+  // 1 愚人
+  {
+    name: "愚人",
+    upright: "正位：新开始",
+    reversed: "逆位：身边人的建议",
+    pattern: "正位：全新开始，天真无畏的探索，放下过去的冒险出发（无准备的盲目冒险，不计后果）<br>逆位：不听身边人建议，鲁莽冲动，毫无准备的盲目行动（明知有风险仍硬闯，不听任何劝告）"
+  },
+  // 2 魔术师
+  {
+    name: "魔术师",
+    upright: "正位：整合资源",
+    reversed: "逆位：没资源、沟通问题",
+    pattern: "正位：资源整合能力，创造力与行动力，想法落地的显化（有准备的主动开始，有资源有计划）<br>逆位：缺乏可用资源，沟通出现问题，能力不足导致想法落空（手里没牌硬出牌，说得多做得少）"
+  },
+  // 3 女祭司
+  {
+    name: "女祭司",
+    upright: "正位：静观其变",
+    reversed: "逆位：很难按逻辑思考",
+    pattern: "正位：静观其变，内在直觉与智慧，冷静洞察隐藏的真相（被动等待，洞察他人与外界）<br>逆位：无法理性思考，直觉失灵，封闭内心忽略内在声音（凭感觉乱猜，不听自己内心的声音）"
+  },
+  // 4 女皇
+  {
+    name: "女皇",
+    upright: "正位：踏实，认真做事",
+    reversed: "逆位：不踏实",
+    pattern: "正位：踏实认真做事，丰饶滋养的力量，物质与精神的富足<br>逆位：做事不踏实，过度依赖他人，懒惰放纵导致创造力枯竭（自己不想干，总想靠别人帮忙）"
+  },
+  // 5 皇帝
+  {
+    name: "皇帝",
+    upright: "正位：踏实，坚定认真做事、但固执",
+    reversed: "逆位：更不踏实",
+    pattern: "正位：踏实坚定的做事风格，理性掌控，规则秩序与事业成就，但性格偏固执（管事情，靠规则和权力掌控）<br>逆位：更加不踏实，专制独裁，控制欲过强，权力失控（比正位更极端的控制，滥用权力打压他人）"
+  },
+  // 6 教皇
+  {
+    name: "教皇",
+    upright: "正位：传教解惑、下面人听他的",
+    reversed: "逆位：不听，第三方",
+    pattern: "正位：传教解惑，精神指引，知识传承，能获得他人的信服与听从（管人心，靠思想和权威掌控）<br>逆位：不听从权威指引，思想僵化，易出现第三方介入【事业 = 外部竞争者 / 合作方介入；感情 = 第三者 / 家人朋友干预】（固执己见不听劝，外界干预强烈）"
+  },
+  // 7 恋人
+  {
+    name: "恋人",
+    upright: "正位：平衡付出与回报",
+    reversed: "逆位：失衡，不平衡，第三方",
+    pattern: "正位：关乎关系中的付出与回报平衡，真爱连接，重要的人生抉择<br>逆位：关乎关系失衡，付出不对等，价值观冲突，易出现第三方介入【事业 = 外部竞争者 / 合作方介入；感情 = 第三者 / 家人朋友干预】（双方想法完全不一样，有人从中作梗）"
+  },
+  // 8 战车
+  {
+    name: "战车",
+    upright: "正位：直接的控制战车，可控",
+    reversed: "逆位：失控",
+    pattern: "正位：意志坚定，局面完全可控，行动力强，能克服困难取得胜利（靠意志力强行推进，硬冲）<br>逆位：局面失控，冲动行事，方向混乱，被情绪左右导致内耗（越努力越乱，被情绪牵着鼻子走）"
+  },
+  // 9 力量
+  {
+    name: "力量",
+    upright: "正位：温柔的方式，间接搞定狮子、可控",
+    reversed: "逆位：难以控制",
+    pattern: "正位：用温柔间接的方式掌控局面，内在勇气，以柔克刚的能力（靠内在力量感化，不用蛮力）<br>逆位：难以控制局面，软弱无力，暴躁易怒，被恐惧支配（表面强硬内心害怕，一点就炸）"
+  },
+  // 10 隐者
+  {
+    name: "隐者",
+    upright: "正位：迷茫",
+    reversed: "逆位：更迷茫",
+    pattern: "正位：迷茫中内省，独自寻找真相，精神层面的沉淀与思考（主动独处，寻找自我答案）<br>逆位：更加迷茫，孤独自闭，逃避现实，固执己见脱离人群（躲起来不见人，谁的话都听不进去）"
+  },
+  // 11 命运之轮
+  {
+    name: "命运之轮",
+    upright: "正位：变化",
+    reversed: "逆位：变化",
+    pattern: "正位：变化发生，正向的转机，顺势而为即可获得好运<br>逆位：变化发生，被动的变动，难以掌控的循环困境（坏运气循环，怎么都逃不掉）<br>补充判断标准：正逆均为变化，周围正牌多 = 正向转机（被动好运），周围逆牌多 = 被动困境（不得不面对的变动），完全符合文档 \"根据具体情况判断\" 核心"
+  },
+  // 12 正义
+  {
+    name: "正义",
+    upright: "正位：平衡权衡，规则对等",
+    reversed: "逆位：失衡、规则不对等",
+    pattern: "正位：平衡权衡，规则对等，公平公正，涉及合同、协议、法律法规等事务<br>逆位：规则不对等，不公不义，偏见偏袒，错误的判断与决策（有人走后门，自己做出错误选择）"
+  },
+  // 13 倒吊人
+  {
+    name: "倒吊人",
+    upright: "正位：精神层面",
+    reversed: "逆位：有压力",
+    pattern: "正位：精神层面的觉醒，换角度思考，耐心等待时机，放下执念（主动等待，为了成长而暂停）<br>逆位：精神压力大，无谓的牺牲，固执己见不愿改变（白付出没回报，死扛着不肯换思路）"
+  },
+  // 14 死神
+  {
+    name: "死神",
+    upright: "正位：真的结束",
+    reversed: "逆位：没有完全结束",
+    pattern: "正位：彻底的终结，旧事物完全消亡，必然迎来全新的开始（被动终结，不得不结束，无法抗拒）<br>逆位：没有完全结束，旧事物死而不僵，拖延变化，恐惧失去（该断不断，旧人旧事反复纠缠）"
+  },
+  // 15 节制
+  {
+    name: "节制",
+    upright: "正位：沟通平衡",
+    reversed: "逆位：不平衡、沟通差",
+    pattern: "正位：沟通平衡，中庸之道，能量调和，耐心等待进展（内在状态的平衡，自我调和）<br>逆位：沟通不畅，状态失衡，过度极端，缺乏耐心导致资源浪费（要么太急要么太缓，做事走极端）"
+  },
+  // 16 恶魔
+  {
+    name: "恶魔",
+    upright: "正位：野心、欲望（长期）",
+    reversed: "逆位：野心、欲望（短期）",
+    pattern: "正位：长期固化的欲望 / 执念（如持续 3 年以上的物质追求、长期上瘾、无法摆脱的关系），被物质主义束缚<br>逆位：短期突发的冲动（如一时的消费欲、短暂的诱惑、临时的贪念），认清真相后可挣脱束缚（一时上头犯错误，清醒后能回头）<br>明确区分：正位是 \"已经成为习惯的执念\"，逆位是 \"偶尔冒头的冲动\""
+  },
+  // 17 高塔
+  {
+    name: "高塔",
+    upright: "正位：突然发生，突如其来、未知的人事物",
+    reversed: "逆位：知道会发生",
+    pattern: "正位：完全无预兆的突发事件（如突然裁员、意外分手、天降横祸、毫无预警的项目终止），真相暴露，打破幻想（突发终结，瞬间崩塌，毫无准备）<br>逆位：早有预兆但被忽略的变故（如早就有矛盾的关系爆发、提前预警的项目失败、已知风险的事故），逃避灾难只会让后果更严重（明明看到问题还拖着，最后炸得更惨）<br>补充边界：正位是 \"措手不及\"，逆位是 \"自食其果\""
+  },
+  // 18 星星
+  {
+    name: "星星",
+    upright: "正位：期望",
+    reversed: "逆位：没期望了",
+    pattern: "正位：指向心中的期望与希望，疗愈重生，灵感涌现，未来可期（对未来有明确的希望，积极向上）<br>逆位：指向失去期望，希望破灭，迷茫绝望，灵感枯竭（对未来彻底没盼头，什么都不想干）"
+  },
+  // 19 月亮
+  {
+    name: "月亮",
+    upright: "正位：有隐藏",
+    reversed: "逆位：发现了、藏不住了",
+    pattern: "正位：有隐藏的事物，潜意识的情绪，未知的恐惧，未被察觉的真相（对未来有未知的恐惧，焦虑不安）<br>逆位：隐藏的真相被发现，秘密藏不住了，幻觉消散，看清现实（纸包不住火，谎言被戳穿）"
+  },
+  // 20 太阳
+  {
+    name: "太阳",
+    upright: "正位：积极阳光、乐观、简单",
+    reversed: "逆位：不明朗，看不清",
+    pattern: "正位：积极阳光，简单纯粹，快乐成功，活力充沛，光明正大（整个人的状态很好，状态性圆满）<br>逆位：状态不明朗，看不清真相，表面光鲜，活力不足（看起来很好，其实心里很累）"
+  },
+  // 21 审判
+  {
+    name: "审判",
+    upright: "正位：抉择",
+    reversed: "逆位：过去出现的问题，还会出现",
+    pattern: "正位：关键的人生抉择，自我觉醒，因果清算，全新的开始（主动终结，自己选择结束过去，重新开始）<br>逆位：过去出现过的问题再次复发，执迷不悟，错过改变的机会（好了伤疤忘了疼，重蹈覆辙）"
+  },
+  // 22 世界
+  {
+    name: "世界",
+    upright: "正位：大环境、克服问题",
+    reversed: "逆位：很难克服",
+    pattern: "正位：大环境有利，成功克服所有问题，事情圆满完成，进入人生新阶段（一件事彻底做完，阶段性圆满）<br>逆位：大环境阻碍重重，问题难以克服，事情未完成，功亏一篑（差最后一步没做成，留下遗憾）"
+  },
+  // 23 宝剑一
+  {
+    name: "宝剑一",
+    upright: "正位：主动出击、想法一致",
+    reversed: "逆位：不主动，不一致",
+    pattern: "正位：想法清晰一致，主动出击，新的思路出现，突破困境（思维层面的开始，想通了就行动）<br>逆位：想法不一致，不主动行动，思维混乱，冲突爆发（思维彻底混乱，连想都想不明白）"
+  },
+  // 24 宝剑二
+  {
+    name: "宝剑二",
+    upright: "正位：选择",
+    reversed: "逆位：放下，纠结，累了选不出来，就放下",
+    pattern: "正位：面临两难选择，纠结不已，陷入僵持与逃避状态（纠结\"怎么选\"，思维层面的选择困难）<br>逆位：放下纠结，累了就不再选择，打破僵局做出决定（思维放弃纠结，随便选一个或者不选）"
+  },
+  // 25 宝剑三
+  {
+    name: "宝剑三",
+    upright: "正位：扎心",
+    reversed: "逆位：更扎心",
+    pattern: "正位：被扎心，遭遇背叛与伤害，心碎痛苦，情绪低落（言语/情感层面的直接伤害）<br>逆位：更加扎心，伤害持续加深，伤口难以愈合（伤害反复出现，无法愈合）"
+  },
+  // 26 宝剑四
+  {
+    name: "宝剑四",
+    upright: "正位：停滞",
+    reversed: "逆位：动起来",
+    pattern: "正位：状态停滞，暂时休息，沉思冥想，养精蓄锐（被动休息，因为疲惫而暂停）<br>逆位：打破停滞，必须动起来，无法休息，焦虑不安（被迫结束休息，不得不行动）"
+  },
+  // 27 宝剑五
+  {
+    name: "宝剑五",
+    upright: "正位：争执、冲突",
+    reversed: "逆位：放下争执、退让一步",
+    pattern: "正位：发生争执与冲突，意见不合，互相争吵博弈（言语层面的恶性争斗，吵人不吵事，有恶意伤害）<br>逆位：放下争执，主动退让一步，和解妥协，避免两败俱伤（意识到言语伤害主动止损，接受不完美结果）"
+  },
+  // 28 宝剑六
+  {
+    name: "宝剑六",
+    upright: "正位：慢",
+    reversed: "逆位：船翻了、容易崩",
+    pattern: "正位：进展缓慢，慢慢前行，过渡阶段，逐渐疗愈伤痛（带着心理伤痛慢慢往前走）<br>逆位：进展崩溃，像船翻了一样，事情容易搞砸，陷入困境（心理彻底崩溃，连带着事情一起崩盘）"
+  },
+  // 29 宝剑七
+  {
+    name: "宝剑七",
+    upright: "正位：另辟蹊径",
+    reversed: "逆位：发现问题",
+    pattern: "正位：另辟蹊径，用巧思解决问题，不走寻常路（靠思维技巧取胜，走捷径）<br>逆位：发现隐藏的问题，策略失败，谎言被揭穿（技巧被识破，小聪明反被聪明误）"
+  },
+  // 30 宝剑八
+  {
+    name: "宝剑八",
+    upright: "正位：难以行动、束缚",
+    reversed: "逆位：挣脱",
+    pattern: "正位：被想法束缚，自我设限，难以行动，感到迷茫无助（自己的想法困住自己）<br>逆位：挣脱思想的束缚，打破限制，重获自由，看清真相（思维开窍，打破自我设限）"
+  },
+  // 31 宝剑九
+  {
+    name: "宝剑九",
+    upright: "正位：想太多",
+    reversed: "逆位：想更多，长期想的多",
+    pattern: "正位：想太多，过度担忧，焦虑失眠，内心备受折磨（晚上睡不着胡思乱想）<br>逆位：想更多，长期陷入精神内耗，焦虑恐惧持续加重（内耗升级，陷入恶性循环）"
+  },
+  // 32 宝剑十
+  {
+    name: "宝剑十",
+    upright: "正位：结束了，凉凉了、歇菜",
+    reversed: "逆位：煎熬、死不掉，死不透",
+    pattern: "正位：彻底结束、无法挽回，凉凉了，歇菜了，事情无可挽回（思维层面的彻底死亡，连想都不想了）<br>逆位：还在煎熬，死不掉也死不透，不会自然结束，必须主动切断才能彻底了结，否则会一直拖着消耗（思维不肯放手，反复拉扯煎熬）"
+  },
+  // 33 宝剑侍从
+  {
+    name: "宝剑侍从",
+    upright: "正位：张望",
+    reversed: "逆位：压力大、不想做还得做，很难深入",
+    pattern: "正位：四处张望，收集信息，好奇心强，思维敏捷（传递消息/八卦，脑子转得快）<br>逆位：压力大，不想做但不得不做，做事浮于表面很难深入（被迫做事，敷衍了事）"
+  },
+  // 34 宝剑骑士
+  {
+    name: "宝剑骑士",
+    upright: "正位：冲、风风火火往前冲",
+    reversed: "逆位：想法不一致、观念不一致",
+    pattern: "正位：风风火火往前冲，思维敏捷，行动迅速，追求真理（说话直，做事快但容易伤人）<br>逆位：想法与观念不一致，沟通冲突，鲁莽冲动说话伤人（说话刻薄，容易引发矛盾）"
+  },
+  // 35 宝剑女王
+  {
+    name: "宝剑女王",
+    upright: "正位：直接、有标准，有话直说",
+    reversed: "逆位：放下标准、放下观念想法",
+    pattern: "正位：性格直接，有明确的标准，有话直说，理性冷静（理性果断，原则性强）<br>逆位：放下自己的标准与原则，观念混乱，容易被他人影响（没有原则，容易被带偏）"
+  },
+  // 36 宝剑国王
+  {
+    name: "宝剑国王",
+    upright: "正位：专业能力、说到做到",
+    reversed: "逆位：说谎、说到做不到",
+    pattern: "正位：专业能力强，言出必行，说到做到，理性权威（专业权威，言出必行）<br>逆位：专业能力不足，爱说谎，说到做不到，滥用权力（能力不足，滥用权力）"
+  },
+  // 37 星币一
+  {
+    name: "星币一",
+    upright: "正位：新开始、计划",
+    reversed: "逆位：星币往下掉、边走边看、没计划",
+    pattern: "正位：物质与工作的新开始，有明确的计划，新的机会到来（有实实在在的物质/工作机会）<br>逆位：计划落空，像星币往下掉一样，只能边走边看，没有规划（物质机会彻底落空，手里抓不住东西）"
+  },
+  // 38 星币二
+  {
+    name: "星币二",
+    upright: "正位：平衡",
+    reversed: "逆位：平衡不了、失衡",
+    pattern: "正位：能够平衡多方事务，灵活应变，财务管理得当（外在事务的平衡，同时处理多件事不慌）<br>逆位：平衡不了，状态失衡，手忙脚乱，出现财务危机"
+  },
+  // 39 星币三
+  {
+    name: "星币三",
+    upright: "正位：学习、讨论",
+    reversed: "逆位：别人靠不住，只能靠自己，第三方",
+    pattern: "正位：学习新知识，团队讨论合作，专业能力得到提升（靠专业能力做事，团队合作顺利）<br>逆位：别人靠不住，只能靠自己，易出现第三方介入【事业 = 外部竞争者 / 合作方介入；感情 = 第三者 / 家人朋友干预】（队友不靠谱，合作破裂）"
+  },
+  // 40 星币四
+  {
+    name: "星币四",
+    upright: "正位：踏实（固定不变）保守（相对稳定）",
+    reversed: "逆位：不稳定",
+    pattern: "正位：状态踏实固定，做事保守，财务稳定，注重安全感（紧紧抓住手里的钱和资源）<br>逆位：状态不稳定，财务出现波动，害怕失去现有资源（钱往外流，守不住现有资源）"
+  },
+  // 41 星币五
+  {
+    name: "星币五",
+    upright: "正位：发展慢，进展慢",
+    reversed: "逆位：慢慢的这种状态，慢慢的会过去",
+    pattern: "正位：发展缓慢，进展迟缓，处境艰难，物质条件一般（没钱没资源，处境困难）<br>逆位：这种缓慢艰难的状态会慢慢过去，过程依然缓慢，不会突然好转，符合土元素 \"慢、稳\" 核心特性（困难开始缓解，但还是很慢）"
+  },
+  // 42 星币六
+  {
+    name: "星币六",
+    upright: "正位：权衡、给的差不多",
+    reversed: "逆位：三角感情、给的一多一少",
+    pattern: "正位：权衡利弊，给予与收获差不多，收支平衡，公平对待（付出多少得多少，公平交换）<br>逆位：给予不均，一多一少，易出现第三方介入【事业 = 外部竞争者 / 合作方介入；感情 = 第三者 / 家人朋友干预】（交换不公，有人占便宜有人吃亏）"
+  },
+  // 43 星币七
+  {
+    name: "星币七",
+    upright: "正位：思考安排（时间，钱，计划）、在意自己拥有的东西",
+    reversed: "逆位：不稳定",
+    pattern: "正位：思考安排时间、金钱与计划，在意自己拥有的东西，耐心等待成果（耐心等待投入的东西有回报）<br>逆位：状态不稳定，计划容易变动，前景不明朗（等待落空，投入没有回报）"
+  },
+  // 44 星币八
+  {
+    name: "星币八",
+    upright: "正位：专注做自己的事",
+    reversed: "逆位：付出多回报少",
+    pattern: "正位：专注做自己的事，勤奋努力，打磨技能，精益求精（靠手艺和勤奋吃饭）<br>逆位：付出多回报少，努力得不到相应的收获，工作懈怠（白干活不赚钱，工作没动力）"
+  },
+  // 45 星币九
+  {
+    name: "星币九",
+    upright: "正位：享受，条件好、小资的状态",
+    reversed: "逆位：不务实、想要更多、不踏实",
+    pattern: "正位：物质条件好，小资状态，享受生活，独立自信（个人物质富足，独立享受生活）<br>逆位：不务实，想要更多，贪得无厌，做事不踏实（贪得无厌，做事不踏实）"
+  },
+  // 46 星币十
+  {
+    name: "星币十",
+    upright: "正位：合家欢乐，大家都很好",
+    reversed: "逆位：很难往前走、很难推进",
+    pattern: "正位：合家欢乐，大家都很好，家族财富丰厚，事业稳固（家底厚，事业根基稳）<br>逆位：事情很难往前走，难以推进，发展受阻（事业根基动摇，事情推不动）"
+  },
+  // 47 星币侍从
+  {
+    name: "星币侍从",
+    upright: "正位：慢慢发展",
+    reversed: "逆位：边走边看、没计划",
+    pattern: "正位：事情慢慢发展，踏实学习，认真肯干，稳步成长（学习物质/技能，踏实稳重）<br>逆位：边走边看，没有明确计划，进展缓慢，学习不认真（学习不踏实，做事没规划）"
+  },
+  // 48 星币骑士
+  {
+    name: "星币骑士",
+    upright: "正位：稳定、专注",
+    reversed: "逆位：不踏实、不专一",
+    pattern: "正位：稳定专注，脚踏实地，做事靠谱，追求实际成果（做事稳，靠谱但慢）<br>逆位：不踏实不专一，三心二意，浮躁不安，缺乏耐心（做事浮躁，不靠谱）"
+  },
+  // 49 星币女王
+  {
+    name: "星币女王",
+    upright: "正位：踏实认真",
+    reversed: "逆位：不踏实、不认真",
+    pattern: "正位：踏实认真，务实能干，善于理财，打理生活井井有条（会过日子，务实能干）<br>逆位：不踏实不认真，敷衍了事，贪图享乐，浪费金钱（贪图享受，不会理财）"
+  },
+  // 50 星币国王
+  {
+    name: "星币国王",
+    upright: "正位：更加踏实认真",
+    reversed: "逆位：更加不踏实、不认真",
+    pattern: "正位：更加踏实认真，极度靠谱，事业成功，财富丰厚，善于理财（极度靠谱，有钱有能力）<br>逆位：更加不踏实不认真，唯利是图，贪婪自私，容易出现财务危机（贪婪自私，财务出问题）"
+  },
+  // 51 权杖一
+  {
+    name: "权杖一",
+    upright: "正位：主动出击、感兴趣",
+    reversed: "逆位：放下、不主动出击了，没兴趣了",
+    pattern: "正位：全新行动的开端，主动出击，对事情充满兴趣与动力（身体行动层面的开始，想到就做）<br>逆位：放下行动，不再主动，热情消退，对事情失去兴趣（行动力彻底熄火，连尝试的念头都没有）"
+  },
+  // 52 权杖二
+  {
+    name: "权杖二",
+    upright: "正位：观望",
+    reversed: "逆位：放下观望",
+    pattern: "正位：观望等待，规划未来方向，权衡利弊后再做决策（纠结\"去哪里做\"，行动前的方向选择）<br>逆位：放下观望，要么立即行动，要么彻底放弃计划（不再纠结方向，二选一快速决断）"
+  },
+  // 53 权杖三
+  {
+    name: "权杖三",
+    upright: "正位：出发",
+    reversed: "逆位：反复、放下、不稳定",
+    pattern: "正位：正式出发，向外拓展，初步取得进展，远见卓识<br>逆位：进展反复无常，状态不稳定，容易中途放弃或回头"
+  },
+  // 54 权杖四
+  {
+    name: "权杖四",
+    upright: "正位：稳定（过去什么样，现在还什么样）",
+    reversed: "逆位：不稳定",
+    pattern: "正位：状态稳定（过去什么样现在还什么样），生活安稳，事业稳固<br>逆位：状态不稳定，出现变动，冲突矛盾，原有的平衡被打破"
+  },
+  // 55 权杖五
+  {
+    name: "权杖五",
+    upright: "正位：打架了，冲突、争执",
+    reversed: "逆位：放下，退让，妥协",
+    pattern: "正位：竞争与冲突，意见不合，发生争执，多方博弈（行动层面的良性竞争，吵事不吵人，无恶意伤害）<br>逆位：放下争执，主动退让，妥协和解，避免内耗（主动退出无效竞争，回归自身做事）"
+  },
+  // 56 权杖六
+  {
+    name: "权杖六",
+    upright: "正位：成功、吸引、听从安排",
+    reversed: "逆位：不听、没有吸引力",
+    pattern: "正位：取得成功，获得他人认可与吸引，别人愿意听从你的安排（靠实际做事成果获得公开认可）<br>逆位：失去吸引力，他人不听从指挥，遭遇失败挫折（做事失败导致威信下降，没人愿意跟随）"
+  },
+  // 57 权杖七
+  {
+    name: "权杖七",
+    upright: "正位：克服",
+    reversed: "逆位：难克服",
+    pattern: "正位：能够克服困难，坚持立场，孤军奋战也能取得胜利（靠体力和毅力硬扛困难）<br>逆位：难以克服困难，被压力击垮，立场动摇，寡不敌众（体力耗尽无法坚持，被迫放弃抵抗）"
+  },
+  // 58 权杖八
+  {
+    name: "权杖八",
+    upright: "正位：很快推进",
+    reversed: "逆位：推进不顺",
+    pattern: "正位：事情快速推进，消息迅速传来，进展顺利，适合出行（做事速度极快，不受阻碍）<br>逆位：事情推进不顺，消息延误，阻碍重重，计划落空（行动被打断，速度骤降甚至停滞）"
+  },
+  // 59 权杖九
+  {
+    name: "权杖九",
+    upright: "正位：防御，防备",
+    reversed: "逆位：放下防御",
+    pattern: "正位：保持防御与防备状态，警惕风险，凭借经验坚持到底（身体层面的防御，怕再次受伤）<br>逆位：放下防御，不再警惕，疲惫不堪，放弃坚持（身体彻底透支，连防备的力气都没有）"
+  },
+  // 60 权杖十
+  {
+    name: "权杖十",
+    upright: "正位：忙、迷茫",
+    reversed: "逆位：压力大、放下",
+    pattern: "正位：非常忙碌，同时感到迷茫，独自承担过多责任与压力（身体层面的超负荷，事太多做不完）<br>逆位：压力过大不堪重负，选择放下负担，推卸责任（身体扛不住了，主动减负）"
+  },
+  // 61 权杖侍从
+  {
+    name: "权杖侍从",
+    upright: "正位：感兴趣",
+    reversed: "逆位：不感兴趣",
+    pattern: "正位：对事情充满兴趣，热情的初学者，活力充沛，潜力无限（对新事物好奇，行动力强但没长性）<br>逆位：对事情失去兴趣，冲动幼稚，缺乏耐心，半途而废（三分钟热度，做事虎头蛇尾）"
+  },
+  // 62 权杖骑士
+  {
+    name: "权杖骑士",
+    upright: "正位：积极，主动",
+    reversed: "逆位：不积极，不主动",
+    pattern: "正位：积极主动，行动力强，风风火火往前冲，追求目标（做事快，说干就干但容易冲动）<br>逆位：消极被动，不积极不主动，做事半途而废（行动力差，拖延放弃）"
+  },
+  // 63 权杖女王
+  {
+    name: "权杖女王",
+    upright: "正位：直接、有责任、事业心",
+    reversed: "逆位：说到做不到",
+    pattern: "正位：性格直接，有责任心，事业心强，自信独立有领导力（外向热情，做事果断）<br>逆位：说到做不到，不负责任，情绪失控，滥用权力（脾气暴躁，不负责任）"
+  },
+  // 64 权杖国王
+  {
+    name: "权杖国王",
+    upright: "正位：专一，负责、说到做到",
+    reversed: "逆位：不专一，不负责、说到做不到",
+    pattern: "正位：专一负责，说到做到，成熟稳重，领导力强，事业成功（成熟稳重，有领导力）<br>逆位：不专一不负责，说到做不到，专制独裁，脾气暴躁（专制暴躁，不负责任）"
+  },
+  // 65 圣杯一
+  {
+    name: "圣杯一",
+    upright: "正位：沟通、喜欢",
+    reversed: "逆位：不沟通、不喜欢",
+    pattern: "正位：情感的新开始，主动沟通，心生喜欢，心灵获得满足（心里有感觉，情感层面的开始）<br>逆位：拒绝沟通，对人没有好感，情感封闭，内心空虚（心里没任何感觉，情感彻底关闭）"
+  },
+  // 66 圣杯二
+  {
+    name: "圣杯二",
+    upright: "正位：合作、平衡",
+    reversed: "逆位：失衡、难沟通",
+    pattern: "正位：平等的合作与关系，沟通顺畅，付出与回报平衡（一对一关系的平等状态，双向奔赴）<br>逆位：关系失衡，沟通困难，合作破裂，矛盾冲突（一对一关系彻底破裂，单向付出）"
+  },
+  // 67 圣杯三
+  {
+    name: "圣杯三",
+    upright: "正位：举杯欢庆、欢乐",
+    reversed: "逆位：难沟通、易被身边人影响",
+    pattern: "正位：举杯欢庆，欢乐和谐，友谊深厚，团队合作愉快（多人聚会社交开心）<br>逆位：沟通不畅，容易被身边人影响，聚会落空，关系破裂（多人关系破裂，被朋友背叛排挤）"
+  },
+  // 68 圣杯四
+  {
+    name: "圣杯四",
+    upright: "正位：懒得搭理",
+    reversed: "逆位：沟通不好，在回想以前",
+    pattern: "正位：懒得搭理他人，情感冷漠，对现状不满，内心空虚（什么都提不起兴趣，情感倦怠）<br>逆位：沟通效果差，总是回想过去的事情，无法走出回忆（沉溺过去，走不出旧伤）"
+  },
+  // 69 圣杯五
+  {
+    name: "圣杯五",
+    upright: "正位：不开心、落寞，情绪状态差",
+    reversed: "逆位：情绪慢慢转好，释怀了",
+    pattern: "正位：情绪状态差，不开心，落寞失落，沉浸在悲伤中（盯着失去的东西难过）<br>逆位：情绪慢慢转好，逐渐释怀，放下过去的悲伤（看到拥有的东西，开始走出悲伤）"
+  },
+  // 70 圣杯六
+  {
+    name: "圣杯六",
+    upright: "正位：关爱，愿意付出",
+    reversed: "逆位：靠自己、一个人付出，持续久了，需要其他的新鲜感",
+    pattern: "正位：愿意关爱与付出，照顾他人，获得安全感与温暖（单方面照顾他人，获得安全感）<br>逆位：只能靠自己，单方面持续付出，需要寻求新的新鲜感（单方面付出得不到回报，只能靠自己）"
+  },
+  // 71 圣杯七
+  {
+    name: "圣杯七",
+    upright: "正位：做梦、画饼，白日梦",
+    reversed: "逆位：失望、梦想破灭",
+    pattern: "正位：爱做梦，容易被画饼吸引，充满不切实际的幻想（沉迷幻想，容易被虚假承诺迷惑）<br>逆位：梦想破灭，感到失望，认清现实，不再抱有幻想（幻想破灭，回归现实）"
+  },
+  // 72 圣杯八
+  {
+    name: "圣杯八",
+    upright: "正位：离开",
+    reversed: "逆位：短期内无法离开、走下坡",
+    pattern: "正位：主动离开当前的状态，追求更高的目标，精神探索（情感不满足主动离开）<br>逆位：短期内无法离开，只能继续停留，状态持续走下坡（想走却走不了，被迫留下消耗）"
+  },
+  // 73 圣杯九
+  {
+    name: "圣杯九",
+    upright: "正位：得意",
+    reversed: "逆位：失望",
+    pattern: "正位：自我感觉得意，愿望达成，情感满足，享受生活（个人情感满足，自我感觉良好）<br>逆位：愿望落空，感到失望，表面满足实则内心空虚（表面风光，内心空虚）"
+  },
+  // 74 圣杯十
+  {
+    name: "圣杯十",
+    upright: "正位：合家欢乐，关系好",
+    reversed: "逆位：分离",
+    pattern: "正位：合家欢乐，人际关系和谐，感情圆满，天伦之乐（家庭/集体情感圆满，所有人都开心）<br>逆位：关系破裂，分离疏远，家庭矛盾，幸福落空（家庭/集体情感破裂，矛盾不断）"
+  },
+  // 75 圣杯侍从
+  {
+    name: "圣杯侍从",
+    upright: "正位：关心问候",
+    reversed: "逆位：没沟通",
+    pattern: "正位：主动关心问候他人，传递浪漫消息，情感丰富细腻（传递情感消息，温柔敏感）<br>逆位：没有沟通，冷漠疏离，消息不实，单相思（传递假消息，情感不真诚）"
+  },
+  // 76 圣杯骑士
+  {
+    name: "圣杯骑士",
+    upright: "正位：沟通、在意感情关系",
+    reversed: "逆位：沟通差、欺骗隐瞒、渣",
+    pattern: "正位：重视感情沟通，温柔体贴，浪漫多情，用心经营关系（追求情感，浪漫但容易花心）<br>逆位：沟通能力差，欺骗隐瞒感情，不负责任，花心滥情（情感欺骗，不负责任）"
+  },
+  // 77 圣杯女王
+  {
+    name: "圣杯女王",
+    upright: "正位：感情一般",
+    reversed: "逆位：沟通很弱、心灵精神上空虚",
+    pattern: "正位：情感状态稳定，温柔善良，直觉敏锐，善于滋养他人（温柔包容，情感丰富）<br>逆位：沟通能力极弱，心灵精神上空虚，情绪失控多愁善感（情绪不稳定，敏感多疑）"
+  },
+  // 78 圣杯国王
+  {
+    name: "圣杯国王",
+    upright: "正位：在意感情的沟通交流、会浪漫",
+    reversed: "逆位：渣男",
+    pattern: "正位：在意感情的沟通与交流，懂得浪漫，成熟稳重包容（成熟包容，懂浪漫）<br>逆位：情感冷漠，不负责任，欺骗感情，典型的渣男特质（情感欺骗，不负责任）"
+  }
+];
+
+// 数据库牌义缓存（初始化时从 D1 加载，覆盖硬编码的默认值）
+let cardMeaningsFromDB = null;
+
+// 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值
+function getCardMeaning(cardId) {
+  return cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {};
+}
+
+
+// ============================================================================
+// 🎨 关键词高亮系统
+// ============================================================================
+
+// 正位关键词列表
+const UPRIGHT_KEYWORDS = [
+  '正位', '顺畅', '积极', '顺利', '成功', '圆满', '和谐', '稳定',
+  '平衡', '正确', '清醒', '自信', '突破', '新生', '正向', '好运',
+  '转机', '新开始', '行动', '沟通', '进展', '发展', '主动', '真实',
+  '真相', '公平', '公正', '有利', '符合预期', '无阻碍', '进展顺利',
+  '事情顺利', '状态顺畅', '积极结果', '积极状态', '状态顺畅呈现',
+  '全新开始', '天真无畏', '探索', '冒险出发', '资源整合', '创造力',
+  '行动力', '落地', '显化', '直觉', '智慧', '洞察', '踏实认真',
+  '丰饶滋养', '富足', '理性掌控', '规则秩序', '事业成就', '精神指引',
+  '知识传承', '信服', '听从', '真爱连接', '抉择', '意志坚定', '克服困难',
+  '内在勇气', '以柔克刚', '内省', '沉淀', '思考', '被动变化', '正向转机',
+  '顺势而为', '公平公正', '合同协议', '法律法规', '觉醒', '换角度思考',
+  '耐心等待', '放下执念', '彻底终结', '必然全新', '沟通平衡', '中庸之道',
+  '能量调和', '长期固化', '习惯', '长期上瘾', '物质主义束缚', '完全无预兆',
+  '真相暴露', '打破幻想', '期望', '疗愈', '重生', '灵感', '未来可期',
+  '隐藏事物', '潜意识情绪', '未知恐惧', '未察觉真相', '隐藏真相', '秘密藏不住',
+  '幻觉消散', '看清现实', '积极阳光', '简单纯粹', '快乐成功', '活力充沛',
+  '光明正大', '关键抉择', '自我觉醒', '因果清算', '全新开始', '大环境有利',
+  '圆满完成', '进入新阶段', '团队讨论合作', '学习', '专业提升', '财务稳定',
+  '安全感', '慢慢过去', '收支平衡', '给予收获差不多', '思考安排时间金钱计划',
+  '在意拥有', '打磨技能', '精益求精', '小资享受', '独立自信', '家族财富',
+  '稳步成长', '专注', '靠谱', '追求实际', '打理生活井井有条', '理财', '极度靠谱'
+];
+
+// 逆位关键词列表
+const REVERSED_KEYWORDS = [
+  '逆位', '受阻', '过度', '扭曲', '偏离', '波折', '挑战', '阻碍',
+  '困难', '失败', '失控', '混乱', '欺骗', '虚假', '逃避', '固执',
+  '拖延', '犹豫', '冲突', '焦虑', '恐惧', '绝望', '压抑', '退缩',
+  '崩溃', '背叛', '痛苦', '损失', '不稳定', '变动', '不平衡',
+  '沟通不畅', '不切实际', '浪费', '失控', '状态受阻', '偏离预期',
+  '状态过度', '状态扭曲', '拖延变化', '恐惧失去', '鲁莽冲动', '毫无准备',
+  '盲目行动', '不听建议', '缺乏资源', '沟通问题', '能力不足', '想法落空',
+  '无法理性思考', '直觉失灵', '封闭内心', '做事不踏实', '过度依赖', '懒惰放纵',
+  '专制独裁', '控制欲强', '权力失控', '思想僵化', '第三者介入', '关系失衡',
+  '付出不对等', '价值观冲突', '局面失控', '方向混乱', '被情绪左右', '内耗',
+  '难以掌控', '软弱无力', '暴躁易怒', '被恐惧支配', '更加迷茫', '孤独自闭',
+  '逃避现实', '固执己见', '被动变动', '难以掌控', '循环困境', '规则不对等',
+  '不公不义', '偏见偏袒', '错误判断', '精神压力大', '无谓牺牲', '固执不愿改变',
+  '拖延变化', '恐惧失去', '短期冲动', '消费欲', '诱惑', '贪念', '认清真相',
+  '挣脱束缚', '早有预兆', '被忽略变故', '逃避灾难', '后果严重', '失去期望',
+  '希望破灭', '迷茫绝望', '灵感枯竭', '状态不明朗', '表面光鲜', '活力不足',
+  '过去问题复发', '执迷不悟', '错过改变', '大环境阻碍', '难以克服', '未完成',
+  '功亏一篑', '别人靠不住', '团队问题', '不稳定', '财务波动', '害怕失去',
+  '计划容易变动', '前景不明', '付出多回报少', '工作懈怠', '不务实', '贪得无厌',
+  '学习不认真', '不踏实不专一', '三心二意', '浮躁不安', '缺乏耐心', '敷衍了事',
+  '贪图享乐', '浪费金钱', '唯利是图', '贪婪自私', '财务危机', '无法离开',
+  '继续停留', '关系破裂', '分离疏远', '家庭矛盾', '幸福落空', '内心空虚',
+  '情感封闭', '不感兴趣', '总是回想过去', '无法走出回忆', '放下纠结', '累了就不选择',
+  '打破僵局', '做出决定', '完全结束了', '凉凉了', '歇菜了', '无可挽回', '煎熬',
+  '死不掉死不透', '不自然结束', '必须主动切断', '一直拖着消耗', '压力大', '不想做但不得不做',
+  '做事浮于表面很难深入', '想法与观念不一致', '鲁莽冲动', '说话伤人', '放下自己的标准与原则',
+  '观念混乱', '容易被他人影响', '专业能力不足', '爱说谎', '说到做不到', '滥用权力',
+  '专横', '说到做不到', '不负责', '情绪失控', '不专一不负责', '不专一', '脾气暴躁',
+  '消极被动', '不积极不主动', '半途而废', '冲动幼稚', '缺乏耐心', '进展反复无常',
+  '中途放弃', '回头', '不稳定', '出现变动', '冲突矛盾', '平衡被打破', '放下争执',
+  '主动退让', '妥协和解', '避免内耗', '失去吸引力', '他人不听指挥', '遭遇失败',
+  '难以克服', '被压力击垮', '立场动摇', '寡不敌众', '推进不顺', '消息延误', '阻碍重重',
+  '计划落空', '疲惫不堪', '放弃坚持', '压力过大', '不堪重负', '放下负担', '推卸责任'
+];
+
+
+
+function highlightKeywords(text, isReversed) {
+  if (!text) return '';
+  
+  // 先按长度排序关键词，避免短关键词先替换长关键词的问题
+  const keywords = isReversed ? 
+    [...REVERSED_KEYWORDS].sort((a, b) => b.length - a.length) : 
+    [...UPRIGHT_KEYWORDS].sort((a, b) => b.length - a.length);
+  
+  const className = isReversed ? 'hl-reversed' : 'hl-upright';
+  
+  // 临时标记以防止重复替换
+  let highlighted = text;
+  const replacements = [];
+  let tempId = 0;
+  
+  // 收集所有需要替换的位置
+  keywords.forEach(keyword => {
+    const regex = new RegExp(escapeRegExp(keyword), 'g');
+    let match;
+    while ((match = regex.exec(highlighted)) !== null) {
+      // 检查是否在已有标记内
+      const before = highlighted.substring(0, match.index);
+      const openTags = (before.match(/<span[^>]*>/g) || []).length;
+      const closeTags = (before.match(/<\/span>/g) || []).length;
+      if (openTags <= closeTags) {
+        const placeholder = `{{__TEMP_${tempId}__}}`;
+        replacements.push({ placeholder, keyword, className });
+        tempId++;
+        // 先替换成占位符
+        highlighted = highlighted.substring(0, match.index) + placeholder + highlighted.substring(match.index + keyword.length);
+        regex.lastIndex = 0; // 重置
+      }
+    }
+  });
+  
+  // 最后替换所有占位符
+  replacements.forEach(({ placeholder, keyword, className }) => {
+    highlighted = highlighted.replace(placeholder, `<span class="${className}">${keyword}</span>`);
+  });
+  
+  return highlighted;
+}
+
+// 转义正则表达式特殊字符
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+
+
+
+// 常量配置（规范化状态管理，消除魔法字符串）
+const CONFIG = {
+  TOTAL_IMAGES: 79,       // 总图片数量（78张牌 + 1张牌背）
+  MAX_SUPPORT: 2,          // 每张大阿卡那最多补抽数量
+  CUT_MIN: 15,             // 切牌最小数量
+  GAME_STATES: {
+    INIT: 'init',          // 初始状态
+    SHUFFLED: 'shuffled',  // 洗牌完成
+    CUT: 'cut',            // 切牌完成
+    SPREAD: 'spread'       // 牌面展开
+  }
+}
+
+// 核心状态对象（优化全局变量 + 新增防抖标志）
+const STATE = {
+  loadedCount: 0,                // 已加载图片数量
+  fullDeck: [],                  // 完整牌组（包含所有78张牌的状态）
+  pickRounds: [[]],              // 抽牌回合（每轮抽的牌）
+  currentRound: 0,               // 当前回合索引
+  cachedNumbers: Array(78).fill(0), // 缓存数字（用于显示，会随抽牌变化）
+  touchSeed: Date.now(),          // 触摸种子（增强随机数的随机性）
+  gameState: CONFIG.GAME_STATES.INIT, // 当前游戏状态
+  isAnimating: false,             // 动画状态（防止重复执行动画）
+  isDebouncing: false,            // 防抖标志（防止重复点击）
+  lockCurrentMainDelete: false,   // 锁定当前主牌删除（防止误操作）
+  reSortCount: 0,                 // 补抽排序次数（用于补抽逻辑）
+  lockPicking: false,             // 锁定抽牌（补抽完成后防止抽新主牌）
+  // 补抽相关状态
+  pendingSupportCount: 0          // 待补抽数量（大阿卡那数量）
+}
+
+// DOM缓存（减少重复查询，提高性能）
+const DOM = {
+  progressContainer: document.getElementById('loadProgress'),
+  progressText: document.getElementById('progressText'),
+  progressFill: document.getElementById('progressFill'),
+  stack: document.getElementById('stack'),
+  spread: document.getElementById('spread'),
+  pickedBox: document.getElementById('picked'),
+  statusTip: document.getElementById('statusTip'),
+  supportStatus: document.getElementById('supportStatus'),
+  cardModal: document.getElementById('cardModal'),
+  modalCard: document.getElementById('modalCard'),
+  cardMeaning: document.getElementById('cardMeaning'),
+  closeModal: document.getElementById('closeModal'),
+  touchMask: document.getElementById('touchMask'),
+  refreshBtn: document.getElementById('refreshBtn'),
+  newRoundBtn: document.getElementById('newRoundBtn'),
+  reSortBtn: document.getElementById('reSortBtn'),
+  cardGroupNumberInput: document.getElementById('cardGroupNumberInput')
+}
+
+// ==================== API 配置 ====================
+const API_CONFIG = {
+  baseUrl: 'https://taro-api.z7758495.workers.dev',  // 使用独立的 Worker 后端
+  endpoints: {
+    register: '/api/auth/register',
+    login: '/api/auth/login',
+    records: '/api/records',
+    health: '/api/health',
+    cardMeanings: '/api/card-meanings'
+  }
+}
+
+// ==================== 认证状态管理 ====================
+const AUTH_STATE = {
+  token: null,
+  user: null,
+  isLoginMode: true // true=登录, false=注册
+}
+
+// 从 localStorage 读取认证状态
+function loadAuthState() {
+  try {
+    const savedToken = localStorage.getItem('taroToken');
+    const savedUser = localStorage.getItem('taroUser');
+    if (savedToken && savedUser) {
+      AUTH_STATE.token = savedToken;
+      AUTH_STATE.user = JSON.parse(savedUser);
+      updateUserButton(true);
+      return true;
+    }
+  } catch (e) {
+    console.error('加载认证状态失败:', e);
+  }
+  return false;
+}
+
+// 保存认证状态到 localStorage
+function saveAuthState(token, user) {
+  AUTH_STATE.token = token;
+  AUTH_STATE.user = user;
+  localStorage.setItem('taroToken', token);
+  localStorage.setItem('taroUser', JSON.stringify(user));
+  updateUserButton(true);
+}
+
+// 清除认证状态
+function clearAuthState() {
+  AUTH_STATE.token = null;
+  AUTH_STATE.user = null;
+  localStorage.removeItem('taroToken');
+  localStorage.removeItem('taroUser');
+  updateUserButton(false);
+}
+
+// 更新用户按钮显示
+function updateUserButton(isLoggedIn) {
+  const userBtn = document.getElementById('userBtn');
+  if (!userBtn) return;
+  
+  if (isLoggedIn && AUTH_STATE.user) {
+    userBtn.textContent = `${AUTH_STATE.user.username} (退出)`;
+    userBtn.classList.add('logged-in');
+  } else {
+    userBtn.textContent = '登录';
+    userBtn.classList.remove('logged-in');
+  }
+}
+
+// ==================== API 请求工具 ====================
+async function apiRequest(endpoint, options = {}) {
+  const url = API_CONFIG.baseUrl + endpoint;
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  
+  if (AUTH_STATE.token) {
+    headers['Authorization'] = `Bearer ${AUTH_STATE.token}`;
+  }
+  
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+  
+  const data = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(data.error || '请求失败');
+  }
+  
+  return data;
+}
+
+// ==================== 登录/注册弹窗控制 ====================
+function openAuthModal() {
+  document.getElementById('authModal').classList.add('active');
+  resetAuthForm();
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('active');
+}
+
+function resetAuthForm() {
+  document.getElementById('authUsername').value = '';
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authError').textContent = '';
+  updateAuthModeDisplay();
+}
+
+function updateAuthModeDisplay() {
+  const title = document.getElementById('authModalTitle');
+  const submitBtn = document.getElementById('authSubmitBtn');
+  const switchText = document.getElementById('authSwitchText');
+  const switchBtn = document.getElementById('authSwitchBtn');
+  
+  if (AUTH_STATE.isLoginMode) {
+    title.textContent = '登录';
+    submitBtn.textContent = '登录';
+    switchText.textContent = '还没有账号？';
+    switchBtn.textContent = '立即注册';
+  } else {
+    title.textContent = '注册';
+    submitBtn.textContent = '注册';
+    switchText.textContent = '已有账号？';
+    switchBtn.textContent = '立即登录';
+  }
+}
+
+function toggleAuthMode() {
+  AUTH_STATE.isLoginMode = !AUTH_STATE.isLoginMode;
+  updateAuthModeDisplay();
+  document.getElementById('authError').textContent = '';
+}
+
+async function handleAuthSubmit() {
+  const username = document.getElementById('authUsername').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const errorEl = document.getElementById('authError');
+  const submitBtn = document.getElementById('authSubmitBtn');
+  
+  errorEl.textContent = '';
+  submitBtn.disabled = true;
+  submitBtn.textContent = AUTH_STATE.isLoginMode ? '登录中...' : '注册中...';
+  
+  if (!username || !password) {
+    errorEl.textContent = '❌ 请输入用户名和密码';
+    submitBtn.disabled = false;
+    submitBtn.textContent = AUTH_STATE.isLoginMode ? '登录' : '注册';
+    return;
+  }
+  
+  try {
+    const endpoint = AUTH_STATE.isLoginMode 
+      ? API_CONFIG.endpoints.login 
+      : API_CONFIG.endpoints.register;
+    
+    const data = await apiRequest(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+    
+    saveAuthState(data.token, { userId: data.userId, username: data.username });
+    closeAuthModal();
+    
+    const successMsg = AUTH_STATE.isLoginMode 
+      ? '✅ 登录成功！欢迎回来，' + data.username + '！' 
+      : '✅ 注册成功！已自动登录，欢迎 ' + data.username + '！';
+    
+    setTip(successMsg);
+    alert(successMsg);
+  } catch (e) {
+    errorEl.textContent = '❌ ' + (e.message || '操作失败');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = AUTH_STATE.isLoginMode ? '登录' : '注册';
+  }
+}
+
+// ==================== 历史记录 API 包装 ====================
+async function fetchHistoryFromApi() {
+  if (!AUTH_STATE.token) {
+    return [];
+  }
+  try {
+    return await apiRequest(API_CONFIG.endpoints.records);
+  } catch (e) {
+    console.error('获取历史记录失败:', e);
+    return [];
+  }
+}
+
+async function saveRecordToApi(record) {
+  if (!AUTH_STATE.token) {
+    throw new Error('请先登录');
+  }
+  return await apiRequest(API_CONFIG.endpoints.records, {
+    method: 'POST',
+    body: JSON.stringify(record)
+  });
+}
+
+async function updateRecordTitleApi(recordId, title) {
+  if (!AUTH_STATE.token) {
+    throw new Error('请先登录');
+  }
+  return await apiRequest(`${API_CONFIG.endpoints.records}/${recordId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ title })
+  });
+}
+
+async function deleteRecordApi(recordId) {
+  if (!AUTH_STATE.token) {
+    throw new Error('请先登录');
+  }
+  return await apiRequest(`${API_CONFIG.endpoints.records}/${recordId}`, {
+    method: 'DELETE'
+  });
+}
+
+// ==================== 牌义数据 API ====================
+
+// 从 D1 加载牌义数据，若数据库为空则自动从硬编码数据初始化
+async function fetchCardMeanings() {
+  try {
+    const data = await apiRequest(API_CONFIG.endpoints.cardMeanings);
+    
+    // 检查是否为空（D1 表还没有数据）
+    if (!data || Object.keys(data).length === 0) {
+      await seedCardMeanings();
+      // 重新获取
+      const seededData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
+      cardMeaningsFromDB = seededData || null;
+    } else {
+      cardMeaningsFromDB = data;
+    }
+  } catch (e) {
+    console.warn('从数据库加载牌义失败，使用本地默认数据:', e.message);
+    cardMeaningsFromDB = null;
+  }
+}
+
+// 初始化牌义数据到 D1
+async function seedCardMeanings() {
+  const cards = [];
+  for (let i = 0; i < cardMeanings.length; i++) {
+    if (cardMeanings[i] && cardMeanings[i].name) {
+      cards.push(cardMeanings[i]);
+    }
+  }
+  
+  await apiRequest(`${API_CONFIG.endpoints.cardMeanings}/seed`, {
+    method: 'POST',
+    body: JSON.stringify({ cards })
+  });
+}
+
+// 更新单张牌义到 D1
+async function updateCardMeaningApi(cardId, meaning) {
+  return await apiRequest(`${API_CONFIG.endpoints.cardMeanings}/${cardId}`, {
+    method: 'PUT',
+    body: JSON.stringify(meaning)
+  });
+}
+
+// 全局防抖函数
+function debounce(fn, delay = 500) {
+  return async (...args) => {
+    if (STATE.isDebouncing || STATE.isAnimating) return;
+    STATE.isDebouncing = true;
+    await fn(...args);
+    setTimeout(() => STATE.isDebouncing = false, delay);
+  };
+}
+
+// 页面加载 - 初始化流程
+window.onload = async () => {
+  // 0. 初始化认证状态
+  loadAuthState();
+  
+  // 0.0 异步加载牌义数据（从 D1 或本地）
+  fetchCardMeanings();
+  
+  // 0.1 绑定登录/注册相关事件
+  document.getElementById('userBtn').addEventListener('click', () => {
+    if (AUTH_STATE.token) {
+      // 已登录，询问是否退出
+      if (confirm('确定要退出登录吗？')) {
+        clearAuthState();
+        location.reload();
+      }
+    } else {
+      // 未登录，打开弹窗
+      openAuthModal();
+    }
+  });
+  document.getElementById('closeAuthModal').addEventListener('click', closeAuthModal);
+  document.getElementById('authSwitchBtn').addEventListener('click', toggleAuthMode);
+  document.getElementById('authSubmitBtn').addEventListener('click', handleAuthSubmit);
+  
+  // 1. 显示加载进度条
+  DOM.progressContainer.style.display = 'block';
+  
+  // 2. 加载牌背图片
+  await loadImage(backImg);
+  
+  // 3. 并行加载所有卡牌图片（性能优化）
+  parallelLoadImages(cardImages.slice(1, 79));
+
+  // 4. 触摸采集（兼容PC点击）
+  // 仅保留touchstart，兼容所有移动端/PC
+  DOM.touchMask.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    collectTouchSeed(e); // 采集触摸种子，增强随机性
+  }, { once: true });
+  // PC端兼容
+  DOM.touchMask.addEventListener('click', (e) => {
+    collectTouchSeed(e); // 采集点击种子，增强随机性
+  }, { once: true });
+
+  // 5. 按钮绑定防抖（防止重复点击）
+  DOM.refreshBtn.addEventListener('click', debounce(refreshPage)); // 重新洗牌
+  DOM.newRoundBtn.addEventListener('click', debounce(startNewRound)); // 开始新轮次
+  DOM.reSortBtn.addEventListener('click', debounce(reSortForSupport)); // 补抽排序
+
+  // 6. 卡牌事件委托（性能优化，仅绑定1次）
+  DOM.spread.addEventListener('click', (e) => {
+    const card = e.target.closest('.taro-spread__card');
+    if(!card) return;
+    const index = Array.from(DOM.spread.children).indexOf(card);
+    pickCard(index); // 处理抽牌逻辑
+  });
+
+  // 7. 键盘事件：ESC键关闭弹窗
+  document.addEventListener('keydown', e => e.key === 'Escape' && closeCardModal());
+  
+  // 8. 初始化状态
+  updateButtonStatus(); // 更新按钮状态
+  setTip("🔮 触摸屏幕，开始塔罗牌占卜"); // 设置初始提示
+  
+  // 9. 绑定隐藏/展开按钮事件
+  const toggleBtn = document.getElementById('toggleSpreadBtn');
+  const spread = document.querySelector('.taro-float__spread');
+  
+  if (toggleBtn && spread) {
+    toggleBtn.addEventListener('click', () => {
+      if (spread.style.display === 'none') {
+        spread.style.display = 'block';
+        toggleBtn.textContent = '隐藏';
+      } else {
+        spread.style.display = 'none';
+        toggleBtn.textContent = '展开';
+      }
+    });
+  }
+  
+  // 10. 绑定编号输入框事件 - 实时更新编号
+  if (DOM.cardGroupNumberInput) {
+    // 设置默认值为当前月份
+    const currentMonth = new Date().getMonth() + 1; // 月份从0开始，所以加1
+    DOM.cardGroupNumberInput.value = currentMonth;
+    
+    DOM.cardGroupNumberInput.addEventListener('input', () => {
+      // 当输入框值改变时，重新渲染已抽牌
+      renderPicked();
+    });
+  }
+};
+
+// 全局状态提示
+function setTip(text) { DOM.statusTip.textContent = text; }
+
+// 全真高强度随机数（占卜专用，不可预测）
+function getTrueRandom(max) {
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return Math.abs((array[0] ^ STATE.touchSeed) % max);
+}
+
+// 触摸采集随机种子 - 增强随机性的关键步骤
+async function collectTouchSeed(e) {
+  try {
+    // 1. 获取触摸或点击位置
+    let x = e.touches?.[0]?.clientX || e.clientX || 0;
+    let y = e.touches?.[0]?.clientY || e.clientY || 0;
+    
+    // 2. 生成触摸种子，增强随机数的随机性
+    // 结合位置坐标、时间戳和位运算，生成高质量随机种子
+    STATE.touchSeed = Math.abs((x * 9876 + y * 1234 + Date.now()) ^ 0x7fffffff);
+    
+    // 3. 隐藏触摸遮罩
+    DOM.touchMask.style.display = 'none';
+    
+    // 4. 执行洗牌切牌流程
+    await playRubShuffleAnimation();
+  } catch (err) {
+    // 错误处理：隐藏触摸遮罩并执行洗牌切牌流程
+    DOM.touchMask.style.display = 'none';
+    await playRubShuffleAnimation();
+  }
+}
+
+// 初始化牌组并执行洗牌切牌流程
+async function playRubShuffleAnimation() {
+  if(STATE.isAnimating) return;
+  STATE.isAnimating = true;
+  disableAllButtons(true);
+  setTip("🔮 正在连接真实世界，请稍候...");
+  try {
+    firstShuffle_InitOrder();
+    
+    // 模拟现实切牌流程
+    const total = STATE.fullDeck.length;
+    
+    // 1. 从中间拿起三分之二
+    const twoThirds = Math.floor(total * 2/3);
+    const topTwoThirds = STATE.fullDeck.slice(0, twoThirds);
+    const bottomThird = STATE.fullDeck.slice(twoThirds);
+    
+    // 2. 放在右侧一部分
+    const rightPart = topTwoThirds.slice(Math.floor(topTwoThirds.length * 1/2));
+    const leftPart = topTwoThirds.slice(0, Math.floor(topTwoThirds.length * 1/2));
+    
+    // 3. 从右侧拿起二分之一，放到左侧
+    const rightHalf = Math.floor(rightPart.length * 1/2);
+    const newLeft = rightPart.slice(0, rightHalf);
+    const newRight = rightPart.slice(rightHalf);
+    
+    // 4. 切三落，按左中右顺序收牌
+    STATE.fullDeck = [...newLeft, ...bottomThird, ...newRight, ...leftPart];
+    
+    STATE.gameState = CONFIG.GAME_STATES.SPREAD;
+    refreshCachedNumbers();
+    renderSpread();
+    renderFanLayout();
+    setTip("✨ 从1-78之间，选择3/6/12个数字");
+  } catch (err) {
+    firstShuffle_InitOrder();
+  } finally {
+    STATE.isAnimating = false;
+    disableAllButtons(false);
+    updateButtonStatus();
+  }
+}
+
+// 模拟现实扑克洗牌算法
+function realisticShuffle(array) {
+  // 1. 多次 riffle shuffle（交叉洗牌）
+  for (let shuffleCount = 0; shuffleCount < 3; shuffleCount++) {
+    // 分割牌堆
+    const midPoint = Math.floor(array.length / 2);
+    const leftPile = array.slice(0, midPoint);
+    const rightPile = array.slice(midPoint);
+    
+    // 交叉合并（模拟人手洗牌）
+    const shuffledDeck = [];
+    while (leftPile.length > 0 || rightPile.length > 0) {
+      // 随机从左堆取1-3张
+      if (leftPile.length > 0 && getTrueRandom(2) === 0) {
+        const takeCount = Math.min(getTrueRandom(3) + 1, leftPile.length);
+        shuffledDeck.push(...leftPile.splice(0, takeCount));
+      }
+      // 随机从右堆取1-3张
+      if (rightPile.length > 0 && getTrueRandom(2) === 0) {
+        const takeCount = Math.min(getTrueRandom(3) + 1, rightPile.length);
+        shuffledDeck.push(...rightPile.splice(0, takeCount));
+      }
+    }
+    array.splice(0, array.length, ...shuffledDeck);
+  }
+  
+  // 2. 最后执行一次 Fisher-Yates 洗牌确保完全随机
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = getTrueRandom(i + 1);
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+// 初始化牌组
+function firstShuffle_InitOrder() {
+  STATE.fullDeck = []; 
+  STATE.pickRounds = [[]]; 
+  STATE.currentRound = 0;
+  STATE.cachedNumbers = Array(78).fill(0); 
+  STATE.lockCurrentMainDelete = false;
+  STATE.reSortCount = 0;
+  STATE.lockPicking = false;
+  
+  for(let i=1; i<=78; i++){
+    STATE.fullDeck.push({
+      cardId: i,
+      rotate: getTrueRandom(2) === 0 ? 0 : 180,
+      active: true
+    });
+  }
+  realisticShuffle(STATE.fullDeck);
+  STATE.gameState = CONFIG.GAME_STATES.SHUFFLED;
+  renderStack();
+  updateButtonStatus();
+}
+
+
+
+
+
+// 刷新显示数字
+function refreshCachedNumbers() {
+  let num = 1;
+  for (let i = 0; i < 78; i++) {
+    STATE.cachedNumbers[i] = STATE.fullDeck[i].active ? num++ : 0;
+  }
+}
+
+// 平铺渲染（DocumentFragment批量DOM优化，性能提升50%+）
+// 功能：渲染牌面排序区域，显示数字牌面
+function renderSpread() {
+  const fragment = document.createDocumentFragment(); // 创建文档片段，减少DOM操作
+  
+  for(let i=0; i<78; i++){
+    const item = STATE.fullDeck[i];
+    const div = document.createElement('div');
+    
+    // 设置卡牌样式
+    div.className = item.active ? 'taro-spread__card' : 'taro-spread__empty';
+    
+    // 如果卡牌可用，显示数字
+    if(item.active) {
+      div.innerHTML = `<div class="taro-spread__num">${STATE.cachedNumbers[i]}</div>`;
+    }
+    
+    fragment.appendChild(div);
+  }
+  
+  // 清空并添加卡牌
+  DOM.spread.innerHTML = '';
+  DOM.spread.appendChild(fragment);
+}
+
+// 牌堆渲染
+function renderStack() {
+  DOM.stack.innerHTML = `<div class="taro-card__stack"><img src="${backImg}" onerror="this.src='${backImg}'"></div>`;
+}
+
+// 扇形牌面布局渲染（响应式自适应，增大50%）
+function renderFanLayout() {
+  const fanContainer = document.createElement('div');
+  fanContainer.className = 'taro-card__fan';
+  
+  // 获取容器宽度
+  const containerWidth = DOM.stack.offsetWidth || 600;
+  
+  // 根据容器宽度计算扇形参数（响应式缩放，增大50%）
+  const scale = containerWidth / 750; // 以750px为基准（增大50%）
+  const cardWidth = 95 * scale; // 调整卡片宽度
+  const cardHeight = 145 * scale; // 调整卡片高度
+  const radius = 200 * scale; // 扇形半径（调整为更紧凑）
+  
+  // 生成30张牌的扇形布局
+  const cardCount = 30;
+  const startAngle = -50; // 起始角度（调整为更集中）
+  const endAngle = 50; // 结束角度（调整为更集中）
+  const angleStep = (endAngle - startAngle) / (cardCount - 1);
+  
+  // 计算扇形实际高度（根据宽度自适应，但不超过最大高度300px）
+  let fanHeight = radius * 1.5 + cardHeight * 0.1;
+  const maxHeight = 300; // 最大高度
+  if (fanHeight > maxHeight) {
+    fanHeight = maxHeight;
+  }
+  
+  // 设置容器高度
+  DOM.stack.style.height = `${fanHeight}px`;
+  const containerHeight = fanHeight;
+  
+  // 中心点坐标（使扇形在容器中垂直居中，更紧凑）
+  const centerX = containerWidth / 2;
+  const endAngleRad = endAngle * Math.PI / 180;
+  const centerY = (containerHeight / 2) + (radius * Math.cos(endAngleRad) * 0.6); // 进一步调整Y坐标使扇形更紧凑
+  
+  for (let i = 0; i < cardCount; i++) {
+    const card = document.createElement('div');
+    card.className = 'taro-card__fan-item';
+    
+    // 计算角度和位置
+    const angle = startAngle + i * angleStep;
+    const radians = angle * Math.PI / 180;
+    const x = centerX + Math.sin(radians) * radius;
+    const y = centerY - Math.cos(radians) * radius;
+    
+    // 设置样式（响应式缩放）
+    card.style.left = `${x - cardWidth / 2}px`;
+    card.style.top = `${y}px`;
+    card.style.width = `${cardWidth}px`;
+    card.style.height = `${cardHeight}px`;
+    card.style.transform = `rotate(${angle}deg)`;
+    card.style.zIndex = i;
+    
+    // 添加牌背图片
+    card.innerHTML = `<img src="${backImg}" onerror="this.src='${backImg}'">`;
+    
+    fanContainer.appendChild(card);
+  }
+  
+  // 清空并添加扇形布局
+  DOM.stack.innerHTML = '';
+  DOM.stack.appendChild(fanContainer);
+}
+
+// 洗牌重来
+function refreshPage() {
+  if(confirm("确定重新洗牌？所有进度将清空！")) {
+    location.reload();
+  }
+}
+
+// 抽牌 - 核心功能
+function pickCard(index) {
+  
+  // 检查游戏状态和卡牌状态
+  if(STATE.gameState !== CONFIG.GAME_STATES.SPREAD || !STATE.fullDeck[index] || !STATE.fullDeck[index].active) {
+    return;
+  }
+  
+  // 检查是否锁定抽牌（补抽完成后锁定）
+  if(checkPickingLock()) return;
+  
+  // 检查是否补抽已完成但还未锁定
+  if(STATE.reSortCount > 0) {
+    updatePendingSupportCount();
+    
+    if(STATE.pendingSupportCount === 0) {
+      // 补抽已完成，锁定抽牌功能
+      resetSupportState();
+      STATE.lockPicking = true; // 锁定抽牌
+      
+      const currentRound = STATE.pickRounds[STATE.currentRound];
+      if(currentRound) {
+        currentRound.forEach(g => {
+          if(g) {
+            g.checked = false;
+            // 将所有补充牌的 isNewAfterReSort 设为 false，隐藏撤销按钮
+            if(g.supports) {
+              g.supports.forEach(sup => {
+                if(typeof sup.isNewAfterReSort !== 'undefined') {
+                  sup.isNewAfterReSort = false;
+                }
+              });
+            }
+          }
+        });
+      }
+
+      updateUI();
+    }
+  }
+  
+  // 再次检查是否锁定抽牌（补抽完成后锁定）
+  if(checkPickingLock()) return;
+
+  // 创建选中的卡牌对象
+  const selectedCard = {
+    ...STATE.fullDeck[index],
+    originalIndex: index,
+    isNewAfterReSort: STATE.reSortCount > 0 // 标记是否为补抽排序后新抽的牌
+  };
+  
+  STATE.fullDeck[index].active = false; // 标记卡牌为已抽取
+
+  // 获取勾选的主牌组（用于补抽）
+  const targetGroup = getCheckedCardGroup();
+
+  
+  let needSave = true; // 标记是否需要保存
+  
+  // 处于补抽模式
+  if(STATE.reSortCount > 0) {
+    if(targetGroup && targetGroup.supports && targetGroup.supports.length < CONFIG.MAX_SUPPORT) {
+      // 有勾选的主牌组且未达到补抽上限，进行补抽
+      targetGroup.supports.push(selectedCard);
+
+      
+      // 检查：如果当前这组补充牌中有小牌（cardId > 22），或者已经补抽了2张，就算完成该组
+      const hasMinorArcana = targetGroup.supports.some(card => card.cardId > 22);
+      const reachedMaxSupport = targetGroup.supports.length >= CONFIG.MAX_SUPPORT;
+      
+      // 更新待补抽数量，确保数据准确
+      updatePendingSupportCount();
+      
+      if(hasMinorArcana) {
+        setTip(`✨ 已补抽到小牌！+检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
+      } else if(reachedMaxSupport) {
+        setTip(`✨ 检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
+      }
+      
+      // 补抽完成后，取消当前主牌的勾选
+      targetGroup.checked = false;
+      
+      // 检查补抽是否完成
+      checkSupportCompletion(targetGroup);
+      updateUI();
+    } else {
+      // 补抽未完成但无法继续补抽
+      alert("🔮 点击补抽排序，勾选大阿卡那！");
+      STATE.fullDeck[index].active = true;
+      renderSpread();
+      needSave = false; // 不需要保存
+    }
+  } else if(targetGroup && targetGroup.supports && targetGroup.supports.length < CONFIG.MAX_SUPPORT) {
+    // 没有处于补抽模式，但有勾选的主牌组，进行补抽
+    targetGroup.supports.push(selectedCard);
+
+    setTip(`✨ 已抽取补充牌（${targetGroup.supports.length}/${CONFIG.MAX_SUPPORT}）`);
+    checkSupportCompletion(targetGroup);
+  } else {
+    // 正常抽主牌
+    const currentRound = STATE.pickRounds[STATE.currentRound];
+    if(currentRound) {
+      currentRound.push({
+        mainCard: selectedCard,
+        supports: [],
+        checked: false
+      });
+
+      setTip(`✨ 已抽取卡牌：第 ${STATE.cachedNumbers[index]} 号`);
+      checkMainCardSupport();
+    } else {
+      setTip("🔮 轮次数据错误！");
+      STATE.fullDeck[index].active = true;
+      needSave = false; // 不需要保存
+    }
+  }
+
+  if (needSave) {
+    // 更新界面
+    updateUI();
+    
+    hasDrawnInSession = true;
+    if (!autoSaveStarted) {
+      startAutoSave();
+    }
+    smartAutoSave();
+  }
+
+}
+
+// 检查主牌是否需要补抽 - 智能检测大阿卡那
+function checkMainCardSupport() {
+  // 1. 更新待补抽数量
+  updatePendingSupportCount();
+  
+  // 2. 根据待补抽数量设置提示
+  if(STATE.pendingSupportCount > 0) {
+    setTip(`🔮 检测到${STATE.pendingSupportCount}张大阿卡那需要补抽`);
+  } else {
+    setTip("✨ 检测中");
+  }
+  
+  // 3. 更新按钮状态
+  updateButtonStatus();
+}
+
+// 检查补抽是否完成 - 补抽逻辑的核心
+function checkSupportCompletion(group) {
+
+  // 3. 更新当前轮的待补抽数量
+  updatePendingSupportCount();
+
+  // 4. 补抽完成的判断条件：
+  //    - 所有大阿卡纳都补抽到了小牌（hasMinorArcana = true）
+  //    - 或者所有大阿卡纳都达到了补抽上限（reachedLimit = true）
+  //    - 或者本来就没有大阿卡纳需要补抽（pendingSupportCount = 0）
+  if(STATE.pendingSupportCount === 0) {
+    if(STATE.reSortCount > 0) {
+      // 不立即锁定，只设置提示信息
+      // 让用户可以先撤回最后一张补充牌
+      // 锁定逻辑在 pickCard 中处理，等用户尝试抽下一张牌时才锁定
+      // 取消所有勾选状态
+      STATE.pickRounds[STATE.currentRound].forEach(g => g.checked = false);
+      setTip("✨ 补抽完成！");
+      renderPicked();
+    }
+  }
+
+  // 5. 更新界面状态
+  updateButtonStatus();
+}
+
+// 更新待补抽数量 - 补抽逻辑的计算核心
+function updatePendingSupportCount() {
+  const currentRound = STATE.pickRounds[STATE.currentRound];
+  if(!currentRound) {
+    STATE.pendingSupportCount = 0;
+    return;
+  }
+  
+  let pendingCount = 0;
+
+  
+  // 遍历所有主牌组，检查是否需要补抽
+  for(const group of currentRound) {
+    if(!group || !group.mainCard || !group.supports) continue;
+    
+    // 检查主牌是否为大阿卡那（1-22）
+    if(group.mainCard.cardId <= 22) {
+      // 检查是否已经补抽到小牌（23-78）或达到2张上限
+      const hasMinorArcana = group.supports.some(card => card.cardId > 22);
+      const reachedLimit = group.supports.length >= CONFIG.MAX_SUPPORT; // 最多补抽2张
+
+      
+      // 如果没有补抽到小牌且未达到2张上限，则需要继续补抽
+      if(!hasMinorArcana && !reachedLimit) {
+        pendingCount++;
+      }
+    }
+  }
+  
+  STATE.pendingSupportCount = pendingCount;
+
+}
+
+// 勾选互斥
+function getCheckedCardGroup() {
+  for(const round of STATE.pickRounds) for(const group of round) if(group.checked) return group;
+  return null;
+}
+function toggleCheck(roundIdx, groupIdx) {
+  STATE.pickRounds[roundIdx][groupIdx].checked = !STATE.pickRounds[roundIdx][groupIdx].checked;
+  for(let r=0; r<STATE.pickRounds.length; r++) for(let g=0; g<STATE.pickRounds[r].length; g++){
+    if(r!==roundIdx || g!==groupIdx) STATE.pickRounds[r][g].checked = false;
+  }
+  renderPicked();
+}
+
+// 撤回功能
+function deleteMainCard(roundIdx, groupIdx) {
+  if(roundIdx !== STATE.currentRound) { 
+    setTip("🔮 上一轮卡牌不可撤回！"); 
+    return;
+  }
+  
+  if(!confirm("🔮 确定撤回主牌？所有补充牌将一起放回原位置！")) return;
+  
+  const round = STATE.pickRounds[roundIdx];
+  if(!round) {
+    setTip("🔮 轮次数据错误！");
+    return;
+  }
+  
+  const group = round[groupIdx];
+  if(!group || !group.mainCard || !group.supports) {
+    setTip("🔮 卡牌数据错误！");
+    return;
+  }
+
+  // 恢复卡牌状态
+  if(STATE.fullDeck[group.mainCard.originalIndex]) {
+    STATE.fullDeck[group.mainCard.originalIndex].active = true;
+  }
+  
+  group.supports.forEach(sup => {
+    if(STATE.fullDeck[sup.originalIndex]) {
+      STATE.fullDeck[sup.originalIndex].active = true;
+    }
+  });
+
+  // 移除主牌组
+  round.splice(groupIdx, 1);
+
+  // 更新待补抽数量和状态显示
+  updatePendingSupportCount();
+  
+  // 撤回主牌后，检查是否所有大阿卡纳都不需要补抽了
+  if(STATE.reSortCount > 0 && STATE.pendingSupportCount === 0) {
+    resetSupportState();
+    setTip("✨ 主牌及补充牌已撤回，补抽状态重置");
+  } else if(STATE.reSortCount > 0 && STATE.pendingSupportCount > 0) {
+    // 还有待补抽的大阿卡纳，解锁抽牌
+    STATE.lockPicking = false;
+    setTip("✨ 主牌及补充牌已撤回，请继续补抽");
+  } else {
+    STATE.lockPicking = false;
+    setTip("✨ 卡牌已撤回牌堆");
+  }
+  
+  updateUI();
+  
+  hasDrawnInSession = true;
+  smartAutoSave();
+}
+
+function deleteSupportCard(roundIdx, groupIdx, supIdx) {
+  if(roundIdx !== STATE.currentRound) { 
+    setTip("🔮 上一轮卡牌不可撤回！"); 
+    return;
+  }
+  
+  if(!confirm("🔮 确定撤回这张补充牌？将放回原位置！")) return;
+  
+  const round = STATE.pickRounds[roundIdx];
+  if(!round) {
+    setTip("🔮 轮次数据错误！");
+    return;
+  }
+  
+  const group = round[groupIdx];
+  if(!group || !group.supports) {
+    setTip("🔮 卡牌数据错误！");
+    return;
+  }
+  
+  const supCard = group.supports[supIdx];
+  if(!supCard) {
+    setTip("🔮 补充牌数据错误！");
+    return;
+  }
+
+  // 恢复卡牌状态
+  if(STATE.fullDeck[supCard.originalIndex]) {
+    STATE.fullDeck[supCard.originalIndex].active = true;
+  }
+  
+  // 移除补充牌
+  group.supports.splice(supIdx, 1);
+
+  // 更新待补抽数量和状态显示
+  updatePendingSupportCount();
+  
+  // 如果撤回后所有大阿卡纳都不需要补抽了，重置补抽状态
+  if(STATE.reSortCount > 0 && STATE.pendingSupportCount === 0) {
+    // 不立即锁定，只设置提示信息
+    // 让用户可以继续操作，等尝试抽下一张牌时才锁定
+    setTip("✨ 补充牌已撤回！所有大阿卡纳补抽完成！可继续操作");
+  } else if(STATE.reSortCount > 0 && STATE.pendingSupportCount > 0) {
+    // 还有待补抽的大阿卡纳，解锁抽牌
+    STATE.lockPicking = false;
+    setTip(`✨ 补充牌已撤回，请继续补抽+检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
+  } else {
+    STATE.lockPicking = false;
+    setTip("✨ 补充牌已撤回牌堆");
+  }
+  
+  updateUI();
+  
+  hasDrawnInSession = true;
+  smartAutoSave();
+}
+
+// 子函数：渲染主牌
+function renderMainCard(group, idx, gIdx, isCurrentRound) {
+  const cardName = getCardMeaning(group.mainCard.cardId).name || '';
+  return `
+    <button class="taro-btn__undo" ${!isCurrentRound || STATE.lockCurrentMainDelete || STATE.lockPicking ? 'disabled' : ''} onclick="deleteMainCard(${idx},${gIdx})">撤销</button>
+    <div class="taro-card__picked" data-card-id="${group.mainCard.cardId}" data-rotate="${group.mainCard.rotate}">
+      <img src="${cardImages[group.mainCard.cardId]}" style="--rotate: ${group.mainCard.rotate}deg; transform: rotate(var(--rotate))" onerror="this.src='${backImg}'">
+      <div class="taro-card__tag">${cardName} ${group.mainCard.rotate === 0 ? '正位' : '逆位'}</div>
+    </div>
+  `;
+}
+
+// 子函数：渲染补充牌
+function renderSupportCard(group, idx, gIdx) {
+  return group.supports.map((sup, sIdx) => {
+    const cardName = getCardMeaning(sup.cardId).name || '';
+    const isInResortMode = STATE.reSortCount > 0;
+    const isNewCard = typeof sup.isNewAfterReSort !== 'undefined' && sup.isNewAfterReSort === true;
+    const canWithdraw = isInResortMode && isNewCard;
+    return `
+    <div class="taro-support__wrapper">
+      <button class="taro-btn__undo" ${canWithdraw ? '' : 'disabled'} onclick="deleteSupportCard(${idx},${gIdx},${sIdx})">撤销</button>
+      <div class="taro-card__support" data-card-id="${sup.cardId}" data-rotate="${sup.rotate}">
+        <img src="${cardImages[sup.cardId]}" style="--rotate: ${sup.rotate}deg; transform: rotate(var(--rotate))" onerror="this.src='${backImg}'">
+        <div class="taro-card__tag">${cardName} ${sup.rotate === 0 ? '正位' : '逆位'}</div>
+      </div>
+    </div>
+  `}).join('');
+}
+
+// 子函数：渲染勾选框
+function renderCheckWrapper(group, idx, gIdx, isCurrentRound) {
+  // 只有大阿卡那才显示补抽勾选框
+  const isMajorArcana = group.mainCard.cardId <= 22;
+  if(!isMajorArcana) return '';
+  
+  // 如果补抽已锁定，不显示勾选框
+  if(STATE.lockPicking) return '';
+  
+  // 检查是否已经补抽到小牌 或 已经补抽了2张
+  const hasMinorArcana = group.supports.some(card => card.cardId > 22);
+  const reachedLimit = group.supports.length >= CONFIG.MAX_SUPPORT;
+  if(hasMinorArcana || reachedLimit) return '';
+  
+  const isDisabled = !isCurrentRound;
+  const isChecked = group.checked;
+  return `
+    <div class="taro-check__wrapper ${isDisabled ? 'taro-check__wrapper--disabled' : ''}">
+      <input type="checkbox" ${group.checked?'checked':''} ${isDisabled ?'disabled':''} onchange="toggleCheck(${idx},${gIdx})">
+      <span class="${!isChecked ? 'blink' : ''}">补抽 ${group.supports.length}/${CONFIG.MAX_SUPPORT}</span>
+    </div>
+  `;
+}
+
+// 渲染已抽牌（代码拆分优化，解耦巨型函数）
+function renderPicked() {
+  DOM.pickedBox.innerHTML = "";
+  
+  // 获取输入框的起始编号
+  const inputValue = DOM.cardGroupNumberInput?.value;
+  const startNumber = inputValue ? parseInt(inputValue, 10) : 0;
+  const maxNumber = 12;
+  
+  STATE.pickRounds.forEach((roundCards, idx)=>{
+    if(roundCards.length === 0) return;
+    const isCurrentRound = idx === STATE.currentRound;
+    const row = `<div class="taro-picked__row"><span class="taro-picked__title">第${idx+1}轮${isCurrentRound ? '（当前）' : '（已锁定）'}：</span>
+      ${roundCards.map((group, gIdx) => {
+        const cardColor = cardColors[group.mainCard.cardId] || "108, 99, 255";
+        const bgColor = `rgba(${cardColor}, 0.12)`;
+        const borderColor = `rgba(${cardColor}, 0.35)`;
+        
+        // 计算卡牌组编号（只有第一轮需要编号）
+        let groupNumber = 0;
+        if (idx === 0 && startNumber > 0) {
+          groupNumber = ((startNumber - 1 + gIdx) % maxNumber) + 1;
+        }
+        
+        return `<div class="taro-card__group" data-group-number="${groupNumber}" style="--bg-color: ${bgColor}; --border-color: ${borderColor}; background: var(--bg-color); border: 2px solid var(--border-color);">
+          ${renderMainCard(group, idx, gIdx, isCurrentRound)}
+          ${renderSupportCard(group, idx, gIdx)}
+          ${renderCheckWrapper(group, idx, gIdx, isCurrentRound)}
+        </div>`;
+      }).join('')}
+    </div>`;
+    DOM.pickedBox.innerHTML += row;
+  });
+
+  document.querySelectorAll('.taro-card__picked, .taro-card__support').forEach(el => {
+    el.onclick = (e) => {
+      if(e.target.tagName === 'BUTTON') return;
+      const cardId = el.dataset.cardId;
+      const rotate = el.dataset.rotate;
+      const imgSrc = cardImages[cardId];
+      openCardModal(imgSrc, rotate, cardId);
+    };
+  });
+}
+
+// 新问题重编号
+function startNewRound() {
+  if(STATE.gameState !== CONFIG.GAME_STATES.SPREAD) { setTip("🔮 请先平铺卡牌！"); return; }
+  if(!confirm("🔮 确定【重新排序】？")) return;
+
+  STATE.currentRound++;
+  STATE.pickRounds.push([]);
+  STATE.lockCurrentMainDelete = false;
+  STATE.reSortCount = 0;
+  STATE.lockPicking = false; // 解锁抽牌
+  STATE.pickRounds.forEach(round => round.forEach(group => group.checked = false));
+  refreshCachedNumbers();
+
+  renderSpread();
+  renderPicked();
+  setTip(`✨ 已开启第 ${STATE.currentRound+1} 轮占卜`);
+}
+
+// 补抽排序 - 为大阿卡那牌进行补抽的准备步骤
+function reSortForSupport() {
+  
+  // 1. 检查游戏状态
+  if(!checkGameState()) {
+    return;
+  }
+  
+  // 2. 先更新待补抽数量，确保数据准确
+  updatePendingSupportCount();
+
+  
+  // 3. 检查是否需要补抽
+  if(STATE.pendingSupportCount === 0) { 
+    if(STATE.reSortCount > 0) {
+      // 之前已经完成补抽但状态未重置
+      resetSupportState();
+      setTip("✨ 补抽已完成！可以开始新问题");
+    } else {
+      setTip("✨ 当前没有需要补抽的大阿卡纳");
+    }
+    return; 
+  }
+
+  // 4. 计算剩余牌数
+  const activeCount = STATE.fullDeck.filter(card => card.active).length;
+
+  
+  // 5. 显示补抽提示信息
+  const message = `🔮 【补抽排序】提示：
+
+检测到${STATE.pendingSupportCount}张大阿卡那牌
+从1-${activeCount}之间，选择${STATE.pendingSupportCount}个数字
+
+是否确认重新排序，进行补抽？`;
+
+  // 6. 用户确认
+  if(!confirm(message)) {
+    return;
+  }
+  
+  // 7. 如果已经处于补抽模式但有新的大阿卡纳需要补抽，重置状态重新开始
+  if(STATE.reSortCount > 0) {
+    resetSupportState();
+  }
+
+  // 8. 重置补充牌的撤回状态
+  const currentRound = STATE.pickRounds[STATE.currentRound];
+  if(!currentRound) { 
+    setTip("🔮 轮次数据错误！");
+    return;
+  }
+
+  currentRound.forEach(group => {
+    if(group && group.supports) {
+      group.supports.forEach(sup => {
+        sup.isNewAfterReSort = false; // 标记为不可撤回
+      });
+    }
+  });
+
+  // 10. 更新状态
+  STATE.reSortCount = 1;
+  STATE.lockCurrentMainDelete = true; // 锁定主牌删除
+  STATE.lockPicking = false; // 解锁抽牌，开始补抽
+
+  refreshCachedNumbers(); // 刷新数字
+
+  // 11. 自动勾选当前轮次的所有大阿卡纳牌
+  const checkedCount = autoCheckAllMajorArcana();
+
+  // 12. 更新界面
+  updateUI();
+  setTip(`✨ 检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽，已勾选`);
+}
+
+// 检查游戏状态
+function checkGameState() {
+  if(STATE.gameState !== CONFIG.GAME_STATES.SPREAD) {
+    setTip("🔮 请先平铺卡牌！");
+    return false;
+  }
+  return true;
+}
+
+// 重置补抽状态
+function resetSupportState() {
+  STATE.reSortCount = 0;
+  STATE.lockCurrentMainDelete = false;
+  STATE.lockPicking = false;
+}
+
+// 更新界面
+function updateUI() {
+  renderSpread();
+  renderPicked();
+  updateButtonStatus();
+}
+
+// 自动勾选当前轮次的所有大阿卡纳牌
+function autoCheckAllMajorArcana() {
+  const currentRound = STATE.pickRounds[STATE.currentRound];
+  if(!currentRound) {
+    return 0;
+  }
+  
+  let checkedCount = 0;
+  
+  // 先取消所有勾选
+  currentRound.forEach(group => {
+    if(group) {
+      group.checked = false;
+    }
+  });
+  
+  // 勾选所有需要补抽的大阿卡纳
+  for(const group of currentRound) {
+    if(!group || !group.mainCard || !group.supports) continue;
+    
+    // 只有大阿卡纳才需要补抽
+    const isMajorArcana = group.mainCard.cardId <= 22;
+    
+    // 检查是否已经补抽到小牌 或 已经补抽了2张
+    const hasMinorArcana = group.supports.some(card => card.cardId > 22);
+    const reachedLimit = group.supports.length >= CONFIG.MAX_SUPPORT;
+    
+    // 如果是大阿卡纳且未完成补抽，则自动勾选
+    if(isMajorArcana && !hasMinorArcana && !reachedLimit) {
+      group.checked = true;
+      checkedCount++;
+    }
+  }
+  
+  return checkedCount;
+}
+
+
+
+// 按钮状态管理 - 控制按钮的启用/禁用状态
+function updateButtonStatus() {
+  // 补抽排序按钮：只有在平铺状态且有大牌组需要补抽时才启用
+  DOM.reSortBtn.disabled = STATE.gameState !== CONFIG.GAME_STATES.SPREAD || STATE.pendingSupportCount === 0;
+  // 更新补抽状态显示
+  updateSupportStatus();
+}
+
+// 更新补抽状态显示 - 在悬浮栏显示补抽相关信息
+function updateSupportStatus() {
+  const activeCount = STATE.fullDeck.filter(card => card.active).length;
+  const pickedCount = STATE.pickRounds.flat().length;
+  
+  if(STATE.gameState === CONFIG.GAME_STATES.SPREAD) {
+    if(STATE.pendingSupportCount > 0) {
+      DOM.supportStatus.textContent = `已抽：${pickedCount}，从1-${activeCount}之间，选择${STATE.pendingSupportCount}个数字`;
+    } else {
+      DOM.supportStatus.textContent = `已抽：${pickedCount}，剩余: ${activeCount}`;
+    }
+  } else {
+    DOM.supportStatus.textContent = '';
+  }
+}
+// 检查抽牌锁定状态
+function checkPickingLock() {
+  if(STATE.lockPicking) {
+    setTip("🔮 点击【新问题】开始新一轮抽牌");
+    return true;
+  }
+  return false;
+}
+
+// 全局禁用按钮
+function disableAllButtons(disabled) {
+  DOM.refreshBtn.disabled = disabled;
+  DOM.newRoundBtn.disabled = disabled;
+  DOM.reSortBtn.disabled = disabled;
+}
+
+function openCardModal(imgUrl, rotate, cardId) {
+  DOM.modalCard.src = imgUrl; 
+  DOM.modalCard.style.transform = `rotate(${rotate}deg)`;
+  const meaning = getCardMeaning(cardId);
+  // 确保 rotate 是数字，然后判断是否为逆位
+  const rotateNum = parseInt(rotate);
+  const isReversed = rotateNum === 180;
+  
+  // 渲染牌意内容
+  DOM.cardMeaning.innerHTML = `
+    <div class="name">${meaning.name || '未知卡牌'}</div>
+    <div class="upright">${meaning.upright || ''}</div>
+    <div class="reversed">${meaning.reversed || ''}</div>
+    <div class="pattern">${meaning.pattern || ''}</div>
+  `;
+  
+  // 关键！根据当前点击的牌的正逆位状态高亮所有内容！
+  // 因为用户点击的可能是正位牌，整个区域只高亮正位关键词；点击逆位牌，只高亮逆位关键词
+  const allElements = DOM.cardMeaning.querySelectorAll('.name, .upright, .reversed, .pattern');
+  allElements.forEach(el => {
+    el.innerHTML = highlightKeywords(el.innerHTML, isReversed);
+  });
+  DOM.cardModal.style.display = "flex"; 
+  document.body.style.overflow = "hidden";
+}
+
+
+function closeCardModal() { 
+  DOM.cardModal.style.display = "none"; 
+  document.body.style.overflow = "auto"; 
+}
+
+// 关闭按钮
+DOM.closeModal.onclick = () => closeCardModal();
+
+// 延时函数
+function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+// 图片加载 - 并行加载（性能优化）
+function loadImage(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.src = url;
+    img.onload = img.onerror = () => {
+      STATE.loadedCount++;
+      updateLoadProgress();
+      resolve();
+    };
+  });
+}
+// 批量并行加载
+async function parallelLoadImages(urlList) {
+  const promises = urlList.map(url => loadImage(url));
+  await Promise.all(promises);
+}
+function updateLoadProgress() {
+  const percent = (STATE.loadedCount / CONFIG.TOTAL_IMAGES) * 100;
+  DOM.progressText.textContent = `🔮 卡牌加载中：${STATE.loadedCount}/${CONFIG.TOTAL_IMAGES}`;
+  DOM.progressFill.style.width = `${percent}%`;
+  if (STATE.loadedCount >= CONFIG.TOTAL_IMAGES) {
+    setTip("✨ 卡牌加载完成，请触摸屏幕开始");
+    setTimeout(() => DOM.progressContainer.style.display = 'none', 500);
+  }
+}
+
+
+
+// 本地存储功能
+
+// 智能自动保存变量
+let currentSessionId = null;
+let lastStateHash = '';
+let autoSaveStarted = false; // 是否已开始自动保存
+let hasDrawnInSession = false; // 是否在这个会话里主动操作过
+
+function initSession() {
+  currentSessionId = 'auto_' + Date.now().toString();
+  lastStateHash = '';
+  autoSaveStarted = false;
+  hasDrawnInSession = false;
+}
+
+// 生成状态哈希值
+function getStateHash() {
+  return JSON.stringify({
+    rounds: STATE.pickRounds,
+    gameState: STATE.gameState,
+    currentRound: STATE.currentRound,
+    fullDeck: STATE.fullDeck,
+    cachedNumbers: STATE.cachedNumbers,
+    reSortCount: STATE.reSortCount,
+    lockPicking: STATE.lockPicking,
+    lockCurrentMainDelete: STATE.lockCurrentMainDelete
+  });
+}
+
+// 启动自动保存（抽第一张牌时调用）
+function startAutoSave() {
+  if (!autoSaveStarted) {
+    autoSaveStarted = true;
+    lastStateHash = '';
+  }
+}
+
+// 智能自动保存（覆盖当前会话记录）
+async function smartAutoSave() {
+  if (!autoSaveStarted || !hasDrawnInSession || !AUTH_STATE.token) {
+    return;
+  }
+  
+  try {
+    const currentStateHash = getStateHash();
+    
+    if (currentStateHash === lastStateHash) {
+      return;
+    }
+    
+    // 先从 API 获取历史记录来检查是否存在
+    const history = await fetchHistoryFromApi();
+    const existingRecord = history.find(item => item.id === currentSessionId);
+    
+    const newRecord = {
+      id: currentSessionId,
+      timestamp: Date.now(),
+      rounds: JSON.parse(JSON.stringify(STATE.pickRounds)),
+      gameState: STATE.gameState,
+      currentRound: STATE.currentRound,
+      fullDeck: JSON.parse(JSON.stringify(STATE.fullDeck)),
+      cachedNumbers: JSON.parse(JSON.stringify(STATE.cachedNumbers)),
+      reSortCount: STATE.reSortCount,
+      lockPicking: STATE.lockPicking,
+      lockCurrentMainDelete: STATE.lockCurrentMainDelete,
+      type: 'auto',
+      title: existingRecord ? existingRecord.title : ''
+    };
+    
+    if (STATE.pickRounds.flat().length > 0) {
+      await saveRecordToApi(newRecord);
+      lastStateHash = currentStateHash;
+    }
+  } catch (error) {
+    console.error('自动保存失败:', error);
+  }
+}
+
+// 手动保存（创建新记录）
+async function saveCurrentState() {
+  if (!AUTH_STATE.token) {
+    setTip('请先登录后再保存！');
+    openAuthModal();
+    return;
+  }
+  
+  try {
+    const newRecord = {
+      id: 'manual_' + Date.now().toString(),
+      timestamp: Date.now(),
+      rounds: JSON.parse(JSON.stringify(STATE.pickRounds)),
+      gameState: STATE.gameState,
+      currentRound: STATE.currentRound,
+      fullDeck: JSON.parse(JSON.stringify(STATE.fullDeck)),
+      cachedNumbers: JSON.parse(JSON.stringify(STATE.cachedNumbers)),
+      reSortCount: STATE.reSortCount,
+      lockPicking: STATE.lockPicking,
+      lockCurrentMainDelete: STATE.lockCurrentMainDelete,
+      type: 'manual',
+      title: ''
+    };
+    
+    await saveRecordToApi(newRecord);
+    setTip('✨ 手动保存成功！');
+  } catch (error) {
+    setTip('❌ 保存失败: ' + (error.message || '未知错误'));
+  }
+}
+
+// 获取历史记录
+async function getHistory() {
+  return await fetchHistoryFromApi();
+}
+
+// 事件委托：处理历史记录的所有交互
+let historyEventDelegatorBound = false;
+function bindHistoryEventDelegator() {
+  if (historyEventDelegatorBound) return;
+  historyEventDelegatorBound = true;
+  
+  const historyList = document.getElementById('historyList');
+  
+  // 统一处理所有点击事件
+  historyList.addEventListener('click', async (e) => {
+    const target = e.target;
+    
+    // 删除按钮
+    if (target.classList.contains('history-delete-btn')) {
+      e.stopPropagation();
+      const id = target.dataset.id;
+      await deleteHistoryRecord(id);
+      return;
+    }
+    
+    // 还原按钮
+    if (target.classList.contains('history-restore-btn')) {
+      e.stopPropagation();
+      const id = target.dataset.id;
+      await restoreState(id);
+      return;
+    }
+    
+    // 标题输入框点击
+    if (target.classList.contains('history-title-input')) {
+      e.stopPropagation();
+      return;
+    }
+  }, true);
+  
+  // 统一处理所有blur事件（用于标题保存）
+  historyList.addEventListener('blur', async (e) => {
+    const target = e.target;
+    if (target.classList.contains('history-title-input')) {
+      const id = target.dataset.id;
+      const title = target.textContent.trim();
+      await saveHistoryTitle(id, title);
+    }
+  }, true);
+}
+
+// 显示历史记录（优化版：使用DocumentFragment + 事件委托）
+async function showHistory() {
+  if (!AUTH_STATE.token) {
+    setTip('请先登录后查看历史记录！');
+    openAuthModal();
+    return;
+  }
+  
+  const history = await getHistory();
+  const historyList = document.getElementById('historyList');
+  
+  // 清空现有内容
+  historyList.innerHTML = '';
+  
+  if (history.length === 0) {
+    const emptyDiv = document.createElement('div');
+    emptyDiv.style.cssText = 'text-align: center; color: #a89fff; padding: 20px;';
+    emptyDiv.textContent = '暂无历史记录';
+    historyList.appendChild(emptyDiv);
+  } else {
+    // 使用DocumentFragment批量添加
+    const fragment = document.createDocumentFragment();
+    
+    history.forEach(item => {
+      const date = new Date(item.timestamp);
+      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+      const typeLabel = item.type === 'manual' ? '📌 手动' : '🔄 自动';
+      
+      // 快速生成轮次信息
+      let roundsHtml = '';
+      item.rounds.forEach((round, roundIndex) => {
+        let roundContent = '';
+        round.forEach((group, idx) => {
+          const cardId = group.mainCard.cardId;
+          const isReversed = parseInt(group.mainCard.rotate) === 180;
+          let cardStr = (isReversed ? '逆位' : '正位') + (getCardMeaning(cardId).name || '');
+          
+          // 如果这张主牌有补充牌，带上
+          if (group.supports && group.supports.length > 0) {
+            let supportsStr = group.supports.map(sup => {
+              const supIsReversed = parseInt(sup.rotate) === 180;
+              return (supIsReversed ? '逆位' : '正位') + (getCardMeaning(sup.cardId).name || '');
+            }).join('、');
+            cardStr += `（补抽：${supportsStr}）`;
+          }
+          
+          roundContent += `<div>- ${cardStr}</div>`;
+        });
+        
+        if (roundIndex > 0) roundsHtml += '<br>';
+        roundsHtml += `<div>第${roundIndex + 1}轮：</div>${roundContent}`;
+      });
+      
+      // 创建历史记录项
+      const itemDiv = document.createElement('div');
+      itemDiv.className = 'history-item';
+      itemDiv.dataset.id = item.id;
+      itemDiv.innerHTML = `
+        <button class="history-delete-btn" data-id="${item.id}" title="删除">×</button>
+        <button class="history-restore-btn" data-id="${item.id}" title="还原">↩</button>
+        <div class="history-header">
+          <div class="history-title-input" data-id="${item.id}" contenteditable="true" placeholder="点击输入标题">${item.title || ''}</div>
+        </div>
+        <div class="timestamp">${typeLabel} ${formattedDate}</div>
+        <div class="rounds">${roundsHtml}</div>
+      `;
+      
+      fragment.appendChild(itemDiv);
+    });
+    
+    // 一次性添加到DOM
+    historyList.appendChild(fragment);
+  }
+  
+  // 绑定事件委托（只绑定一次）
+  bindHistoryEventDelegator();
+  
+  // 显示模态框
+  document.getElementById('historyModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// 还原状态
+async function restoreState(id) {
+  try {
+    const history = await getHistory();
+    const record = history.find(item => item.id === id);
+    
+    if (record) {
+      initSession();
+      
+      STATE.pickRounds = JSON.parse(JSON.stringify(record.rounds));
+      STATE.gameState = record.gameState;
+      STATE.currentRound = record.currentRound;
+      
+      if (record.fullDeck) {
+        STATE.fullDeck = JSON.parse(JSON.stringify(record.fullDeck));
+      }
+      
+      if (record.cachedNumbers) {
+        STATE.cachedNumbers = JSON.parse(JSON.stringify(record.cachedNumbers));
+      } else {
+        refreshCachedNumbers();
+      }
+      
+      if (typeof record.reSortCount !== 'undefined') {
+        STATE.reSortCount = record.reSortCount;
+      }
+      if (typeof record.lockPicking !== 'undefined') {
+        STATE.lockPicking = record.lockPicking;
+      }
+      if (typeof record.lockCurrentMainDelete !== 'undefined') {
+        STATE.lockCurrentMainDelete = record.lockCurrentMainDelete;
+      }
+      
+      STATE.pickRounds.forEach(round => {
+        round.forEach(group => {
+          if(group) group.checked = false;
+        });
+      });
+      
+      updatePendingSupportCount();
+      
+      lastStateHash = getStateHash();
+      
+      startAutoSave();
+      
+      renderPicked();
+      if (STATE.gameState === CONFIG.GAME_STATES.SHUFFLED) {
+        renderStack();
+      } else if (STATE.gameState === CONFIG.GAME_STATES.SPREAD) {
+        renderSpread();
+        renderFanLayout();
+      }
+      updateButtonStatus();
+      updateSupportStatus();
+      
+      setTip('✨ 历史记录还原成功！');
+      closeHistoryModal();
+    } else {
+      setTip('❌ 未找到历史记录');
+    }
+  } catch (error) {
+    setTip('❌ 还原失败');
+  }
+}
+
+// 保存历史记录标题（标题已在DOM中直接更新，无需重新渲染）
+async function saveHistoryTitle(id, title) {
+  try {
+    await updateRecordTitleApi(id, title);
+  } catch (error) {
+    console.error('保存标题失败:', error);
+  }
+}
+
+// 删除单条历史记录（局部更新：只删除对应DOM元素）
+async function deleteHistoryRecord(id) {
+  try {
+    await deleteRecordApi(id);
+    
+    const historyItem = document.querySelector(`.history-item[data-id="${id}"]`);
+    if (historyItem) {
+      historyItem.remove();
+      
+      const historyList = document.getElementById('historyList');
+      const remainingItems = historyList.querySelectorAll('.history-item');
+      
+      if (remainingItems.length === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.style.cssText = 'text-align: center; color: #a89fff; padding: 20px;';
+        emptyDiv.textContent = '暂无历史记录';
+        historyList.appendChild(emptyDiv);
+      }
+    } else {
+      showHistory();
+    }
+  } catch (error) {
+  }
+}
+
+// 关闭历史记录弹窗
+function closeHistoryModal() {
+  document.getElementById('historyModal').style.display = 'none';
+  document.body.style.overflow = 'auto';
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('active');
+}
+
+// 事件监听器
+
+document.getElementById('saveBtn').addEventListener('click', saveCurrentState);
+
+document.getElementById('historyBtn').addEventListener('click', showHistory);
+
+document.getElementById('closeHistoryModal').addEventListener('click', closeHistoryModal);
+
+// 快速查询功能
+document.getElementById('quickQueryBtn').addEventListener('click', openQuickQuery);
+
+document.getElementById('closeQuickQueryModal').addEventListener('click', closeQuickQueryModal);
+
+document.getElementById('quickQueryModal').addEventListener('click', (e) => {
+  if (e.target.id === 'quickQueryModal') {
+    closeQuickQueryModal();
+  }
+});
+
+// 快速查询 - 事件委托（优化：避免重复绑定监听器）
+document.getElementById('quickQueryList').addEventListener('click', (e) => {
+  const btn = e.target.closest('.quick-query-card-btn');
+  if (btn && btn.dataset.cardId) {
+    showQuickQueryDetail(parseInt(btn.dataset.cardId));
+  }
+});
+
+// 打开快速查询
+function openQuickQuery() {
+  const modal = document.getElementById('quickQueryModal');
+  const listContainer = document.getElementById('quickQueryList');
+  const detailContainer = document.getElementById('quickQueryDetail');
+  
+  // 清空内容
+  listContainer.innerHTML = '';
+  detailContainer.innerHTML = '';
+  
+  // 5个牌组定义
+  const groups = [
+    { name: '大阿卡纳', start: 1, end: 22 },
+    { name: '宝剑牌组', start: 23, end: 36 },
+    { name: '星币牌组', start: 37, end: 50 },
+    { name: '权杖牌组', start: 51, end: 64 },
+    { name: '圣杯牌组', start: 65, end: 78 }
+  ];
+  
+  // 生成5个分组
+  groups.forEach(group => {
+    const groupDiv = document.createElement('div');
+    groupDiv.className = 'quick-query-group';
+    
+    const title = document.createElement('div');
+    title.className = 'quick-query-group-title';
+    title.textContent = group.name;
+    groupDiv.appendChild(title);
+    
+    const cardsDiv = document.createElement('div');
+    cardsDiv.className = 'quick-query-group-cards';
+    
+    for (let i = group.start; i <= group.end; i++) {
+      const cardInfo = getCardMeaning(i);
+      const btn = document.createElement('button');
+      btn.className = 'quick-query-card-btn';
+      btn.textContent = cardInfo?.name || `牌${i}`;
+      btn.dataset.cardId = i; // 用 dataset 存储 cardId，用于事件委托
+      cardsDiv.appendChild(btn);
+    }
+    
+    groupDiv.appendChild(cardsDiv);
+    listContainer.appendChild(groupDiv);
+  });
+  
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// 显示牌的详细信息（支持直接编辑 + 失焦自动保存）
+function showQuickQueryDetail(cardId) {
+  const container = document.getElementById('quickQueryDetail');
+  const cardInfo = getCardMeaning(cardId);
+  const cardImage = cardImages[cardId];
+  const isLoggedIn = !!AUTH_STATE.token;
+  
+  // 更新按钮选中状态：移除之前的，添加当前的
+  document.querySelectorAll('.quick-query-card-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  const currentBtn = document.querySelector(`.quick-query-card-btn[data-card-id="${cardId}"]`);
+  if (currentBtn) {
+    currentBtn.classList.add('active');
+  }
+  
+  if (!cardInfo) {
+    container.innerHTML = '<div class="quick-query-empty-state">未找到该牌的信息</div>';
+    return;
+  }
+  
+  const editableAttr = isLoggedIn ? 'contenteditable="true"' : '';
+  const editableClass = isLoggedIn ? ' pattern-editable' : '';
+  
+  container.innerHTML = `
+    <div class="quick-query-detail">
+      <div class="quick-query-image-container">
+        <img src="${cardImage || ''}" alt="${cardInfo.name}" class="quick-query-card-image">
+      </div>
+      <div id="quickQueryTextArea" class="quick-query-text-area" onclick="toggleQuickQueryText()">
+        <div class="quick-query-hint">👆 解牌</div>
+        <div id="quickQueryTextContent" style="display: none;">
+          <div class="name">${cardInfo.name || ''}</div>
+          <div class="upright${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.upright || ''}</div>
+          <div class="reversed${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.reversed || ''}</div>
+          <div class="pattern${editableClass}" ${editableAttr} placeholder="点击编辑牌义" onblur="saveCardMeaning(${cardId})">${cardInfo.pattern || ''}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// 保存牌义（失焦时调用，收集所有可编辑字段）
+async function saveCardMeaning(cardId) {
+  const container = document.getElementById('quickQueryTextContent');
+  const uprightEl = container.querySelector('.upright');
+  const reversedEl = container.querySelector('.reversed');
+  const patternEl = container.querySelector('.pattern');
+  
+  const newUpright = uprightEl.innerHTML;
+  const newReversed = reversedEl.innerHTML;
+  const newPattern = patternEl.innerHTML;
+  const old = getCardMeaning(cardId);
+  
+  if (newUpright === old.upright && newReversed === old.reversed && newPattern === old.pattern) return;
+  
+  try {
+    await updateCardMeaningApi(cardId, {
+      name: old.name,
+      upright: newUpright,
+      reversed: newReversed,
+      pattern: newPattern
+    });
+    
+    if (cardMeaningsFromDB) {
+      if (!cardMeaningsFromDB[cardId]) {
+        cardMeaningsFromDB[cardId] = { ...old };
+      }
+      cardMeaningsFromDB[cardId].upright = newUpright;
+      cardMeaningsFromDB[cardId].reversed = newReversed;
+      cardMeaningsFromDB[cardId].pattern = newPattern;
+    }
+    setTip('✅ 牌义已保存');
+  } catch (e) {
+    setTip('❌ 保存失败');
+  }
+}
+
+// 切换快速查询的文字显示/隐藏
+function toggleQuickQueryText() {
+  const textArea = document.getElementById('quickQueryTextArea');
+  const textContent = document.getElementById('quickQueryTextContent');
+  const hint = textArea.querySelector('.quick-query-hint');
+  
+  textContent.style.display = 'block';
+  if (hint) hint.style.display = 'none';
+}
+
+// 关闭快速查询
+function closeQuickQueryModal() {
+  document.getElementById('quickQueryModal').style.display = 'none';
+  document.body.style.overflow = 'auto';
+}
+
+// 自动保存事件绑定
+
+// 页面加载时初始化会话ID（抽第一张牌时才会真正开始保存）
+window.addEventListener('load', () => {
+  initSession();
+});
+
+// 页面关闭前保存
+window.addEventListener('beforeunload', smartAutoSave);
+window.addEventListener('pagehide', smartAutoSave);
+
+// 定期自动保存（核心保存逻辑）
+setInterval(smartAutoSave, 5000);
+</script>
+</body>
+</html>
