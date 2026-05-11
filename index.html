@@ -2472,7 +2472,7 @@ const DOM = {
 
 // ==================== API 配置 ====================
 const API_CONFIG = {
-  baseUrl: 'https://taro-api.z7758495.workers.dev',  // 使用独立的 Worker 后端
+  baseUrl: '',  // 空字符串 = 使用当前域名（Vercel 域名，API 和页面同源）
   endpoints: {
     register: '/api/auth/register',
     login: '/api/auth/login',
