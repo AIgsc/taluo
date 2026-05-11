@@ -3783,12 +3783,15 @@ function updateLoadProgress() {
 
 // 智能自动保存变量
 let currentSessionId = null;
+let currentSessionTitle = ''; // 当前会话标题（跨 autoSave 保留）
 let lastStateHash = '';
 let autoSaveStarted = false; // 是否已开始自动保存
 let hasDrawnInSession = false; // 是否在这个会话里主动操作过
+let historyCache = null; // 前端内存缓存：只在增删改后刷新
 
 function initSession() {
   currentSessionId = 'auto_' + Date.now().toString();
+  currentSessionTitle = '';
   lastStateHash = '';
   autoSaveStarted = false;
   hasDrawnInSession = false;
@@ -3829,10 +3832,6 @@ async function smartAutoSave() {
       return;
     }
     
-    // 先从 API 获取历史记录来检查是否存在
-    const history = await fetchHistoryFromApi();
-    const existingRecord = history.find(item => item.id === currentSessionId);
-    
     const newRecord = {
       id: currentSessionId,
       timestamp: Date.now(),
@@ -3845,11 +3844,12 @@ async function smartAutoSave() {
       lockPicking: STATE.lockPicking,
       lockCurrentMainDelete: STATE.lockCurrentMainDelete,
       type: 'auto',
-      title: existingRecord ? existingRecord.title : ''
+      title: currentSessionTitle
     };
     
     if (STATE.pickRounds.flat().length > 0) {
       await saveRecordToApi(newRecord);
+      historyCache = null; // 数据有变，清除缓存
       lastStateHash = currentStateHash;
     }
   } catch (error) {
@@ -3882,15 +3882,21 @@ async function saveCurrentState() {
     };
     
     await saveRecordToApi(newRecord);
+    historyCache = null; // 清除缓存
     setTip('✨ 手动保存成功！');
   } catch (error) {
     setTip('❌ 保存失败: ' + (error.message || '未知错误'));
   }
 }
 
-// 获取历史记录
+// 获取历史记录（带前端缓存）
 async function getHistory() {
-  return await fetchHistoryFromApi();
+  if (historyCache) {
+    return historyCache;
+  }
+  const data = await fetchHistoryFromApi();
+  historyCache = data;
+  return data;
 }
 
 // 事件委托：处理历史记录的所有交互
@@ -4090,6 +4096,10 @@ async function restoreState(id) {
 async function saveHistoryTitle(id, title) {
   try {
     await updateRecordTitleApi(id, title);
+    historyCache = null; // 清除缓存
+    if (id === currentSessionId) {
+      currentSessionTitle = title; // 更新当前会话标题
+    }
   } catch (error) {
     console.error('保存标题失败:', error);
   }
@@ -4099,6 +4109,7 @@ async function saveHistoryTitle(id, title) {
 async function deleteHistoryRecord(id) {
   try {
     await deleteRecordApi(id);
+    historyCache = null; // 清除缓存
     
     const historyItem = document.querySelector(`.history-item[data-id="${id}"]`);
     if (historyItem) {
