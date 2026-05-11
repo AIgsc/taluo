@@ -2636,6 +2636,9 @@ async function handleAuthSubmit() {
     saveAuthState(data.token, { userId: data.userId, username: data.username });
     closeAuthModal();
     
+    // 加载该用户的数据库牌义
+    fetchCardMeanings();
+    
     const successMsg = AUTH_STATE.isLoginMode 
       ? '✅ 登录成功！欢迎回来，' + data.username + '！' 
       : '✅ 注册成功！已自动登录，欢迎 ' + data.username + '！';
@@ -2694,15 +2697,14 @@ async function deleteRecordApi(recordId) {
 
 // ==================== 牌义数据 API ====================
 
-// 从 D1 加载牌义数据，若数据库为空则自动从硬编码数据初始化
+// 从 D1 加载牌义数据（需登录），若数据库为空则自动从硬编码数据初始化
 async function fetchCardMeanings() {
+  if (!AUTH_STATE.token) return;
   try {
     const data = await apiRequest(API_CONFIG.endpoints.cardMeanings);
     
-    // 检查是否为空（D1 表还没有数据）
     if (!data || Object.keys(data).length === 0) {
       await seedCardMeanings();
-      // 重新获取
       const seededData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
       cardMeaningsFromDB = seededData || null;
     } else {
@@ -2750,10 +2752,8 @@ function debounce(fn, delay = 500) {
 // 页面加载 - 初始化流程
 window.onload = async () => {
   // 0. 初始化认证状态
-  loadAuthState();
-  
-  // 0.0 异步加载牌义数据（从 D1 或本地）
-  fetchCardMeanings();
+  const isLoggedIn = loadAuthState();
+  if (isLoggedIn) fetchCardMeanings();
   
   // 0.1 绑定登录/注册相关事件
   document.getElementById('userBtn').addEventListener('click', () => {
