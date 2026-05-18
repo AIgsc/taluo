@@ -3737,7 +3737,6 @@ let lastStateHash = '';
 let autoSaveStarted = false; // 是否已开始自动保存
 let hasDrawnInSession = false; // 是否在这个会话里主动操作过
 let historyCache = null; // 前端内存缓存：只在增删改后刷新
-let currentEditingCardId = null; // 当前正在编辑的牌义 cardId，用于 3 秒自动保存
 
 function initSession() {
   currentSessionId = 'auto_' + Date.now().toString();
@@ -4195,11 +4194,8 @@ function showQuickQueryDetail(cardId) {
   
   if (!cardInfo) {
     container.innerHTML = '<div class="quick-query-empty-state">未找到该牌的信息</div>';
-    currentEditingCardId = null;
     return;
   }
-  
-  currentEditingCardId = cardId;
   
   const editableAttr = isLoggedIn ? 'contenteditable="true"' : '';
   const editableClass = isLoggedIn ? ' pattern-editable' : '';
@@ -4227,6 +4223,13 @@ function showQuickQueryDetail(cardId) {
       e.preventDefault();
       const text = e.clipboardData.getData('text/plain');
       document.execCommand('insertText', false, text);
+    });
+    
+    // 编辑即保存：停止输入 600ms 后自动保存
+    let saveTimer;
+    el.addEventListener('input', () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => saveCardMeaning(cardId), 500);
     });
   });
 }
@@ -4266,38 +4269,6 @@ async function saveCardMeaning(cardId) {
   }
 }
 
-// 3秒自动保存当前正在编辑的牌义
-function autoSaveCardMeaning() {
-  const cardId = currentEditingCardId;
-  if (cardId === null) return;
-  const container = document.getElementById('quickQueryTextContent');
-  if (!container || container.style.display === 'none') return;
-  const uprightEl = container.querySelector('.upright');
-  const reversedEl = container.querySelector('.reversed');
-  const patternEl = container.querySelector('.pattern');
-  if (!uprightEl || !reversedEl || !patternEl) return;
-  const newUpright = uprightEl.innerHTML;
-  const newReversed = reversedEl.innerHTML;
-  const newPattern = patternEl.innerHTML;
-  const old = getCardMeaning(cardId);
-  if (newUpright === old.upright && newReversed === old.reversed && newPattern === old.pattern) return;
-  updateCardMeaningApi(cardId, {
-    name: old.name,
-    upright: newUpright,
-    reversed: newReversed,
-    pattern: newPattern
-  }).then(() => {
-    if (cardMeaningsFromDB) {
-      if (!cardMeaningsFromDB[cardId]) {
-        cardMeaningsFromDB[cardId] = { ...old };
-      }
-      cardMeaningsFromDB[cardId].upright = newUpright;
-      cardMeaningsFromDB[cardId].reversed = newReversed;
-      cardMeaningsFromDB[cardId].pattern = newPattern;
-    }
-  }).catch(() => {});
-}
-
 // 切换快速查询的文字显示/隐藏
 function toggleQuickQueryText() {
   const textArea = document.getElementById('quickQueryTextArea');
@@ -4312,7 +4283,6 @@ function toggleQuickQueryText() {
 function closeQuickQueryModal() {
   document.getElementById('quickQueryModal').style.display = 'none';
   document.body.style.overflow = 'auto';
-  currentEditingCardId = null;
 }
 
 // 自动保存事件绑定
@@ -4328,7 +4298,6 @@ window.addEventListener('pagehide', smartAutoSave);
 
 // 定期自动保存（核心保存逻辑）
 setInterval(smartAutoSave, 5000);
-setInterval(autoSaveCardMeaning, 3000);
 </script>
 </body>
 </html>
