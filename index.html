@@ -3944,6 +3944,16 @@ function bindHistoryEventDelegator() {
       await saveHistoryTitle(id, title);
     }
   }, true);
+  
+  // 统一处理所有paste事件（强制纯文本粘贴）
+  historyList.addEventListener('paste', (e) => {
+    const target = e.target;
+    if (target.classList.contains('history-title-input')) {
+      e.preventDefault();
+      const text = e.clipboardData.getData('text/plain');
+      document.execCommand('insertText', false, text);
+    }
+  }, true);
 }
 
 // 显示历史记录（优化版：使用DocumentFragment + 事件委托）
@@ -4258,6 +4268,15 @@ function showQuickQueryDetail(cardId) {
       </div>
     </div>
   `;
+  
+  // 强制可编辑区域粘贴纯文本，不带格式
+  container.querySelectorAll('.pattern-editable').forEach(el => {
+    el.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = e.clipboardData.getData('text/plain');
+      document.execCommand('insertText', false, text);
+    });
+  });
 }
 
 // 保存牌义（失焦时调用，收集所有可编辑字段）
