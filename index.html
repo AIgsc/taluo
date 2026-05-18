@@ -2306,64 +2306,12 @@ function getCardMeaning(cardId) {
 
 // 正位关键词列表
 const UPRIGHT_KEYWORDS = [
-  '正位', '顺畅', '积极', '顺利', '成功', '圆满', '和谐', '稳定',
-  '平衡', '正确', '清醒', '自信', '突破', '新生', '正向', '好运',
-  '转机', '新开始', '行动', '沟通', '进展', '发展', '主动', '真实',
-  '真相', '公平', '公正', '有利', '符合预期', '无阻碍', '进展顺利',
-  '事情顺利', '状态顺畅', '积极结果', '积极状态', '状态顺畅呈现',
-  '全新开始', '天真无畏', '探索', '冒险出发', '资源整合', '创造力',
-  '行动力', '落地', '显化', '直觉', '智慧', '洞察', '踏实认真',
-  '丰饶滋养', '富足', '理性掌控', '规则秩序', '事业成就', '精神指引',
-  '知识传承', '信服', '听从', '真爱连接', '抉择', '意志坚定', '克服困难',
-  '内在勇气', '以柔克刚', '内省', '沉淀', '思考', '被动变化', '正向转机',
-  '顺势而为', '公平公正', '合同协议', '法律法规', '觉醒', '换角度思考',
-  '耐心等待', '放下执念', '彻底终结', '必然全新', '沟通平衡', '中庸之道',
-  '能量调和', '长期固化', '习惯', '长期上瘾', '物质主义束缚', '完全无预兆',
-  '真相暴露', '打破幻想', '期望', '疗愈', '重生', '灵感', '未来可期',
-  '隐藏事物', '潜意识情绪', '未知恐惧', '未察觉真相', '隐藏真相', '秘密藏不住',
-  '幻觉消散', '看清现实', '积极阳光', '简单纯粹', '快乐成功', '活力充沛',
-  '光明正大', '关键抉择', '自我觉醒', '因果清算', '全新开始', '大环境有利',
-  '圆满完成', '进入新阶段', '团队讨论合作', '学习', '专业提升', '财务稳定',
-  '安全感', '慢慢过去', '收支平衡', '给予收获差不多', '思考安排时间金钱计划',
-  '在意拥有', '打磨技能', '精益求精', '小资享受', '独立自信', '家族财富',
-  '稳步成长', '专注', '靠谱', '追求实际', '打理生活井井有条', '理财', '极度靠谱'
+  '正位'
 ];
 
 // 逆位关键词列表
 const REVERSED_KEYWORDS = [
-  '逆位', '受阻', '过度', '扭曲', '偏离', '波折', '挑战', '阻碍',
-  '困难', '失败', '失控', '混乱', '欺骗', '虚假', '逃避', '固执',
-  '拖延', '犹豫', '冲突', '焦虑', '恐惧', '绝望', '压抑', '退缩',
-  '崩溃', '背叛', '痛苦', '损失', '不稳定', '变动', '不平衡',
-  '沟通不畅', '不切实际', '浪费', '失控', '状态受阻', '偏离预期',
-  '状态过度', '状态扭曲', '拖延变化', '恐惧失去', '鲁莽冲动', '毫无准备',
-  '盲目行动', '不听建议', '缺乏资源', '沟通问题', '能力不足', '想法落空',
-  '无法理性思考', '直觉失灵', '封闭内心', '做事不踏实', '过度依赖', '懒惰放纵',
-  '专制独裁', '控制欲强', '权力失控', '思想僵化', '第三者介入', '关系失衡',
-  '付出不对等', '价值观冲突', '局面失控', '方向混乱', '被情绪左右', '内耗',
-  '难以掌控', '软弱无力', '暴躁易怒', '被恐惧支配', '更加迷茫', '孤独自闭',
-  '逃避现实', '固执己见', '被动变动', '难以掌控', '循环困境', '规则不对等',
-  '不公不义', '偏见偏袒', '错误判断', '精神压力大', '无谓牺牲', '固执不愿改变',
-  '拖延变化', '恐惧失去', '短期冲动', '消费欲', '诱惑', '贪念', '认清真相',
-  '挣脱束缚', '早有预兆', '被忽略变故', '逃避灾难', '后果严重', '失去期望',
-  '希望破灭', '迷茫绝望', '灵感枯竭', '状态不明朗', '表面光鲜', '活力不足',
-  '过去问题复发', '执迷不悟', '错过改变', '大环境阻碍', '难以克服', '未完成',
-  '功亏一篑', '别人靠不住', '团队问题', '不稳定', '财务波动', '害怕失去',
-  '计划容易变动', '前景不明', '付出多回报少', '工作懈怠', '不务实', '贪得无厌',
-  '学习不认真', '不踏实不专一', '三心二意', '浮躁不安', '缺乏耐心', '敷衍了事',
-  '贪图享乐', '浪费金钱', '唯利是图', '贪婪自私', '财务危机', '无法离开',
-  '继续停留', '关系破裂', '分离疏远', '家庭矛盾', '幸福落空', '内心空虚',
-  '情感封闭', '不感兴趣', '总是回想过去', '无法走出回忆', '放下纠结', '累了就不选择',
-  '打破僵局', '做出决定', '完全结束了', '凉凉了', '歇菜了', '无可挽回', '煎熬',
-  '死不掉死不透', '不自然结束', '必须主动切断', '一直拖着消耗', '压力大', '不想做但不得不做',
-  '做事浮于表面很难深入', '想法与观念不一致', '鲁莽冲动', '说话伤人', '放下自己的标准与原则',
-  '观念混乱', '容易被他人影响', '专业能力不足', '爱说谎', '说到做不到', '滥用权力',
-  '专横', '说到做不到', '不负责', '情绪失控', '不专一不负责', '不专一', '脾气暴躁',
-  '消极被动', '不积极不主动', '半途而废', '冲动幼稚', '缺乏耐心', '进展反复无常',
-  '中途放弃', '回头', '不稳定', '出现变动', '冲突矛盾', '平衡被打破', '放下争执',
-  '主动退让', '妥协和解', '避免内耗', '失去吸引力', '他人不听指挥', '遭遇失败',
-  '难以克服', '被压力击垮', '立场动摇', '寡不敌众', '推进不顺', '消息延误', '阻碍重重',
-  '计划落空', '疲惫不堪', '放弃坚持', '压力过大', '不堪重负', '放下负担', '推卸责任'
+  '逆位'
 ];
 
 
@@ -3789,6 +3737,7 @@ let lastStateHash = '';
 let autoSaveStarted = false; // 是否已开始自动保存
 let hasDrawnInSession = false; // 是否在这个会话里主动操作过
 let historyCache = null; // 前端内存缓存：只在增删改后刷新
+let currentEditingCardId = null; // 当前正在编辑的牌义 cardId，用于 3 秒自动保存
 
 function initSession() {
   currentSessionId = 'auto_' + Date.now().toString();
@@ -4246,8 +4195,11 @@ function showQuickQueryDetail(cardId) {
   
   if (!cardInfo) {
     container.innerHTML = '<div class="quick-query-empty-state">未找到该牌的信息</div>';
+    currentEditingCardId = null;
     return;
   }
+  
+  currentEditingCardId = cardId;
   
   const editableAttr = isLoggedIn ? 'contenteditable="true"' : '';
   const editableClass = isLoggedIn ? ' pattern-editable' : '';
@@ -4309,10 +4261,41 @@ async function saveCardMeaning(cardId) {
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
     }
-    setTip('✅ 牌义已保存');
   } catch (e) {
     setTip('❌ 保存失败');
   }
+}
+
+// 3秒自动保存当前正在编辑的牌义
+function autoSaveCardMeaning() {
+  const cardId = currentEditingCardId;
+  if (cardId === null) return;
+  const container = document.getElementById('quickQueryTextContent');
+  if (!container || container.style.display === 'none') return;
+  const uprightEl = container.querySelector('.upright');
+  const reversedEl = container.querySelector('.reversed');
+  const patternEl = container.querySelector('.pattern');
+  if (!uprightEl || !reversedEl || !patternEl) return;
+  const newUpright = uprightEl.innerHTML;
+  const newReversed = reversedEl.innerHTML;
+  const newPattern = patternEl.innerHTML;
+  const old = getCardMeaning(cardId);
+  if (newUpright === old.upright && newReversed === old.reversed && newPattern === old.pattern) return;
+  updateCardMeaningApi(cardId, {
+    name: old.name,
+    upright: newUpright,
+    reversed: newReversed,
+    pattern: newPattern
+  }).then(() => {
+    if (cardMeaningsFromDB) {
+      if (!cardMeaningsFromDB[cardId]) {
+        cardMeaningsFromDB[cardId] = { ...old };
+      }
+      cardMeaningsFromDB[cardId].upright = newUpright;
+      cardMeaningsFromDB[cardId].reversed = newReversed;
+      cardMeaningsFromDB[cardId].pattern = newPattern;
+    }
+  }).catch(() => {});
 }
 
 // 切换快速查询的文字显示/隐藏
@@ -4329,6 +4312,7 @@ function toggleQuickQueryText() {
 function closeQuickQueryModal() {
   document.getElementById('quickQueryModal').style.display = 'none';
   document.body.style.overflow = 'auto';
+  currentEditingCardId = null;
 }
 
 // 自动保存事件绑定
@@ -4344,6 +4328,7 @@ window.addEventListener('pagehide', smartAutoSave);
 
 // 定期自动保存（核心保存逻辑）
 setInterval(smartAutoSave, 5000);
+setInterval(autoSaveCardMeaning, 3000);
 </script>
 </body>
 </html>
