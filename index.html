@@ -545,6 +545,90 @@ h1 {
   font-weight: 700;
   margin-bottom: 20px;
 }
+/* 快速按数字抽牌 */
+.taro-picked__quick-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 15px 12px;
+  border-bottom: 1px solid rgba(108, 99, 255, 0.1);
+  margin-bottom: 8px;
+}
+.taro-picked__quick-pick input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(108, 99, 255, 0.4);
+  outline: none;
+  transition: 0.25s ease;
+}
+.taro-picked__quick-pick input:focus {
+  border-color: #a89fff;
+  background: rgba(255,255,255,0.15);
+}
+.taro-picked__quick-pick input::placeholder {
+  color: rgba(168, 159, 255, 0.4);
+}
+.taro-picked__quick-pick button {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6c63ff, #8c85ff);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.25s ease;
+  flex-shrink: 0;
+}
+.taro-picked__quick-pick button:hover {
+  background: linear-gradient(135deg, #554ed9, #6c63ff);
+  transform: scale(1.05);
+}
+.taro-picked__quick-pick button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+/* 数字预览 */
+.quick-pick-preview {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 15px;
+  min-height: 0;
+}
+.quick-pick-preview.show {
+  display: flex;
+}
+.quick-pick-preview .qpp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  font-size: 13px;
+  border-radius: 12px;
+  background: rgba(168, 159, 255, 0.15);
+  color: #c8c3ff;
+  border: 1px solid rgba(168, 159, 255, 0.25);
+  transition: 0.2s;
+}
+.quick-pick-preview .qpp-badge.unavailable {
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff8888;
+  border-color: rgba(255, 80, 80, 0.3);
+  text-decoration: line-through;
+}
+.quick-pick-preview .qpp-label {
+  width: 100%;
+  font-size: 11px;
+  color: rgba(168, 159, 255, 0.5);
+  margin-bottom: -2px;
+}
 /* 主牌+补充牌 垂直容器 */
 .taro-card__group {
   display: flex;
@@ -1404,6 +1488,11 @@ h1 {
 <div class="taro-stack__area" id="stack"></div>
 <div class="taro-picked__box">
   <h3>已抽牌</h3>
+  <div class="taro-picked__quick-pick">
+    <input type="text" id="quickPickInput" placeholder="粘贴聊天记录，自动识别数字">
+    <button id="quickPickBtn">按数字抽牌</button>
+  </div>
+  <div id="quickPickPreview" class="quick-pick-preview"></div>
   <div id="picked"></div>
 </div>
 
@@ -3309,6 +3398,7 @@ function deleteMainCard(roundIdx, groupIdx) {
   
   hasDrawnInSession = true;
   smartAutoSave();
+  clearQuickPickInput();
 }
 
 function deleteSupportCard(roundIdx, groupIdx, supIdx) {
@@ -3366,6 +3456,7 @@ function deleteSupportCard(roundIdx, groupIdx, supIdx) {
   
   hasDrawnInSession = true;
   smartAutoSave();
+  clearQuickPickInput();
 }
 
 // 子函数：渲染主牌
@@ -3479,6 +3570,7 @@ function startNewRound() {
   STATE.lockPicking = false; // 解锁抽牌
   STATE.pickRounds.forEach(round => round.forEach(group => group.checked = false));
   refreshCachedNumbers();
+  clearQuickPickInput();
 
   renderSpread();
   renderPicked();
@@ -3552,6 +3644,7 @@ function reSortForSupport() {
   STATE.lockPicking = false; // 解锁抽牌，开始补抽
 
   refreshCachedNumbers(); // 刷新数字
+  clearQuickPickInput();
 
   // 11. 自动勾选当前轮次的所有大阿卡纳牌
   const checkedCount = autoCheckAllMajorArcana();
@@ -4042,6 +4135,8 @@ async function restoreState(id) {
       updateButtonStatus();
       updateSupportStatus();
       
+      clearQuickPickInput();
+      
       setTip('✨ 历史记录还原成功！');
       closeHistoryModal();
     } else {
@@ -4291,11 +4386,172 @@ function closeQuickQueryModal() {
   document.body.style.overflow = 'auto';
 }
 
+// ============================================================================
+// 🔢 快速按数字抽牌
+// ============================================================================
+
+// 解析输入文本中的数字（只提取纯数字，保留输入顺序，去重保留首次出现）
+function parseQuickPickInput(str) {
+  const cleaned = str.replace(/[^\d]/g, ' ');
+  const numbers = cleaned.split(/\s+/).filter(n => n !== '').map(Number);
+  const seen = new Set();
+  return numbers.filter(n => {
+    if (n < 1 || n > 78 || seen.has(n)) return false;
+    seen.add(n);
+    return true;
+  });
+}
+
+// 根据显示编号查找 fullDeck 索引（cachedNumbers 反查）
+function displayNumberToIndex(num) {
+  for (let i = 0; i < 78; i++) {
+    if (STATE.cachedNumbers[i] === num) return i;
+  }
+  return -1;
+}
+
+// 更新数字预览（实时显示解析结果）
+function updateQuickPickPreview() {
+  const input = document.getElementById('quickPickInput');
+  const preview = document.getElementById('quickPickPreview');
+  const raw = input.value.trim();
+  
+  if (!raw) {
+    preview.classList.remove('show');
+    preview.innerHTML = '';
+    return;
+  }
+  
+  const numbers = parseQuickPickInput(raw);
+  
+  if (numbers.length === 0) {
+    preview.classList.remove('show');
+    preview.innerHTML = '';
+    return;
+  }
+  
+  let hasUnavailable = false;
+  let firstActive = null;
+  for (const n of numbers) {
+    const idx = displayNumberToIndex(n);
+    const active = idx >= 0 && STATE.fullDeck[idx].active;
+    if (active && firstActive === null) firstActive = n;
+    if (!active) hasUnavailable = true;
+  }
+  
+  let html;
+  if (STATE.reSortCount > 0) {
+    html = '<div class="qpp-label">补抽模式：逐个抽取</div>';
+  } else {
+    html = '<div class="qpp-label">将按此顺序抽牌：</div>';
+  }
+  
+  for (const n of numbers) {
+    const idx = displayNumberToIndex(n);
+    const active = idx >= 0 && STATE.fullDeck[idx].active;
+    html += `<span class="qpp-badge${active ? '' : ' unavailable'}">${n}</span>`;
+  }
+  if (STATE.reSortCount > 0 && numbers.length > STATE.pendingSupportCount) {
+    html += '<div style="width:100%;font-size:11px;color:rgba(168,159,255,0.4);margin-top:2px;">数字多出' + (numbers.length - STATE.pendingSupportCount) + '个，多余的将跳过</div>';
+  }
+  if (hasUnavailable) {
+    html += '<div style="width:100%;font-size:11px;color:rgba(255,80,80,0.6);margin-top:2px;">红色 = 已被抽走</div>';
+  }
+  
+  preview.innerHTML = html;
+  preview.classList.add('show');
+}
+
+// 清空输入和预览
+function clearQuickPickInput() {
+  const input = document.getElementById('quickPickInput');
+  if (document.activeElement !== input) {
+    input.value = '';
+  }
+  const preview = document.getElementById('quickPickPreview');
+  preview.classList.remove('show');
+  preview.innerHTML = '';
+}
+
+// 按数字批量抽牌
+function quickPickByNumbers() {
+  const input = document.getElementById('quickPickInput');
+  const btn = document.getElementById('quickPickBtn');
+  const raw = input.value.trim();
+  
+  if (!raw) {
+    setTip('⚠️ 粘贴聊天记录后，自动识别数字');
+    input.focus();
+    return;
+  }
+  
+  if (STATE.gameState !== CONFIG.GAME_STATES.SPREAD) {
+    setTip('⚠️ 请先洗牌展开牌面后再使用');
+    return;
+  }
+  
+  if (checkPickingLock()) {
+    setTip('🔒 当前已锁定，无法抽牌');
+    return;
+  }
+  
+  const numbers = parseQuickPickInput(raw);
+  if (numbers.length === 0) {
+    setTip('⚠️ 未能识别出有效数字（1-78）');
+    input.focus();
+    return;
+  }
+  
+  const available = numbers.filter(n => {
+    const idx = displayNumberToIndex(n);
+    return idx >= 0 && STATE.fullDeck[idx].active;
+  });
+  const unavailable = numbers.length - available.length;
+  
+  if (available.length === 0) {
+    setTip('⚠️ 这些位置的牌已被抽走，请换其他数字');
+    return;
+  }
+  
+  if (STATE.reSortCount === 0) {
+    STATE.pickRounds.forEach(round => round.forEach(g => g.checked = false));
+  }
+  
+  btn.disabled = true;
+  
+  let pickedCount = 0;
+  for (const num of available) {
+    const idx = displayNumberToIndex(num);
+    if (idx >= 0) {
+      pickCard(idx);
+      if (!STATE.fullDeck[idx].active) pickedCount++;
+    }
+    if (STATE.reSortCount > 0 && checkPickingLock()) break;
+  }
+  btn.disabled = false;
+  
+  let msg = `✅ 已抽 ${pickedCount} 张牌`;
+  if (unavailable > 0) msg += `（${unavailable} 张已被抽过已跳过）`;
+  setTip(msg);
+  
+  input.value = '';
+  updateQuickPickPreview();
+}
+
 // 自动保存事件绑定
 
 // 页面加载时初始化会话ID（抽第一张牌时才会真正开始保存）
 window.addEventListener('load', () => {
   initSession();
+  
+  document.getElementById('quickPickBtn').addEventListener('click', quickPickByNumbers);
+  document.getElementById('quickPickInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      quickPickByNumbers();
+    }
+  });
+  document.getElementById('quickPickInput').addEventListener('input', updateQuickPickPreview);
 });
 
 // 页面关闭前保存
