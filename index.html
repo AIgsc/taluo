@@ -3737,6 +3737,7 @@ let lastStateHash = '';
 let autoSaveStarted = false; // 是否已开始自动保存
 let hasDrawnInSession = false; // 是否在这个会话里主动操作过
 let historyCache = null; // 前端内存缓存：只在增删改后刷新
+let cardMeaningSaveTimer = null; // 牌义编辑防抖定时器，切换卡片时需清除
 
 function initSession() {
   currentSessionId = 'auto_' + Date.now().toString();
@@ -4178,6 +4179,7 @@ function openQuickQuery() {
 
 // 显示牌的详细信息（支持直接编辑 + 失焦自动保存）
 function showQuickQueryDetail(cardId) {
+  clearTimeout(cardMeaningSaveTimer);
   const container = document.getElementById('quickQueryDetail');
   const cardInfo = getCardMeaning(cardId);
   const cardImage = cardImages[cardId];
@@ -4227,16 +4229,18 @@ function showQuickQueryDetail(cardId) {
     });
     
     // 编辑即保存：停止输入后自动保存
-    let saveTimer;
     el.addEventListener('input', () => {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => saveCardMeaning(cardId), 500);
+      clearTimeout(cardMeaningSaveTimer);
+      cardMeaningSaveTimer = setTimeout(() => saveCardMeaning(cardId), 500);
     });
   });
 }
 
 // 保存牌义（失焦时调用，收集所有可编辑字段）
 async function saveCardMeaning(cardId) {
+  const activeBtn = document.querySelector('.quick-query-card-btn.active');
+  if (!activeBtn || parseInt(activeBtn.dataset.cardId) !== cardId) return;
+  
   const container = document.getElementById('quickQueryTextContent');
   const uprightEl = container.querySelector('.upright');
   const reversedEl = container.querySelector('.reversed');
@@ -4282,6 +4286,7 @@ function toggleQuickQueryText() {
 
 // 关闭快速查询
 function closeQuickQueryModal() {
+  clearTimeout(cardMeaningSaveTimer);
   document.getElementById('quickQueryModal').style.display = 'none';
   document.body.style.overflow = 'auto';
 }
