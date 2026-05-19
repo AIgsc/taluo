@@ -2681,7 +2681,7 @@ async function handleAuthSubmit() {
       ? '✅ 登录成功！欢迎回来，' + data.username + '！' 
       : '✅ 注册成功！已自动登录，欢迎 ' + data.username + '！';
     
-    setTip(successMsg);
+    setTempTip(successMsg);
     alert(successMsg);
   } catch (e) {
     errorEl.textContent = '❌ ' + (e.message || '操作失败');
@@ -2880,7 +2880,22 @@ window.onload = async () => {
 };
 
 // 全局状态提示
-function setTip(text) { DOM.statusTip.textContent = text; }
+let _lastImportantTip = '';
+function setTip(text) {
+  _lastImportantTip = text;
+  DOM.statusTip.textContent = text;
+  if (_tipTimer) { clearTimeout(_tipTimer); _tipTimer = null; }
+}
+// 临时提示（10 秒后自动恢复重要提示）
+let _tipTimer = null;
+function setTempTip(text) {
+  if (_tipTimer) clearTimeout(_tipTimer);
+  DOM.statusTip.textContent = text;
+  _tipTimer = setTimeout(() => {
+    _tipTimer = null;
+    if (_lastImportantTip) DOM.statusTip.textContent = _lastImportantTip;
+  }, 10000);
+}
 
 // 全真高强度随机数（占卜专用，不可预测）
 function getTrueRandom(max) {
@@ -2917,7 +2932,7 @@ async function playRubShuffleAnimation() {
   if(STATE.isAnimating) return;
   STATE.isAnimating = true;
   disableAllButtons(true);
-  setTip("🔮 正在连接真实世界，请稍候...");
+  setTempTip("🔮 正在连接真实世界，请稍候...");
   try {
     firstShuffle_InitOrder();
     
@@ -3199,9 +3214,9 @@ function pickCard(index) {
       updatePendingSupportCount();
       
       if(hasMinorArcana) {
-        setTip(`✨ 已补抽到小牌！+检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
+        setTempTip(`✨ 已补抽到小牌！+检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
       } else if(reachedMaxSupport) {
-        setTip(`✨ 检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
+        setTempTip(`✨ 检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
       }
       
       // 补抽完成后，取消当前主牌的勾选
@@ -3221,7 +3236,7 @@ function pickCard(index) {
     // 没有处于补抽模式，但有勾选的主牌组，进行补抽
     targetGroup.supports.push(selectedCard);
 
-    setTip(`✨ 已抽取补充牌（${targetGroup.supports.length}/${CONFIG.MAX_SUPPORT}）`);
+    setTempTip(`✨ 已抽取补充牌（${targetGroup.supports.length}/${CONFIG.MAX_SUPPORT}）`);
     checkSupportCompletion(targetGroup);
   } else {
     // 正常抽主牌
@@ -3233,7 +3248,7 @@ function pickCard(index) {
         checked: false
       });
 
-      setTip(`✨ 已抽取卡牌：第 ${STATE.cachedNumbers[index]} 号`);
+      setTempTip(`✨ 已抽取卡牌：第 ${STATE.cachedNumbers[index]} 号`);
       checkMainCardSupport();
     } else {
       setTip("🔮 轮次数据错误！");
@@ -3288,7 +3303,7 @@ function checkSupportCompletion(group) {
       // 锁定逻辑在 pickCard 中处理，等用户尝试抽下一张牌时才锁定
       // 取消所有勾选状态
       STATE.pickRounds[STATE.currentRound].forEach(g => g.checked = false);
-      setTip("✨ 补抽完成！");
+      setTempTip("✨ 补抽完成！");
       renderPicked();
     }
   }
@@ -3346,7 +3361,7 @@ function toggleCheck(roundIdx, groupIdx) {
 // 撤回功能
 function deleteMainCard(roundIdx, groupIdx) {
   if(roundIdx !== STATE.currentRound) { 
-    setTip("🔮 上一轮卡牌不可撤回！"); 
+    setTempTip("🔮 上一轮卡牌不可撤回！"); 
     return;
   }
   
@@ -3384,14 +3399,14 @@ function deleteMainCard(roundIdx, groupIdx) {
   // 撤回主牌后，检查是否所有大阿卡纳都不需要补抽了
   if(STATE.reSortCount > 0 && STATE.pendingSupportCount === 0) {
     resetSupportState();
-    setTip("✨ 主牌及补充牌已撤回，补抽状态重置");
+    setTempTip("✨ 主牌及补充牌已撤回，补抽状态重置");
   } else if(STATE.reSortCount > 0 && STATE.pendingSupportCount > 0) {
     // 还有待补抽的大阿卡纳，解锁抽牌
     STATE.lockPicking = false;
-    setTip("✨ 主牌及补充牌已撤回，请继续补抽");
+    setTempTip("✨ 主牌及补充牌已撤回，请继续补抽");
   } else {
     STATE.lockPicking = false;
-    setTip("✨ 卡牌已撤回牌堆");
+    setTempTip("✨ 卡牌已撤回牌堆");
   }
   
   updateUI();
@@ -3403,7 +3418,7 @@ function deleteMainCard(roundIdx, groupIdx) {
 
 function deleteSupportCard(roundIdx, groupIdx, supIdx) {
   if(roundIdx !== STATE.currentRound) { 
-    setTip("🔮 上一轮卡牌不可撤回！"); 
+    setTempTip("🔮 上一轮卡牌不可撤回！"); 
     return;
   }
   
@@ -3442,14 +3457,14 @@ function deleteSupportCard(roundIdx, groupIdx, supIdx) {
   if(STATE.reSortCount > 0 && STATE.pendingSupportCount === 0) {
     // 不立即锁定，只设置提示信息
     // 让用户可以继续操作，等尝试抽下一张牌时才锁定
-    setTip("✨ 补充牌已撤回！所有大阿卡纳补抽完成！可继续操作");
+    setTempTip("✨ 补充牌已撤回！所有大阿卡纳补抽完成！可继续操作");
   } else if(STATE.reSortCount > 0 && STATE.pendingSupportCount > 0) {
     // 还有待补抽的大阿卡纳，解锁抽牌
     STATE.lockPicking = false;
-    setTip(`✨ 补充牌已撤回，请继续补抽+检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
+    setTempTip(`✨ 补充牌已撤回，请继续补抽+检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽`);
   } else {
     STATE.lockPicking = false;
-    setTip("✨ 补充牌已撤回牌堆");
+    setTempTip("✨ 补充牌已撤回牌堆");
   }
   
   updateUI();
@@ -3560,7 +3575,7 @@ function renderPicked() {
 
 // 新问题重编号
 function startNewRound() {
-  if(STATE.gameState !== CONFIG.GAME_STATES.SPREAD) { setTip("🔮 请先平铺卡牌！"); return; }
+  if(STATE.gameState !== CONFIG.GAME_STATES.SPREAD) { setTempTip("🔮 请先平铺卡牌！"); return; }
   if(!confirm("🔮 确定【重新排序】？")) return;
 
   STATE.currentRound++;
@@ -3574,7 +3589,7 @@ function startNewRound() {
 
   renderSpread();
   renderPicked();
-  setTip(`✨ 已开启第 ${STATE.currentRound+1} 轮占卜`);
+  setTempTip(`✨ 已开启第 ${STATE.currentRound+1} 轮占卜`);
 }
 
 // 补抽排序 - 为大阿卡那牌进行补抽的准备步骤
@@ -3594,9 +3609,9 @@ function reSortForSupport() {
     if(STATE.reSortCount > 0) {
       // 之前已经完成补抽但状态未重置
       resetSupportState();
-      setTip("✨ 补抽已完成！可以开始新问题");
+      setTempTip("✨ 补抽已完成！可以开始新问题");
     } else {
-      setTip("✨ 当前没有需要补抽的大阿卡纳");
+      setTempTip("✨ 当前没有需要补抽的大阿卡纳");
     }
     return; 
   }
@@ -3651,13 +3666,13 @@ function reSortForSupport() {
 
   // 12. 更新界面
   updateUI();
-  setTip(`✨ 检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽，已勾选`);
+  setTempTip(`✨ 检测到【${STATE.pendingSupportCount}】张大阿卡那需要补抽，已勾选`);
 }
 
 // 检查游戏状态
 function checkGameState() {
   if(STATE.gameState !== CONFIG.GAME_STATES.SPREAD) {
-    setTip("🔮 请先平铺卡牌！");
+    setTempTip("🔮 请先平铺卡牌！");
     return false;
   }
   return true;
@@ -3814,7 +3829,7 @@ function updateLoadProgress() {
   DOM.progressText.textContent = `🔮 卡牌加载中：${STATE.loadedCount}/${CONFIG.TOTAL_IMAGES}`;
   DOM.progressFill.style.width = `${percent}%`;
   if (STATE.loadedCount >= CONFIG.TOTAL_IMAGES) {
-    setTip("✨ 卡牌加载完成，请触摸屏幕开始");
+    setTempTip("✨ 卡牌加载完成，请触摸屏幕开始");
     setTimeout(() => DOM.progressContainer.style.display = 'none', 500);
   }
 }
@@ -3903,7 +3918,7 @@ async function smartAutoSave() {
 // 手动保存（创建新记录）
 async function saveCurrentState() {
   if (!AUTH_STATE.token) {
-    setTip('请先登录后再保存！');
+    setTempTip('请先登录后再保存！');
     openAuthModal();
     return;
   }
@@ -3926,9 +3941,9 @@ async function saveCurrentState() {
     
     await saveRecordToApi(newRecord);
     historyCache = null; // 清除缓存
-    setTip('✨ 手动保存成功！');
+    setTempTip('✨ 手动保存成功！');
   } catch (error) {
-    setTip('❌ 保存失败: ' + (error.message || '未知错误'));
+    setTempTip('❌ 保存失败: ' + (error.message || '未知错误'));
   }
 }
 
@@ -4001,7 +4016,7 @@ function bindHistoryEventDelegator() {
 // 显示历史记录（优化版：使用DocumentFragment + 事件委托）
 async function showHistory() {
   if (!AUTH_STATE.token) {
-    setTip('请先登录后查看历史记录！');
+    setTempTip('请先登录后查看历史记录！');
     openAuthModal();
     return;
   }
@@ -4137,13 +4152,13 @@ async function restoreState(id) {
       
       clearQuickPickInput();
       
-      setTip('✨ 历史记录还原成功！');
+      setTempTip('✨ 历史记录还原成功！');
       closeHistoryModal();
     } else {
-      setTip('❌ 未找到历史记录');
+      setTempTip('❌ 未找到历史记录');
     }
   } catch (error) {
-    setTip('❌ 还原失败');
+    setTempTip('❌ 还原失败');
   }
 }
 
@@ -4365,7 +4380,7 @@ async function saveCardMeaning(cardId) {
       cardMeaningsFromDB[cardId].pattern = newPattern;
     }
   } catch (e) {
-    setTip('❌ 保存失败');
+    setTempTip('❌ 保存失败');
   }
 }
 
@@ -4431,11 +4446,9 @@ function updateQuickPickPreview() {
   }
   
   let hasUnavailable = false;
-  let firstActive = null;
   for (const n of numbers) {
     const idx = displayNumberToIndex(n);
     const active = idx >= 0 && STATE.fullDeck[idx].active;
-    if (active && firstActive === null) firstActive = n;
     if (!active) hasUnavailable = true;
   }
   
@@ -4480,24 +4493,24 @@ function quickPickByNumbers() {
   const raw = input.value.trim();
   
   if (!raw) {
-    setTip('⚠️ 粘贴聊天记录后，自动识别数字');
+    setTempTip('⚠️ 粘贴聊天记录后，自动识别数字');
     input.focus();
     return;
   }
   
   if (STATE.gameState !== CONFIG.GAME_STATES.SPREAD) {
-    setTip('⚠️ 请先洗牌展开牌面后再使用');
+    setTempTip('⚠️ 请先洗牌展开牌面后再使用');
     return;
   }
   
   if (checkPickingLock()) {
-    setTip('🔒 当前已锁定，无法抽牌');
+    setTempTip('🔒 当前已锁定，无法抽牌');
     return;
   }
   
   const numbers = parseQuickPickInput(raw);
   if (numbers.length === 0) {
-    setTip('⚠️ 未能识别出有效数字（1-78）');
+    setTempTip('⚠️ 未能识别出有效数字（1-78）');
     input.focus();
     return;
   }
@@ -4509,7 +4522,26 @@ function quickPickByNumbers() {
   const unavailable = numbers.length - available.length;
   
   if (available.length === 0) {
-    setTip('⚠️ 这些位置的牌已被抽走，请换其他数字');
+    setTempTip('⚠️ 这些位置的牌已被抽走，请换其他数字');
+    return;
+  }
+  
+  // 一次性预计算所有索引（防止 pickCard 后 cachedNumbers 刷新导致找错牌）
+  const indices = [];
+  for (const num of available) {
+    const idx = displayNumberToIndex(num);
+    if (idx >= 0 && STATE.fullDeck[idx].active) {
+      indices.push(idx);
+    }
+  }
+  
+  if (indices.length === 0) {
+    setTempTip('⚠️ 这些位置的牌已被抽走，请换其他数字');
+    return;
+  }
+  
+  if (STATE.reSortCount > 0 && !getCheckedCardGroup()) {
+    alert("🔮 点击补抽排序，勾选大阿卡那！");
     return;
   }
   
@@ -4520,19 +4552,16 @@ function quickPickByNumbers() {
   btn.disabled = true;
   
   let pickedCount = 0;
-  for (const num of available) {
-    const idx = displayNumberToIndex(num);
-    if (idx >= 0) {
-      pickCard(idx);
-      if (!STATE.fullDeck[idx].active) pickedCount++;
-    }
-    if (STATE.reSortCount > 0 && checkPickingLock()) break;
+  for (const idx of indices) {
+    pickCard(idx);
+    if (!STATE.fullDeck[idx].active) pickedCount++;
+    if (checkPickingLock() || (STATE.reSortCount > 0 && STATE.fullDeck[idx].active)) break;
   }
   btn.disabled = false;
   
   let msg = `✅ 已抽 ${pickedCount} 张牌`;
   if (unavailable > 0) msg += `（${unavailable} 张已被抽过已跳过）`;
-  setTip(msg);
+  setTempTip(msg);
   
   input.value = '';
   updateQuickPickPreview();
