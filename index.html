@@ -408,7 +408,7 @@ h1 {
 
 #spread {
   display: grid;
-  grid-template-columns: repeat(13, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
   gap: 2px;
   padding: 3px;
   max-width: 100%;
@@ -429,9 +429,10 @@ h1 {
   z-index: 2;
 }
 .taro-spread__card {
-  width: min(44px, calc((100vh - 150px) / 6));
-  height: min(44px, calc((100vh - 150px) / 6));
+  width: 100%;
+  max-width: 44px;
   min-width: 28px;
+  height: min(44px, calc((100vh - 150px) / 6));
   min-height: 28px;
   border-radius: 8px;
   position: relative;
@@ -465,9 +466,10 @@ h1 {
   box-shadow: 0 0 6px rgba(0,0,0,0.4);
 }
 .taro-spread__empty {
-  width: min(44px, calc((100vh - 150px) / 6));
-  height: min(44px, calc((100vh - 150px) / 6));
+  width: 100%;
+  max-width: 44px;
   min-width: 28px;
+  height: min(44px, calc((100vh - 150px) / 6));
   min-height: 28px;
   border: 1px dashed rgba(108, 99, 255, 0.2);
   border-radius: 8px;
