@@ -2890,9 +2890,30 @@ window.onload = async () => {
 
   // 11. 网络状态监听 - 网络恢复时同步所有待同步队列
   window.addEventListener('online', async () => {
+    setTempTip('✅ 网络已恢复！正在同步数据...');
     if (AUTH_STATE.token) {
       await syncAllPending();
     }
+    
+    // 重新加载所有图片（强制刷新）
+    const images = document.querySelectorAll('img');
+    const timestamp = Date.now();
+    images.forEach(img => {
+      const originalSrc = img.src.split('?')[0];
+      img.src = originalSrc + '?t=' + timestamp;
+    });
+    
+    // 重新渲染关键内容
+    if (STATE.gameState === CONFIG.GAME_STATES.SHUFFLED) {
+      renderStack();
+    } else if (STATE.gameState === CONFIG.GAME_STATES.SPREAD) {
+      renderSpread();
+      renderFanLayout();
+    }
+    renderPicked();
+    updateButtonStatus();
+    
+    setTempTip('✅ 数据同步完成！资源已重新加载');
   });
 
   // 12. 页面关闭前保存当前编辑内容和历史记录到待同步队列
