@@ -19,7 +19,7 @@ body {
   background-attachment: fixed;
   color: #fff;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  padding: 8px;
+  padding: 12px;
   text-align: center;
   min-height: 100vh;
   overflow-x: hidden;
@@ -238,8 +238,8 @@ h1 {
   position: relative;
   width: 100%;
   max-width: 750px;
-  max-height: 280px;
-  margin: 10px auto;
+  max-height: 350px;
+  margin: 15px auto 15px;
   perspective: 1000px;
   transition: height 0.3s ease;
   overflow: hidden;
@@ -339,10 +339,10 @@ h1 {
 .taro-float__spread {
   width: 100%;
   max-width: 95%;
-  margin: 4px auto;
+  margin: 5px auto;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 12px;
-  padding: 4px 6px;
+  padding: 8px;
   border: 1px solid rgba(108, 99, 255, 0.2);
 }
 
@@ -408,9 +408,10 @@ h1 {
 
 #spread {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
   gap: 2px;
-  padding: 3px;
+  padding: 8px;
+  min-height: 100px;
   max-width: 100%;
   margin: 0;
   background: transparent;
@@ -418,8 +419,6 @@ h1 {
   border: none;
   box-shadow: none;
   position: relative;
-  width: 100%;
-  box-sizing: border-box;
 }
 #spread::before {
   display: none;
@@ -431,19 +430,19 @@ h1 {
 .taro-spread__card {
   width: 100%;
   max-width: 44px;
-  min-width: 28px;
-  height: min(44px, calc((100vh - 150px) / 6));
-  min-height: 28px;
+  height: 44px;
   border-radius: 8px;
   position: relative;
   background: rgba(255, 255, 255, 0.15);
   margin: 0 auto;
   cursor: pointer;
-  transition: 0.15s ease;
+  transition: 0.2s ease;
   border: 1px solid rgba(255,255,255,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 .taro-spread__card:hover {
   transform: scale(1.15);
@@ -455,12 +454,12 @@ h1 {
 .taro-spread__num {
   background: rgba(0,0,0,0.85);
   color: #fff;
-  width: min(30px, 60%);
-  height: min(30px, 60%);
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  font-size: clamp(8px, 2.5vw, 12px);
+  font-size: 12px;
   font-weight: bold;
-  line-height: min(30px, 60%);
+  line-height: 30px;
   text-align: center;
   z-index: 2;
   box-shadow: 0 0 6px rgba(0,0,0,0.4);
@@ -468,15 +467,15 @@ h1 {
 .taro-spread__empty {
   width: 100%;
   max-width: 44px;
-  min-width: 28px;
-  height: min(44px, calc((100vh - 150px) / 6));
-  min-height: 28px;
+  height: 44px;
   border: 1px dashed rgba(108, 99, 255, 0.2);
   border-radius: 8px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
 }
 #spread::before {
   content: '';
@@ -495,12 +494,12 @@ h1 {
 }
 
 .taro-picked__box {
-  margin-bottom: 110px;
-  margin-top: 18px;
+  margin-bottom: 30px;
+  margin-top: 25px;
   clear: both;
   background: rgba(255,255,255,0.03);
   border-radius: 16px;
-  padding: 14px 0;
+  padding: 20px 0;
   max-width: 95%;
   margin-left: auto;
   margin-right: auto;
@@ -508,9 +507,9 @@ h1 {
   box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .taro-picked__box h3 {
-  margin-bottom: 14px;
+  margin-bottom: 20px;
   color: #a89fff;
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 600;
   text-shadow: 0 0 8px rgba(168, 159, 255, 0.2);
 }
@@ -519,8 +518,8 @@ h1 {
   flex-wrap: wrap;
   gap: 0;
   justify-content: space-between;
-  padding: 12px 6px;
-  margin: 8px 0;
+  padding: 18px 8px;
+  margin: 12px 0;
   border-top: 1px solid rgba(108, 99, 255, 0.15);
   box-sizing: border-box;
 }
@@ -2956,6 +2955,57 @@ window.onload = async () => {
       };
       addHistoryToPending(record);
     }
+  });
+
+  // 13. 动态高度适配 - 适应小屏手机
+  function adjustLayout() {
+    const header = document.querySelector('.taro-float__header');
+    const spread = document.querySelector('.taro-float__spread');
+    const pickedBox = document.querySelector('.taro-picked__box');
+    if (!header || !spread) return;
+
+    const vh = window.innerHeight;
+
+    // 计算 header 中非 spread 部分占据的高度
+    const buttonBar = header.querySelector('.taro-float__button-bar');
+    const infoBar = header.querySelector('.taro-float__info-bar');
+    const leftBtn = header.querySelector('.taro-float__left');
+    const rightBtn = header.querySelector('.taro-float__right');
+
+    let fixedHeight = 0;
+    if (buttonBar) fixedHeight += buttonBar.offsetHeight;
+    if (infoBar) fixedHeight += infoBar.offsetHeight;
+    if (leftBtn) fixedHeight = Math.max(fixedHeight, leftBtn.offsetHeight);
+    if (rightBtn) fixedHeight = Math.max(fixedHeight, rightBtn.offsetHeight);
+
+    // 加上 header 本身的内边距
+    const style = getComputedStyle(header);
+    fixedHeight += parseInt(style.paddingTop) + parseInt(style.paddingBottom);
+
+    // 可用高度 = 视口高度 - 固定部分高度
+    const availableHeight = vh - fixedHeight - 10;
+
+    if (availableHeight > 60) {
+      spread.style.maxHeight = availableHeight + 'px';
+      spread.style.overflowY = 'auto';
+    }
+
+    // 调整已抽牌区域底部边距
+    if (pickedBox) {
+      const headerHeight = header.offsetHeight;
+      pickedBox.style.paddingBottom = (headerHeight + 20) + 'px';
+    }
+  }
+
+  // 初始执行 + 窗口变化时重新计算
+  adjustLayout();
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(adjustLayout, 100);
+  });
+  window.addEventListener('orientationchange', () => {
+    setTimeout(adjustLayout, 300);
   });
 };
 
