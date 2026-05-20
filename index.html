@@ -290,6 +290,7 @@ h1 {
   box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.3);
   min-height: 90px;
   flex-shrink: 0;
+  overflow-y: auto;
 }
 /* 悬浮栏内的左右按钮 */
 .taro-float__header .taro-float__left {
@@ -1201,7 +1202,6 @@ h1 {
 
 @media (max-width: 768px) and (max-height: 668px) {
   .taro-float__header {
-    max-height: 666px;
     overflow-y: auto;
   }
 }
@@ -2860,9 +2860,18 @@ window.onload = async () => {
   updateButtonStatus(); // 更新按钮状态
   setTip("🔮 触摸屏幕，开始塔罗牌占卜"); // 设置初始提示
   
-  // 9. 绑定隐藏/展开按钮事件
+  // 9. 绑定隐藏/展开按钮事件 + 动态撑高
   const toggleBtn = document.getElementById('toggleSpreadBtn');
   const spread = document.querySelector('.taro-float__spread');
+  const headerEl = document.querySelector('.taro-float__header');
+  const topRightEl = document.querySelector('.taro-page__top-right');
+  
+  function updateHeaderHeight() {
+    if (!headerEl || !topRightEl) return;
+    const topRightRect = topRightEl.getBoundingClientRect();
+    const available = window.innerHeight - topRightRect.top;
+    headerEl.style.maxHeight = Math.max(90, available) + 'px';
+  }
   
   if (toggleBtn && spread) {
     toggleBtn.addEventListener('click', () => {
@@ -2873,8 +2882,12 @@ window.onload = async () => {
         spread.style.display = 'none';
         toggleBtn.textContent = '展开';
       }
+      updateHeaderHeight();
     });
   }
+  
+  window.addEventListener('resize', updateHeaderHeight);
+  updateHeaderHeight();
   
   // 10. 绑定编号输入框事件 - 实时更新编号
   if (DOM.cardGroupNumberInput) {
