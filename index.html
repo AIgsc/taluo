@@ -2888,7 +2888,11 @@ window.onload = async () => {
     });
   }
 
-  // 11. 网络状态监听 - 网络恢复时同步所有待同步队列
+  // 11. 网络状态监听
+  window.addEventListener('offline', () => {
+    setTempTip('⚠️ 网络已断开，数据将保存到本地，恢复后自动同步');
+  });
+  
   window.addEventListener('online', async () => {
     setTempTip('✅ 网络已恢复！正在同步数据...');
     if (AUTH_STATE.token) {
