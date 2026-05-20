@@ -2383,8 +2383,12 @@ const cardMeanings = [
 // 数据库牌义缓存（初始化时从 D1 加载，覆盖硬编码的默认值）
 let cardMeaningsFromDB = null;
 
-// 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值
+// 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值，优先显示待同步队列中的内容
 function getCardMeaning(cardId) {
+  const pending = getPendingSync().cardMeanings[cardId];
+  if (pending) {
+    return { ...(cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {}), ...pending };
+  }
   return cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {};
 }
 
@@ -2791,8 +2795,14 @@ function debounce(fn, delay = 500) {
 window.onload = async () => {
   // 0. 初始化认证状态
   const isLoggedIn = loadAuthState();
-  if (isLoggedIn) fetchCardMeanings();
-  
+  if (isLoggedIn) {
+    fetchCardMeanings();
+    // 有网时尝试同步所有待同步内容
+    if (window.navigator.onLine) {
+      await syncAllPending();
+    }
+  }
+
   // 0.1 绑定登录/注册相关事件
   document.getElementById('userBtn').addEventListener('click', () => {
     if (AUTH_STATE.token) {
@@ -2877,6 +2887,60 @@ window.onload = async () => {
       renderPicked();
     });
   }
+
+  // 11. 网络状态监听 - 网络恢复时同步所有待同步队列
+  window.addEventListener('online', async () => {
+    if (AUTH_STATE.token) {
+      await syncAllPending();
+    }
+  });
+
+  // 12. 页面关闭前保存当前编辑内容和历史记录到待同步队列
+  window.addEventListener('beforeunload', () => {
+    // 保存牌义编辑内容
+    if (currentEditingCardId) {
+      const container = document.getElementById('quickQueryTextContent');
+      if (container) {
+        const uprightEl = container.querySelector('.upright');
+        const reversedEl = container.querySelector('.reversed');
+        const patternEl = container.querySelector('.pattern');
+        const old = getCardMeaning(currentEditingCardId);
+
+        const newUpright = uprightEl?.innerHTML || '';
+        const newReversed = reversedEl?.innerHTML || '';
+        const newPattern = patternEl?.innerHTML || '';
+
+        if (newUpright !== old.upright || newReversed !== old.reversed || newPattern !== old.pattern) {
+          addCardMeaningToPending(currentEditingCardId, {
+            name: old.name,
+            upright: newUpright,
+            reversed: newReversed,
+            pattern: newPattern
+          });
+        }
+      }
+    }
+
+    // 保存历史记录到待同步队列（兜底）
+    if (STATE.pickRounds.flat().length > 0 && hasDrawnInSession) {
+      const record = {
+        id: currentSessionId,
+        timestamp: Date.now(),
+        rounds: JSON.parse(JSON.stringify(STATE.pickRounds)),
+        gameState: STATE.gameState,
+        currentRound: STATE.currentRound,
+        fullDeck: JSON.parse(JSON.stringify(STATE.fullDeck)),
+        cachedNumbers: JSON.parse(JSON.stringify(STATE.cachedNumbers)),
+        reSortCount: STATE.reSortCount,
+        lockPicking: STATE.lockPicking,
+        lockCurrentMainDelete: STATE.lockCurrentMainDelete,
+        type: 'auto',
+        title: currentSessionTitle,
+        sessionId: currentSessionId
+      };
+      addHistoryToPending(record);
+    }
+  });
 };
 
 // 全局状态提示
@@ -3265,7 +3329,7 @@ function pickCard(index) {
     if (!autoSaveStarted) {
       startAutoSave();
     }
-    smartAutoSave();
+    saveHistory();
   }
 
 }
@@ -3412,7 +3476,7 @@ function deleteMainCard(roundIdx, groupIdx) {
   updateUI();
   
   hasDrawnInSession = true;
-  smartAutoSave();
+  saveHistory();
   clearQuickPickInput();
 }
 
@@ -3470,7 +3534,7 @@ function deleteSupportCard(roundIdx, groupIdx, supIdx) {
   updateUI();
   
   hasDrawnInSession = true;
-  smartAutoSave();
+  saveHistory();
   clearQuickPickInput();
 }
 
@@ -3578,6 +3642,7 @@ function startNewRound() {
   if(STATE.gameState !== CONFIG.GAME_STATES.SPREAD) { setTempTip("🔮 请先平铺卡牌！"); return; }
   if(!confirm("🔮 确定【重新排序】？")) return;
 
+  clearHistoryFromPending(); // 开始新问题，只清空历史记录待同步（牌义还要继续保留）
   STATE.currentRound++;
   STATE.pickRounds.push([]);
   STATE.lockCurrentMainDelete = false;
@@ -3845,7 +3910,6 @@ let lastStateHash = '';
 let autoSaveStarted = false; // 是否已开始自动保存
 let hasDrawnInSession = false; // 是否在这个会话里主动操作过
 let historyCache = null; // 前端内存缓存：只在增删改后刷新
-let cardMeaningSaveTimer = null; // 牌义编辑防抖定时器，切换卡片时需清除
 
 function initSession() {
   currentSessionId = 'auto_' + Date.now().toString();
@@ -3877,41 +3941,50 @@ function startAutoSave() {
   }
 }
 
-// 智能自动保存（覆盖当前会话记录）
-async function smartAutoSave() {
-  if (!autoSaveStarted || !hasDrawnInSession || !AUTH_STATE.token) {
+// 保存历史记录（抽牌/撤销后调用）
+async function saveHistory() {
+  if (!autoSaveStarted || !hasDrawnInSession || STATE.pickRounds.flat().length === 0) {
     return;
   }
-  
+
+  const currentStateHash = getStateHash();
+  if (currentStateHash === lastStateHash) {
+    await syncAllPending();
+    return;
+  }
+
+  const newRecord = {
+    id: currentSessionId,
+    timestamp: Date.now(),
+    rounds: JSON.parse(JSON.stringify(STATE.pickRounds)),
+    gameState: STATE.gameState,
+    currentRound: STATE.currentRound,
+    fullDeck: JSON.parse(JSON.stringify(STATE.fullDeck)),
+    cachedNumbers: JSON.parse(JSON.stringify(STATE.cachedNumbers)),
+    reSortCount: STATE.reSortCount,
+    lockPicking: STATE.lockPicking,
+    lockCurrentMainDelete: STATE.lockCurrentMainDelete,
+    type: 'auto',
+    title: currentSessionTitle
+  };
+
+  if (!AUTH_STATE.token) {
+    // 未登录，只保存到本地队列
+    addHistoryToPending(newRecord);
+    lastStateHash = currentStateHash;
+    return;
+  }
+
   try {
-    const currentStateHash = getStateHash();
-    
-    if (currentStateHash === lastStateHash) {
-      return;
-    }
-    
-    const newRecord = {
-      id: currentSessionId,
-      timestamp: Date.now(),
-      rounds: JSON.parse(JSON.stringify(STATE.pickRounds)),
-      gameState: STATE.gameState,
-      currentRound: STATE.currentRound,
-      fullDeck: JSON.parse(JSON.stringify(STATE.fullDeck)),
-      cachedNumbers: JSON.parse(JSON.stringify(STATE.cachedNumbers)),
-      reSortCount: STATE.reSortCount,
-      lockPicking: STATE.lockPicking,
-      lockCurrentMainDelete: STATE.lockCurrentMainDelete,
-      type: 'auto',
-      title: currentSessionTitle
-    };
-    
-    if (STATE.pickRounds.flat().length > 0) {
-      await saveRecordToApi(newRecord);
-      historyCache = null; // 数据有变，清除缓存
-      lastStateHash = currentStateHash;
-    }
-  } catch (error) {
-    console.error('自动保存失败:', error);
+    await saveRecordToApi(newRecord);
+    historyCache = null;
+    lastStateHash = currentStateHash;
+    clearHistoryFromPending();
+    await syncAllPending(); // 保存成功后，同步其他待同步内容
+  } catch {
+    // 网络失败，保存到队列
+    addHistoryToPending(newRecord);
+    lastStateHash = currentStateHash;
   }
 }
 
@@ -3922,7 +3995,7 @@ async function saveCurrentState() {
     openAuthModal();
     return;
   }
-  
+
   try {
     const newRecord = {
       id: 'manual_' + Date.now().toString(),
@@ -3938,9 +4011,11 @@ async function saveCurrentState() {
       type: 'manual',
       title: ''
     };
-    
+
     await saveRecordToApi(newRecord);
-    historyCache = null; // 清除缓存
+    historyCache = null;
+    clearHistoryFromPending();
+    await syncAllPending();
     setTempTip('✨ 手动保存成功！');
   } catch (error) {
     setTempTip('❌ 保存失败: ' + (error.message || '未知错误'));
@@ -4103,6 +4178,7 @@ async function restoreState(id) {
     
     if (record) {
       initSession();
+      clearPendingSync(); // 从服务器恢复历史，清空待同步队列
       
       STATE.pickRounds = JSON.parse(JSON.stringify(record.rounds));
       STATE.gameState = record.gameState;
@@ -4289,7 +4365,11 @@ function openQuickQuery() {
 
 // 显示牌的详细信息（支持直接编辑 + 失焦自动保存）
 function showQuickQueryDetail(cardId) {
-  clearTimeout(cardMeaningSaveTimer);
+  // 切换卡片前先保存前一张
+  if (currentEditingCardId && currentEditingCardId !== cardId) {
+    saveCardMeaning(currentEditingCardId);
+  }
+  currentEditingCardId = cardId;
   const container = document.getElementById('quickQueryDetail');
   const cardInfo = getCardMeaning(cardId);
   const cardImage = cardImages[cardId];
@@ -4337,40 +4417,156 @@ function showQuickQueryDetail(cardId) {
       document.execCommand('insertText', false, text);
       saveCardMeaning(cardId);
     });
-    
-    // 编辑即保存：停止输入后自动保存
-    el.addEventListener('input', () => {
-      clearTimeout(cardMeaningSaveTimer);
-      cardMeaningSaveTimer = setTimeout(() => saveCardMeaning(cardId), 500);
-    });
   });
+}
+
+// ------------------------------
+// 统一待同步队列管理
+// ------------------------------
+let currentEditingCardId = null;
+const PENDING_SYNC_KEY = 'pendingSync';
+
+function getPendingSync() {
+  try {
+    const raw = localStorage.getItem(PENDING_SYNC_KEY);
+    return raw ? JSON.parse(raw) : { cardMeanings: {}, history: null };
+  } catch {
+    return { cardMeanings: {}, history: null };
+  }
+}
+
+function savePendingSync(pending) {
+  localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pending));
+}
+
+function clearPendingSync() {
+  localStorage.removeItem(PENDING_SYNC_KEY);
+}
+
+function addCardMeaningToPending(cardId, meaning) {
+  const pending = getPendingSync();
+  pending.cardMeanings[cardId] = meaning;
+  savePendingSync(pending);
+}
+
+function removeCardMeaningFromPending(cardId) {
+  const pending = getPendingSync();
+  delete pending.cardMeanings[cardId];
+  savePendingSync(pending);
+}
+
+function addHistoryToPending(record) {
+  const pending = getPendingSync();
+  pending.history = record;
+  savePendingSync(pending);
+}
+
+function clearHistoryFromPending() {
+  const pending = getPendingSync();
+  pending.history = null;
+  savePendingSync(pending);
+}
+
+// 同步所有待同步内容
+async function syncAllPending() {
+  if (!AUTH_STATE.token) return;
+
+  const pending = getPendingSync();
+  let allSynced = true;
+
+  // 1. 同步牌义
+  const cardIds = Object.keys(pending.cardMeanings).map(Number);
+  if (cardIds.length > 0) {
+    for (const cardId of cardIds) {
+      try {
+        const meaning = pending.cardMeanings[cardId];
+        await updateCardMeaningApi(cardId, meaning);
+        if (cardMeaningsFromDB) {
+          if (!cardMeaningsFromDB[cardId]) {
+            cardMeaningsFromDB[cardId] = getCardMeaning(cardId);
+          }
+          cardMeaningsFromDB[cardId].upright = meaning.upright;
+          cardMeaningsFromDB[cardId].reversed = meaning.reversed;
+          cardMeaningsFromDB[cardId].pattern = meaning.pattern;
+        }
+        removeCardMeaningFromPending(cardId);
+      } catch {
+        allSynced = false;
+        break;
+      }
+    }
+  }
+
+  // 2. 同步历史记录
+  if (pending.history && allSynced) {
+    try {
+      await saveRecordToApi(pending.history);
+      historyCache = null;
+      clearHistoryFromPending();
+    } catch {
+      allSynced = false;
+    }
+  }
+}
+
+// 从待同步队列恢复历史记录
+function restoreHistoryFromPending() {
+  const pending = getPendingSync();
+  if (!pending.history) return false;
+
+  try {
+    const record = pending.history;
+    STATE.pickRounds = record.rounds;
+    STATE.gameState = record.gameState;
+    STATE.currentRound = record.currentRound;
+    STATE.fullDeck = record.fullDeck;
+    STATE.cachedNumbers = record.cachedNumbers;
+    STATE.reSortCount = record.reSortCount;
+    STATE.lockPicking = record.lockPicking;
+    STATE.lockCurrentMainDelete = record.lockCurrentMainDelete;
+
+    if (record.sessionId) {
+      currentSessionId = record.sessionId;
+    }
+    if (record.title) {
+      currentSessionTitle = record.title;
+    }
+
+    lastStateHash = '';
+    hasDrawnInSession = true;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // 保存牌义（失焦时调用，收集所有可编辑字段）
 async function saveCardMeaning(cardId) {
   const activeBtn = document.querySelector('.quick-query-card-btn.active');
   if (!activeBtn || parseInt(activeBtn.dataset.cardId) !== cardId) return;
-  
+
   const container = document.getElementById('quickQueryTextContent');
   const uprightEl = container.querySelector('.upright');
   const reversedEl = container.querySelector('.reversed');
   const patternEl = container.querySelector('.pattern');
-  
+
   const newUpright = uprightEl.innerHTML;
   const newReversed = reversedEl.innerHTML;
   const newPattern = patternEl.innerHTML;
   const old = getCardMeaning(cardId);
-  
+
   if (newUpright === old.upright && newReversed === old.reversed && newPattern === old.pattern) return;
-  
+
+  const meaning = {
+    name: old.name,
+    upright: newUpright,
+    reversed: newReversed,
+    pattern: newPattern
+  };
+
   try {
-    await updateCardMeaningApi(cardId, {
-      name: old.name,
-      upright: newUpright,
-      reversed: newReversed,
-      pattern: newPattern
-    });
-    
+    await updateCardMeaningApi(cardId, meaning);
+
     if (cardMeaningsFromDB) {
       if (!cardMeaningsFromDB[cardId]) {
         cardMeaningsFromDB[cardId] = { ...old };
@@ -4379,8 +4575,11 @@ async function saveCardMeaning(cardId) {
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
     }
+    removeCardMeaningFromPending(cardId);
+    await syncAllPending(); // 保存成功后，尝试同步其他待同步内容
   } catch (e) {
-    setTempTip('❌ 保存失败');
+    addCardMeaningToPending(cardId, meaning);
+    setTempTip('⚠️ 网络异常，已暂存本地，网络恢复后自动同步');
   }
 }
 
@@ -4396,7 +4595,10 @@ function toggleQuickQueryText() {
 
 // 关闭快速查询
 function closeQuickQueryModal() {
-  clearTimeout(cardMeaningSaveTimer);
+  if (currentEditingCardId) {
+    saveCardMeaning(currentEditingCardId);
+  }
+  currentEditingCardId = null;
   document.getElementById('quickQueryModal').style.display = 'none';
   document.body.style.overflow = 'auto';
 }
@@ -4545,10 +4747,6 @@ function quickPickByNumbers() {
     return;
   }
   
-  if (STATE.reSortCount === 0) {
-    STATE.pickRounds.forEach(round => round.forEach(g => g.checked = false));
-  }
-  
   btn.disabled = true;
   
   let pickedCount = 0;
@@ -4582,13 +4780,6 @@ window.addEventListener('load', () => {
   });
   document.getElementById('quickPickInput').addEventListener('input', updateQuickPickPreview);
 });
-
-// 页面关闭前保存
-window.addEventListener('beforeunload', smartAutoSave);
-window.addEventListener('pagehide', smartAutoSave);
-
-// 定期自动保存（核心保存逻辑）
-setInterval(smartAutoSave, 5000);
 </script>
 </body>
 </html>
