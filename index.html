@@ -289,9 +289,7 @@ h1 {
   gap: 8px;
   box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.3);
   min-height: 90px;
-  max-height: 50vh;
   overflow-y: auto;
-  flex-shrink: 0;
   -webkit-overflow-scrolling: touch;
 }
 /* 悬浮栏内的左右按钮 */
@@ -2794,15 +2792,8 @@ function adjustViewportLayout() {
   const vv = window.visualViewport;
   if (!vv) return;
 
-  // body 高度 = 实际可视高度（排除浏览器搜索条）
-  const actualHeight = vv.height;
-  document.body.style.minHeight = actualHeight + 'px';
-
-  // 底部悬浮栏高度不超过可视区域的 55%
-  const header = document.querySelector('.taro-float__header');
-  if (header) {
-    header.style.maxHeight = Math.round(actualHeight * 0.55) + 'px';
-  }
+  // 用实际可视高度覆盖 100vh，排除搜索条占用的空间
+  document.body.style.minHeight = vv.height + 'px';
 }
 
 // 监听可视区域变化（浏览器搜索条出现/消失时自动调整）
