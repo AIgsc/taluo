@@ -289,7 +289,10 @@ h1 {
   gap: 8px;
   box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.3);
   min-height: 90px;
+  max-height: 50vh;
+  overflow-y: auto;
   flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
 }
 /* 悬浮栏内的左右按钮 */
 .taro-float__header .taro-float__left {
@@ -494,7 +497,7 @@ h1 {
 }
 
 .taro-picked__box {
-  margin-bottom: 30px;
+  margin-bottom: 300px;
   margin-top: 25px;
   clear: both;
   background: rgba(255,255,255,0.03);
@@ -1193,7 +1196,12 @@ h1 {
   .taro-float__button-bar {
     gap: 5px;
   }
+  .taro-picked__box {
+    margin-bottom: 100px;
+  }
 }
+
+
 
 
 /* 快速查询模态框 - 重新设计，一屏显示 */
@@ -2781,8 +2789,32 @@ function debounce(fn, delay = 500) {
   };
 }
 
+// 根据实际可视区域调整布局（解决浏览器搜索条导致的溢出）
+function adjustViewportLayout() {
+  const vv = window.visualViewport;
+  if (!vv) return;
+
+  // body 高度 = 实际可视高度（排除浏览器搜索条）
+  const actualHeight = vv.height;
+  document.body.style.minHeight = actualHeight + 'px';
+
+  // 底部悬浮栏高度不超过可视区域的 55%
+  const header = document.querySelector('.taro-float__header');
+  if (header) {
+    header.style.maxHeight = Math.round(actualHeight * 0.55) + 'px';
+  }
+}
+
+// 监听可视区域变化（浏览器搜索条出现/消失时自动调整）
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', adjustViewportLayout);
+}
+
 // 页面加载 - 初始化流程
 window.onload = async () => {
+  // 调整布局适配实际可视高度
+  adjustViewportLayout();
+
   // 0. 初始化认证状态
   const isLoggedIn = loadAuthState();
   if (isLoggedIn) {
@@ -2955,57 +2987,6 @@ window.onload = async () => {
       };
       addHistoryToPending(record);
     }
-  });
-
-  // 13. 动态高度适配 - 适应小屏手机
-  function adjustLayout() {
-    const header = document.querySelector('.taro-float__header');
-    const spread = document.querySelector('.taro-float__spread');
-    const pickedBox = document.querySelector('.taro-picked__box');
-    if (!header || !spread) return;
-
-    const vh = window.innerHeight;
-
-    // 计算 header 中非 spread 部分占据的高度
-    const buttonBar = header.querySelector('.taro-float__button-bar');
-    const infoBar = header.querySelector('.taro-float__info-bar');
-    const leftBtn = header.querySelector('.taro-float__left');
-    const rightBtn = header.querySelector('.taro-float__right');
-
-    let fixedHeight = 0;
-    if (buttonBar) fixedHeight += buttonBar.offsetHeight;
-    if (infoBar) fixedHeight += infoBar.offsetHeight;
-    if (leftBtn) fixedHeight = Math.max(fixedHeight, leftBtn.offsetHeight);
-    if (rightBtn) fixedHeight = Math.max(fixedHeight, rightBtn.offsetHeight);
-
-    // 加上 header 本身的内边距
-    const style = getComputedStyle(header);
-    fixedHeight += parseInt(style.paddingTop) + parseInt(style.paddingBottom);
-
-    // 可用高度 = 视口高度 - 固定部分高度
-    const availableHeight = vh - fixedHeight - 10;
-
-    if (availableHeight > 60) {
-      spread.style.maxHeight = availableHeight + 'px';
-      spread.style.overflowY = 'auto';
-    }
-
-    // 调整已抽牌区域底部边距
-    if (pickedBox) {
-      const headerHeight = header.offsetHeight;
-      pickedBox.style.paddingBottom = (headerHeight + 20) + 'px';
-    }
-  }
-
-  // 初始执行 + 窗口变化时重新计算
-  adjustLayout();
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(adjustLayout, 100);
-  });
-  window.addEventListener('orientationchange', () => {
-    setTimeout(adjustLayout, 300);
   });
 };
 
