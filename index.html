@@ -2797,9 +2797,9 @@ window.onload = async () => {
   const isLoggedIn = loadAuthState();
   if (isLoggedIn) {
     fetchCardMeanings();
-    // 有网时尝试同步所有待同步内容
+    // 有网时后台同步待队列，不阻塞页面加载
     if (window.navigator.onLine) {
-      await syncAllPending();
+      syncAllPending();
     }
   }
 
