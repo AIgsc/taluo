@@ -2740,21 +2740,37 @@ async function deleteRecordApi(recordId) {
 // ==================== 牌义数据 API ====================
 
 // 从 D1 加载牌义数据（需登录），若数据库为空则自动从硬编码数据初始化
+// 首次加载时：本地优先，合并服务器数据
 async function fetchCardMeanings() {
   if (!AUTH_STATE.token) return;
   try {
-    const data = await apiRequest(API_CONFIG.endpoints.cardMeanings);
+    let serverData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
     
-    if (!data || Object.keys(data).length === 0) {
+    if (!serverData || Object.keys(serverData).length === 0) {
       await seedCardMeanings();
-      const seededData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
-      cardMeaningsFromDB = seededData || null;
-    } else {
-      cardMeaningsFromDB = data;
+      serverData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
     }
+    
+    // 合并本地和服务器，本地优先
+    const localData = loadLocalCardMeanings();
+    if (serverData && localData) {
+      cardMeaningsFromDB = { ...serverData };
+      for (const cardId in localData) {
+        if (localData[cardId]) {
+          cardMeaningsFromDB[cardId] = localData[cardId];
+        }
+      }
+    } else if (localData) {
+      cardMeaningsFromDB = localData;
+    } else {
+      cardMeaningsFromDB = serverData;
+    }
+    
+    saveLocalCardMeanings(); // 立即保存合并后的数据到本地
   } catch (e) {
-    console.warn('从数据库加载牌义失败，使用本地默认数据:', e.message);
-    cardMeaningsFromDB = null;
+    console.warn('从数据库加载牌义失败，使用本地数据:', e.message);
+    const localData = loadLocalCardMeanings();
+    cardMeaningsFromDB = localData || null;
   }
 }
 
@@ -2935,7 +2951,7 @@ window.onload = async () => {
 
   // 12. 页面关闭前保存当前编辑内容和历史记录到待同步队列
   window.addEventListener('beforeunload', () => {
-    // 保存牌义编辑内容
+    // 保存牌义编辑内容（优先立即保存到本地）
     if (currentEditingCardId) {
       const container = document.getElementById('quickQueryTextContent');
       if (container) {
@@ -2949,6 +2965,17 @@ window.onload = async () => {
         const newPattern = patternEl?.innerHTML || '';
 
         if (newUpright !== old.upright || newReversed !== old.reversed || newPattern !== old.pattern) {
+          // 立即更新本地
+          if (cardMeaningsFromDB) {
+            if (!cardMeaningsFromDB[currentEditingCardId]) {
+              cardMeaningsFromDB[currentEditingCardId] = { ...old };
+            }
+            cardMeaningsFromDB[currentEditingCardId].upright = newUpright;
+            cardMeaningsFromDB[currentEditingCardId].reversed = newReversed;
+            cardMeaningsFromDB[currentEditingCardId].pattern = newPattern;
+            saveLocalCardMeanings();
+          }
+          
           addCardMeaningToPending(currentEditingCardId, {
             name: old.name,
             upright: newUpright,
@@ -4401,9 +4428,14 @@ function openQuickQuery() {
   document.body.style.overflow = 'hidden';
 }
 
+// 防抖函数
+let localSaveTimer = null;
+
 // 显示牌的详细信息（支持直接编辑 + 失焦自动保存）
 function showQuickQueryDetail(cardId) {
-  // 切换卡片前先保存前一张
+  // 切换卡片前：清除旧 timer（防止旧 timer 读取新 DOM 写入旧 cardId）
+  if (localSaveTimer) { clearTimeout(localSaveTimer); localSaveTimer = null; }
+  // 保存前一张牌
   if (currentEditingCardId && currentEditingCardId !== cardId) {
     saveCardMeaning(currentEditingCardId);
   }
@@ -4447,15 +4479,68 @@ function showQuickQueryDetail(cardId) {
     </div>
   `;
   
+  // 打字 0.1 秒后立即更新本地
+  function updateLocalImmediately() {
+    if (localSaveTimer) clearTimeout(localSaveTimer);
+    localSaveTimer = setTimeout(() => {
+      const contentContainer = document.getElementById('quickQueryTextContent');
+      if (!contentContainer) return;
+      const uprightEl = contentContainer.querySelector('.upright');
+      const reversedEl = contentContainer.querySelector('.reversed');
+      const patternEl = contentContainer.querySelector('.pattern');
+      const newUpright = uprightEl.innerHTML;
+      const newReversed = reversedEl.innerHTML;
+      const newPattern = patternEl.innerHTML;
+      
+      if (cardMeaningsFromDB) {
+        const old = getCardMeaning(cardId);
+        if (!cardMeaningsFromDB[cardId]) {
+          cardMeaningsFromDB[cardId] = { ...old };
+        }
+        cardMeaningsFromDB[cardId].upright = newUpright;
+        cardMeaningsFromDB[cardId].reversed = newReversed;
+        cardMeaningsFromDB[cardId].pattern = newPattern;
+        saveLocalCardMeanings();
+      }
+    }, 100);
+  }
+  
   // 强制可编辑区域粘贴纯文本，不带格式
   container.querySelectorAll('.pattern-editable').forEach(el => {
     el.addEventListener('paste', (e) => {
       e.preventDefault();
       const text = e.clipboardData.getData('text/plain');
       document.execCommand('insertText', false, text);
-      saveCardMeaning(cardId);
+      updateLocalImmediately(); // 先立即更新本地
+      saveCardMeaning(cardId); // 再尝试提交网络
     });
+    el.addEventListener('input', updateLocalImmediately);
   });
+}
+
+// ------------------------------
+// 本地牌义持久化
+// ------------------------------
+const LOCAL_CARD_MEANINGS_KEY = 'localCardMeanings';
+
+function saveLocalCardMeanings() {
+  try {
+    if (cardMeaningsFromDB) {
+      localStorage.setItem(LOCAL_CARD_MEANINGS_KEY, JSON.stringify(cardMeaningsFromDB));
+    }
+  } catch (e) {
+    console.error('本地牌义保存失败', e);
+  }
+}
+
+function loadLocalCardMeanings() {
+  try {
+    const raw = localStorage.getItem(LOCAL_CARD_MEANINGS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.error('本地牌义读取失败', e);
+    return null;
+  }
 }
 
 // ------------------------------
@@ -4578,7 +4663,7 @@ function restoreHistoryFromPending() {
   }
 }
 
-// 保存牌义（失焦时调用，收集所有可编辑字段）
+// 保存牌义到服务器（失焦时调用，收集所有可编辑字段）
 async function saveCardMeaning(cardId) {
   const activeBtn = document.querySelector('.quick-query-card-btn.active');
   if (!activeBtn || parseInt(activeBtn.dataset.cardId) !== cardId) return;
@@ -4602,9 +4687,11 @@ async function saveCardMeaning(cardId) {
     pattern: newPattern
   };
 
+  // 本地已经是最新，不需要再更新，直接提交网络
   try {
     await updateCardMeaningApi(cardId, meaning);
-
+    removeCardMeaningFromPending(cardId);
+    // 确保本地缓存与服务端同步
     if (cardMeaningsFromDB) {
       if (!cardMeaningsFromDB[cardId]) {
         cardMeaningsFromDB[cardId] = { ...old };
@@ -4612,8 +4699,8 @@ async function saveCardMeaning(cardId) {
       cardMeaningsFromDB[cardId].upright = newUpright;
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
+      saveLocalCardMeanings();
     }
-    removeCardMeaningFromPending(cardId);
     await syncAllPending(); // 保存成功后，尝试同步其他待同步内容
   } catch (e) {
     addCardMeaningToPending(cardId, meaning);
@@ -4633,6 +4720,8 @@ function toggleQuickQueryText() {
 
 // 关闭快速查询
 function closeQuickQueryModal() {
+  // 清除防抖 timer
+  if (localSaveTimer) { clearTimeout(localSaveTimer); localSaveTimer = null; }
   if (currentEditingCardId) {
     saveCardMeaning(currentEditingCardId);
   }
