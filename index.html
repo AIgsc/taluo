@@ -2766,7 +2766,15 @@ async function deleteRecordApi(recordId) {
 // 首次加载时：本地优先，合并服务器数据
 async function fetchCardMeanings() {
   if (!AUTH_STATE.token) return;
+  
+  // 第一步：先读取本地，快速显示
+  const localData = loadLocalCardMeanings();
+  if (localData) {
+    cardMeaningsFromDB = localData;
+  }
+  
   try {
+    // 第二步：后台请求数据库最新内容
     let serverData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
     
     if (!serverData || Object.keys(serverData).length === 0) {
@@ -2774,26 +2782,75 @@ async function fetchCardMeanings() {
       serverData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
     }
     
-    // 合并本地和服务器，本地优先
-    const localData = loadLocalCardMeanings();
-    if (serverData && localData) {
-      cardMeaningsFromDB = { ...serverData };
-      for (const cardId in localData) {
-        if (localData[cardId]) {
-          cardMeaningsFromDB[cardId] = localData[cardId];
+    // 第三步：对比本地和数据库
+    let needUpdateLocal = false;
+    let needRefreshUI = false;
+    const pendingData = loadPendingSyncMeanings(); // 读取待同步队列，看看哪些是本地刚修改的
+    
+    if (serverData) {
+      const finalData = {};
+      
+      for (let cardId = 1; cardId <= 78; cardId++) {
+        const serverMeaning = serverData[cardId];
+        const localMeaning = localData ? localData[cardId] : null;
+        
+        // 检查是否有本地待同步（说明是这个设备刚修改的）
+        const hasPending = pendingData && pendingData[cardId];
+        
+        if (hasPending) {
+          // 有本地待同步，优先用本地（等下同步的时候会推送给数据库）
+          finalData[cardId] = localMeaning || serverMeaning;
+          needUpdateLocal = true;
+        } else if (localMeaning && serverMeaning) {
+          // 没有待同步，对比内容
+          const localStr = JSON.stringify(localMeaning);
+          const serverStr = JSON.stringify(serverMeaning);
+          if (localStr !== serverStr) {
+            // 数据库更新了，用数据库的
+            finalData[cardId] = serverMeaning;
+            needUpdateLocal = true;
+            needRefreshUI = true;
+          } else {
+            // 内容一致，用哪个都一样
+            finalData[cardId] = localMeaning;
+          }
+        } else if (serverMeaning) {
+          // 本地没有，用数据库的
+          finalData[cardId] = serverMeaning;
+          needUpdateLocal = true;
+          needRefreshUI = true;
+        } else {
+          // 都没有
+          finalData[cardId] = null;
         }
       }
-    } else if (localData) {
-      cardMeaningsFromDB = localData;
-    } else {
-      cardMeaningsFromDB = serverData;
+      
+      // 更新内存
+      cardMeaningsFromDB = finalData;
+      
+      // 保存到本地
+      if (needUpdateLocal) {
+        saveLocalCardMeanings();
+      }
+      
+      // 如果数据库更新了，刷新当前UI
+      if (needRefreshUI) {
+        // 如果快速查询弹窗开着，更新当前显示的牌义
+        if (DOM.quickQueryCardList && DOM.quickQueryCardList.style.display !== 'none') {
+          const activeBtn = document.querySelector('.quick-query-card-btn.active');
+          if (activeBtn) {
+            const cardId = parseInt(activeBtn.dataset.cardId);
+            if (currentEditingCardId === cardId) {
+              // 只需要重新渲染一下当前内容
+              showQuickQueryDetail(cardId);
+            }
+          }
+        }
+      }
     }
-    
-    saveLocalCardMeanings(); // 立即保存合并后的数据到本地
   } catch (e) {
     console.warn('从数据库加载牌义失败，使用本地数据:', e.message);
-    const localData = loadLocalCardMeanings();
-    cardMeaningsFromDB = localData || null;
+    // 网络失败，继续用本地数据，不做任何覆盖
   }
 }
 
@@ -4598,6 +4655,20 @@ function showQuickQueryDetail(cardId) {
 // 本地牌义持久化
 // ------------------------------
 const LOCAL_CARD_MEANINGS_KEY = 'localCardMeanings';
+
+function loadPendingSyncMeanings() {
+  try {
+    const pending = localStorage.getItem('pendingSync');
+    if (pending) {
+      const data = JSON.parse(pending);
+      return data.cardMeanings || {};
+    }
+    return {};
+  } catch (e) {
+    console.error('读取待同步牌义失败', e);
+    return {};
+  }
+}
 
 function saveLocalCardMeanings() {
   try {
