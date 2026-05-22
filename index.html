@@ -1432,6 +1432,29 @@ h1 {
   opacity: 0.7;
 }
 
+.quick-query-actions {
+  width: 100%;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.quick-query-export-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-query-export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
 </style>
 </head>
 <body>
@@ -2795,6 +2818,60 @@ async function updateCardMeaningApi(cardId, meaning) {
     method: 'PUT',
     body: JSON.stringify(meaning)
   });
+}
+
+// ------------------------------
+// 牌义导出功能
+// ------------------------------
+function exportAllCardMeanings() {
+  try {
+    // 优先用 localStorage 里的牌义（持久化存储，最新）
+    let meaningsData = loadLocalCardMeanings();
+    
+    // 如果 localStorage 里没有，用内存里的 cardMeaningsFromDB
+    if (!meaningsData || Object.keys(meaningsData).length === 0) {
+      meaningsData = cardMeaningsFromDB;
+    }
+    
+    if (!meaningsData || Object.keys(meaningsData).length === 0) {
+      setTempTip('⚠️ 没有牌义数据可导出');
+      return;
+    }
+    
+    // 转换成数组，按 cardId 1-78 排序
+    const arrayData = [];
+    for (let cardId = 1; cardId <= 78; cardId++) {
+      const meaning = meaningsData[cardId];
+      if (meaning) {
+        arrayData.push({
+          name: meaning.name || '',
+          upright: meaning.upright || '',
+          reversed: meaning.reversed || '',
+          pattern: meaning.pattern || ''
+        });
+      }
+    }
+    
+    // 生成和 index.html 结构完全一致的内容
+    const content = `const cardMeanings = ${JSON.stringify(arrayData, null, 2)};`;
+    
+    // 创建下载链接
+    const blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `card-meanings-${new Date().toISOString().slice(0, 10)}.js`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setTempTip('✅ 牌义导出成功！');
+  } catch (e) {
+    console.error('导出失败:', e);
+    setTempTip('❌ 导出失败，请重试');
+  }
 }
 
 // 全局防抖函数
@@ -4479,6 +4556,11 @@ function showQuickQueryDetail(cardId) {
         </div>
       </div>
     </div>
+    ${isLoggedIn ? `
+      <div class="quick-query-actions">
+        <button id="exportCardMeaningsBtn" class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button>
+      </div>
+    ` : ''}
   `;
   
   // 打字 0.1 秒后立即更新本地
