@@ -2797,7 +2797,10 @@ async function fetchCardMeanings() {
         // 找到这三个里最新的时间戳
         const maxTime = Math.max(localTime, serverTime, pendingTime);
         
-        if (maxTime === pendingTime) {
+        if (maxTime === 0) {
+          // 三个地方都没数据 → null
+          finalData[cardId] = null;
+        } else if (maxTime === pendingTime) {
           // pending 数据最新 → 用 pending，加入队列保留（syncAllPending同步
           finalData[cardId] = pendingMeaning;
           if (!pending.cardMeanings[cardId]) {
@@ -2812,8 +2815,8 @@ async function fetchCardMeanings() {
           }
           needUpdateLocal = true;
           needRefreshUI = true;
-        } else if (maxTime === localTime) {
-          // 本地数据最新（且服务器没有或旧 → 用本地，加入 pending（如果没有）
+        } else {
+          // 本地数据最新 → 用本地，加入 pending（如果没有）
           finalData[cardId] = localMeaning;
           if (!pending.cardMeanings[cardId]) {
             addCardMeaningToPending(cardId, localMeaning);
