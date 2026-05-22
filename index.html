@@ -3121,7 +3121,8 @@ window.onload = async () => {
             name: old.name,
             upright: newUpright,
             reversed: newReversed,
-            pattern: newPattern
+            pattern: newPattern,
+            updated_at: Date.now()
           });
         }
       }
@@ -4838,7 +4839,8 @@ async function saveCardMeaning(cardId) {
     name: old.name,
     upright: newUpright,
     reversed: newReversed,
-    pattern: newPattern
+    pattern: newPattern,
+    updated_at: Date.now()
   };
 
   // 本地已经是最新，不需要再更新，直接提交网络
