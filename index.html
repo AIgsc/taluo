@@ -3007,15 +3007,7 @@ window.onload = async () => {
       await syncAllPending();
     }
     
-    // 重新加载所有图片（强制刷新）
-    const images = document.querySelectorAll('img');
-    const timestamp = Date.now();
-    images.forEach(img => {
-      const originalSrc = img.src.split('?')[0];
-      img.src = originalSrc + '?t=' + timestamp;
-    });
-    
-    // 重新渲染关键内容
+    // 重新渲染关键内容（图片浏览器自己处理缓存）
     if (STATE.gameState === CONFIG.GAME_STATES.SHUFFLED) {
       renderStack();
     } else if (STATE.gameState === CONFIG.GAME_STATES.SPREAD) {
@@ -3025,7 +3017,7 @@ window.onload = async () => {
     renderPicked();
     updateButtonStatus();
     
-    setTempTip('✅ 数据同步完成！资源已重新加载');
+    setTempTip('✅ 数据同步完成！');
   });
 
   // 12. 页面关闭前保存当前编辑内容和历史记录到待同步队列
