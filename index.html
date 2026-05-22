@@ -2406,12 +2406,8 @@ const cardMeanings = [
 // 数据库牌义缓存（初始化时从 D1 加载，覆盖硬编码的默认值）
 let cardMeaningsFromDB = null;
 
-// 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值，优先显示待同步队列中的内容
+// 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值
 function getCardMeaning(cardId) {
-  const pending = getPendingSync().cardMeanings[cardId];
-  if (pending) {
-    return { ...(cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {}), ...pending };
-  }
   return cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {};
 }
 
@@ -2793,31 +2789,22 @@ async function fetchCardMeanings() {
       for (let cardId = 1; cardId <= 78; cardId++) {
         const serverMeaning = serverData[cardId];
         const localMeaning = localData ? localData[cardId] : null;
+        const pendingMeaning = pending.cardMeanings[cardId];
+        const pendingTime = pendingMeaning?.updated_at || 0;
+        const localTime = localMeaning?.updated_at || 0;
+        const serverTime = serverMeaning?.updated_at || 0;
         
-        if (localMeaning && serverMeaning) {
-          const localTime = localMeaning.updated_at || 0;
-          const serverTime = serverMeaning.updated_at || 0;
-          
-          if (localTime > serverTime) {
-            // 本地更新 → 保持本地，加入待同步队列（syncAllPending 统一推送）
-            finalData[cardId] = localMeaning;
-            if (!pending.cardMeanings[cardId]) {
-              addCardMeaningToPending(cardId, localMeaning);
-            }
-          } else if (serverTime > localTime) {
-            // 服务器更新 → 用服务器的，更新本地缓存
-            finalData[cardId] = serverMeaning;
-            if (pending.cardMeanings[cardId]) {
-              delete pending.cardMeanings[cardId];
-              savePendingSync(pending);
-            }
-            needUpdateLocal = true;
-            needRefreshUI = true;
-          } else {
-            finalData[cardId] = localMeaning;
+        // 找到这三个里最新的时间戳
+        const maxTime = Math.max(localTime, serverTime, pendingTime);
+        
+        if (maxTime === pendingTime) {
+          // pending 数据最新 → 用 pending，加入队列保留（syncAllPending同步
+          finalData[cardId] = pendingMeaning;
+          if (!pending.cardMeanings[cardId]) {
+            addCardMeaningToPending(cardId, pendingMeaning);
           }
-        } else if (serverMeaning) {
-          // 本地没有 → 用服务器的，清除过期 pending
+        } else if (maxTime === serverTime) {
+          // 服务器数据最新 → 用服务器，删除该牌的pending
           finalData[cardId] = serverMeaning;
           if (pending.cardMeanings[cardId]) {
             delete pending.cardMeanings[cardId];
@@ -2825,14 +2812,12 @@ async function fetchCardMeanings() {
           }
           needUpdateLocal = true;
           needRefreshUI = true;
-        } else if (localMeaning) {
-          // 服务器没有 → 用本地的，加入待同步队列
+        } else if (maxTime === localTime) {
+          // 本地数据最新（且服务器没有或旧 → 用本地，加入 pending（如果没有）
           finalData[cardId] = localMeaning;
           if (!pending.cardMeanings[cardId]) {
             addCardMeaningToPending(cardId, localMeaning);
           }
-        } else {
-          finalData[cardId] = null;
         }
       }
       
@@ -4574,7 +4559,6 @@ function openQuickQuery() {
 let localSaveTimer = null;
 
 // 显示牌的详细信息（支持直接编辑 + 失焦自动保存）
-// 图片元素保持持久化，只更新 src，不重建 DOM——避免每次切换卡片重新下载图片
 function showQuickQueryDetail(cardId) {
   if (localSaveTimer) { clearTimeout(localSaveTimer); localSaveTimer = null; }
   if (currentEditingCardId && currentEditingCardId !== cardId) {
@@ -4599,39 +4583,29 @@ function showQuickQueryDetail(cardId) {
     return;
   }
 
-  const img = container.querySelector('.quick-query-card-image');
-
-  if (!img) {
-    const exportBtnHtml = isLoggedIn
-      ? `<div class="quick-query-actions"><button id="exportCardMeaningsBtn" class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button></div>`
-      : '';
-    container.innerHTML = `
-      <div class="quick-query-image-container">
-        <img class="quick-query-card-image" alt="">
-      </div>
-      <div id="quickQueryDetailContent" class="quick-query-detail"></div>
-      ${exportBtnHtml}
-    `;
-    container.querySelector('.quick-query-card-image').src = cardImage;
-    container.querySelector('.quick-query-card-image').alt = cardInfo.name || '';
-  } else {
-    img.src = cardImage;
-    img.alt = cardInfo.name || '';
-  }
-
   const editableAttr = isLoggedIn ? 'contenteditable="true"' : '';
   const editableClass = isLoggedIn ? ' pattern-editable' : '';
 
-  document.getElementById('quickQueryDetailContent').innerHTML = `
-    <div id="quickQueryTextArea" class="quick-query-text-area" onclick="toggleQuickQueryText()">
-      <div class="quick-query-hint">👆 解牌</div>
-      <div id="quickQueryTextContent" style="display: none;">
-        <div class="name">${cardInfo.name || ''}</div>
-        <div class="upright${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.upright || ''}</div>
-        <div class="reversed${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.reversed || ''}</div>
-        <div class="pattern${editableClass}" ${editableAttr} placeholder="点击编辑牌义" onblur="saveCardMeaning(${cardId})">${cardInfo.pattern || ''}</div>
+  container.innerHTML = `
+    <div class="quick-query-detail">
+      <div class="quick-query-image-container">
+        <img src="${cardImage}" alt="${cardInfo.name}" class="quick-query-card-image">
+      </div>
+      <div id="quickQueryTextArea" class="quick-query-text-area" onclick="toggleQuickQueryText()">
+        <div class="quick-query-hint">👆 解牌</div>
+        <div id="quickQueryTextContent" style="display: none;">
+          <div class="name">${cardInfo.name || ''}</div>
+          <div class="upright${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.upright || ''}</div>
+          <div class="reversed${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.reversed || ''}</div>
+          <div class="pattern${editableClass}" ${editableAttr} placeholder="点击编辑牌义" onblur="saveCardMeaning(${cardId})">${cardInfo.pattern || ''}</div>
+        </div>
       </div>
     </div>
+    ${isLoggedIn ? `
+      <div class="quick-query-actions">
+        <button id="exportCardMeaningsBtn" class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button>
+      </div>
+    ` : ''}
   `;
 
   function updateLocalImmediately() {
@@ -4660,7 +4634,7 @@ function showQuickQueryDetail(cardId) {
     }, 100);
   }
 
-  document.querySelectorAll('.pattern-editable').forEach(el => {
+  container.querySelectorAll('.pattern-editable').forEach(el => {
     el.addEventListener('paste', (e) => {
       e.preventDefault();
       const text = e.clipboardData.getData('text/plain');
@@ -4773,6 +4747,7 @@ async function syncAllPending() {
         break;
       }
     }
+    if (cardMeaningsFromDB) saveLocalCardMeanings();
   }
 
   // 2. 同步历史记录
