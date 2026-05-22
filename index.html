@@ -4859,6 +4859,8 @@ async function saveCardMeaning(cardId) {
       cardMeaningsFromDB[cardId].updated_at = (result && result.updated_at) ? result.updated_at : Date.now();
       saveLocalCardMeanings();
     }
+    // 更新原始数据为已保存的内容，防止后续重复对比
+    window.currentOriginalCardData = { ...old, upright: newUpright, reversed: newReversed, pattern: newPattern, updated_at: Date.now() };
     await syncAllPending(); // 保存成功后，尝试同步其他待同步内容
   } catch (e) {
     // 本地立即保存 updated_at，标记本地最新
