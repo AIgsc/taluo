@@ -4798,6 +4798,7 @@ function restoreHistoryFromPending() {
 
 // 保存牌义到服务器（失焦时调用，收集所有可编辑字段）
 async function saveCardMeaning(cardId) {
+  console.log('开始保存牌义，cardId:', cardId);
   const container = document.getElementById('quickQueryTextContent');
   if (!container) return;
   const uprightEl = container.querySelector('.upright');
@@ -4810,7 +4811,12 @@ async function saveCardMeaning(cardId) {
   const newPattern = patternEl.innerHTML;
   const old = getCardMeaning(cardId);
 
-  if (newUpright === old.upright && newReversed === old.reversed && newPattern === old.pattern) return;
+  console.log('旧数据:', old);
+  console.log('新数据:', { newUpright, newReversed, newPattern });
+  if (newUpright === old.upright && newReversed === old.reversed && newPattern === old.pattern) {
+    console.log('数据没有变化，不保存');
+    return;
+  }
 
   const meaning = {
     name: old.name,
@@ -4820,9 +4826,10 @@ async function saveCardMeaning(cardId) {
     updated_at: Date.now()
   };
 
-  // 本地已经是最新，不需要再更新，直接提交网络
+  console.log('准备发送网络请求');
   try {
     const result = await updateCardMeaningApi(cardId, meaning);
+    console.log('网络请求成功，结果:', result);
     removeCardMeaningFromPending(cardId);
     // 确保本地缓存与服务端同步
     if (cardMeaningsFromDB) {
@@ -4835,9 +4842,11 @@ async function saveCardMeaning(cardId) {
       // 记录服务器返回的时间戳
       cardMeaningsFromDB[cardId].updated_at = (result && result.updated_at) ? result.updated_at : Date.now();
       saveLocalCardMeanings();
+      console.log('本地数据已更新');
     }
     await syncAllPending(); // 保存成功后，尝试同步其他待同步内容
   } catch (e) {
+    console.error('网络请求失败:', e);
     // 本地立即保存 updated_at，标记本地最新
     if (cardMeaningsFromDB) {
       if (!cardMeaningsFromDB[cardId]) {
