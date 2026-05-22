@@ -4798,13 +4798,12 @@ function restoreHistoryFromPending() {
 
 // 保存牌义到服务器（失焦时调用，收集所有可编辑字段）
 async function saveCardMeaning(cardId) {
-  const activeBtn = document.querySelector('.quick-query-card-btn.active');
-  if (!activeBtn || parseInt(activeBtn.dataset.cardId) !== cardId) return;
-
   const container = document.getElementById('quickQueryTextContent');
+  if (!container) return;
   const uprightEl = container.querySelector('.upright');
   const reversedEl = container.querySelector('.reversed');
   const patternEl = container.querySelector('.pattern');
+  if (!uprightEl || !reversedEl || !patternEl) return;
 
   const newUpright = uprightEl.innerHTML;
   const newReversed = reversedEl.innerHTML;
