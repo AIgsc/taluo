@@ -2782,10 +2782,10 @@ async function fetchCardMeanings() {
       serverData = await apiRequest(API_CONFIG.endpoints.cardMeanings);
     }
     
-    // 第三步：对比本地和数据库
+    // 第三步：逐张牌对比 updated_at 时间戳，最新的胜出
     let needUpdateLocal = false;
     let needRefreshUI = false;
-    const pendingData = loadPendingSyncMeanings(); // 读取待同步队列，看看哪些是本地刚修改的
+    const pending = getPendingSync();
     
     if (serverData) {
       const finalData = {};
@@ -2794,33 +2794,44 @@ async function fetchCardMeanings() {
         const serverMeaning = serverData[cardId];
         const localMeaning = localData ? localData[cardId] : null;
         
-        // 检查是否有本地待同步（说明是这个设备刚修改的）
-        const hasPending = pendingData && pendingData[cardId];
-        
-        if (hasPending) {
-          // 有本地待同步，优先用本地（等下同步的时候会推送给数据库）
-          finalData[cardId] = localMeaning || serverMeaning;
-          needUpdateLocal = true;
-        } else if (localMeaning && serverMeaning) {
-          // 没有待同步，对比内容
-          const localStr = JSON.stringify(localMeaning);
-          const serverStr = JSON.stringify(serverMeaning);
-          if (localStr !== serverStr) {
-            // 数据库更新了，用数据库的
+        if (localMeaning && serverMeaning) {
+          const localTime = localMeaning.updated_at || 0;
+          const serverTime = serverMeaning.updated_at || 0;
+          
+          if (localTime > serverTime) {
+            // 本地更新 → 保持本地，加入待同步队列（syncAllPending 统一推送）
+            finalData[cardId] = localMeaning;
+            if (!pending.cardMeanings[cardId]) {
+              addCardMeaningToPending(cardId, localMeaning);
+            }
+          } else if (serverTime > localTime) {
+            // 服务器更新 → 用服务器的，更新本地缓存
             finalData[cardId] = serverMeaning;
+            if (pending.cardMeanings[cardId]) {
+              delete pending.cardMeanings[cardId];
+              savePendingSync(pending);
+            }
             needUpdateLocal = true;
             needRefreshUI = true;
           } else {
-            // 内容一致，用哪个都一样
             finalData[cardId] = localMeaning;
           }
         } else if (serverMeaning) {
-          // 本地没有，用数据库的
+          // 本地没有 → 用服务器的，清除过期 pending
           finalData[cardId] = serverMeaning;
+          if (pending.cardMeanings[cardId]) {
+            delete pending.cardMeanings[cardId];
+            savePendingSync(pending);
+          }
           needUpdateLocal = true;
           needRefreshUI = true;
+        } else if (localMeaning) {
+          // 服务器没有 → 用本地的，加入待同步队列
+          finalData[cardId] = localMeaning;
+          if (!pending.cardMeanings[cardId]) {
+            addCardMeaningToPending(cardId, localMeaning);
+          }
         } else {
-          // 都没有
           finalData[cardId] = null;
         }
       }
@@ -2971,11 +2982,12 @@ window.onload = async () => {
   
   // 3. 牌背加载完成后，才处理牌义和同步（避免占据网络连接池阻塞图片加载）
   if (isLoggedIn) {
-    fetchCardMeanings();
-    // 有网时后台同步待队列，不阻塞页面
-    if (window.navigator.onLine) {
-      syncAllPending();
-    }
+    // 先获取数据库最新数据（含时间戳），完成后才同步待同步队列——避免竞态条件导致旧 pending 覆盖新数据
+    fetchCardMeanings().then(() => {
+      if (window.navigator.onLine) {
+        syncAllPending();
+      }
+    });
   }
   
   // 3. 并行加载所有卡牌图片（性能优化）
@@ -3101,6 +3113,7 @@ window.onload = async () => {
             cardMeaningsFromDB[currentEditingCardId].upright = newUpright;
             cardMeaningsFromDB[currentEditingCardId].reversed = newReversed;
             cardMeaningsFromDB[currentEditingCardId].pattern = newPattern;
+            cardMeaningsFromDB[currentEditingCardId].updated_at = Date.now();
             saveLocalCardMeanings();
           }
           
@@ -3824,7 +3837,7 @@ function renderPicked() {
       if(e.target.tagName === 'BUTTON') return;
       const cardId = el.dataset.cardId;
       const rotate = el.dataset.rotate;
-      const imgSrc = cardImages[cardId];
+      const imgSrc = cardImages[cardId] || '';
       openCardModal(imgSrc, rotate, cardId);
     };
   });
@@ -4065,7 +4078,7 @@ DOM.closeModal.onclick = () => closeCardModal();
 
 // 延时函数
 function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-// 图片加载 - 并行加载（性能优化）
+// 图片加载 - 并行加载（性能优化：依赖浏览器 HTTP 缓存，不额外做 Blob URL 缓存）
 function loadImage(url) {
   return new Promise(resolve => {
     const img = new Image();
@@ -4560,20 +4573,18 @@ function openQuickQuery() {
 let localSaveTimer = null;
 
 // 显示牌的详细信息（支持直接编辑 + 失焦自动保存）
+// 图片元素保持持久化，只更新 src，不重建 DOM——避免每次切换卡片重新下载图片
 function showQuickQueryDetail(cardId) {
-  // 切换卡片前：清除旧 timer（防止旧 timer 读取新 DOM 写入旧 cardId）
   if (localSaveTimer) { clearTimeout(localSaveTimer); localSaveTimer = null; }
-  // 保存前一张牌
   if (currentEditingCardId && currentEditingCardId !== cardId) {
     saveCardMeaning(currentEditingCardId);
   }
   currentEditingCardId = cardId;
   const container = document.getElementById('quickQueryDetail');
   const cardInfo = getCardMeaning(cardId);
-  const cardImage = cardImages[cardId];
+  const cardImage = cardImages[cardId] || '';
   const isLoggedIn = !!AUTH_STATE.token;
-  
-  // 更新按钮选中状态：移除之前的，添加当前的
+
   document.querySelectorAll('.quick-query-card-btn').forEach(btn => {
     btn.classList.remove('active');
   });
@@ -4581,38 +4592,47 @@ function showQuickQueryDetail(cardId) {
   if (currentBtn) {
     currentBtn.classList.add('active');
   }
-  
+
   if (!cardInfo) {
     container.innerHTML = '<div class="quick-query-empty-state">未找到该牌的信息</div>';
     return;
   }
-  
+
+  const img = container.querySelector('.quick-query-card-image');
+
+  if (!img) {
+    const exportBtnHtml = isLoggedIn
+      ? `<div class="quick-query-actions"><button id="exportCardMeaningsBtn" class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button></div>`
+      : '';
+    container.innerHTML = `
+      <div class="quick-query-image-container">
+        <img class="quick-query-card-image" alt="">
+      </div>
+      <div id="quickQueryDetailContent" class="quick-query-detail"></div>
+      ${exportBtnHtml}
+    `;
+    container.querySelector('.quick-query-card-image').src = cardImage;
+    container.querySelector('.quick-query-card-image').alt = cardInfo.name || '';
+  } else {
+    img.src = cardImage;
+    img.alt = cardInfo.name || '';
+  }
+
   const editableAttr = isLoggedIn ? 'contenteditable="true"' : '';
   const editableClass = isLoggedIn ? ' pattern-editable' : '';
-  
-  container.innerHTML = `
-    <div class="quick-query-detail">
-      <div class="quick-query-image-container">
-        <img src="${cardImage || ''}" alt="${cardInfo.name}" class="quick-query-card-image">
-      </div>
-      <div id="quickQueryTextArea" class="quick-query-text-area" onclick="toggleQuickQueryText()">
-        <div class="quick-query-hint">👆 解牌</div>
-        <div id="quickQueryTextContent" style="display: none;">
-          <div class="name">${cardInfo.name || ''}</div>
-          <div class="upright${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.upright || ''}</div>
-          <div class="reversed${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.reversed || ''}</div>
-          <div class="pattern${editableClass}" ${editableAttr} placeholder="点击编辑牌义" onblur="saveCardMeaning(${cardId})">${cardInfo.pattern || ''}</div>
-        </div>
+
+  document.getElementById('quickQueryDetailContent').innerHTML = `
+    <div id="quickQueryTextArea" class="quick-query-text-area" onclick="toggleQuickQueryText()">
+      <div class="quick-query-hint">👆 解牌</div>
+      <div id="quickQueryTextContent" style="display: none;">
+        <div class="name">${cardInfo.name || ''}</div>
+        <div class="upright${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.upright || ''}</div>
+        <div class="reversed${editableClass}" ${editableAttr} onblur="saveCardMeaning(${cardId})">${cardInfo.reversed || ''}</div>
+        <div class="pattern${editableClass}" ${editableAttr} placeholder="点击编辑牌义" onblur="saveCardMeaning(${cardId})">${cardInfo.pattern || ''}</div>
       </div>
     </div>
-    ${isLoggedIn ? `
-      <div class="quick-query-actions">
-        <button id="exportCardMeaningsBtn" class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button>
-      </div>
-    ` : ''}
   `;
-  
-  // 打字 0.1 秒后立即更新本地
+
   function updateLocalImmediately() {
     if (localSaveTimer) clearTimeout(localSaveTimer);
     localSaveTimer = setTimeout(() => {
@@ -4624,7 +4644,7 @@ function showQuickQueryDetail(cardId) {
       const newUpright = uprightEl.innerHTML;
       const newReversed = reversedEl.innerHTML;
       const newPattern = patternEl.innerHTML;
-      
+
       if (cardMeaningsFromDB) {
         const old = getCardMeaning(cardId);
         if (!cardMeaningsFromDB[cardId]) {
@@ -4633,19 +4653,19 @@ function showQuickQueryDetail(cardId) {
         cardMeaningsFromDB[cardId].upright = newUpright;
         cardMeaningsFromDB[cardId].reversed = newReversed;
         cardMeaningsFromDB[cardId].pattern = newPattern;
+        cardMeaningsFromDB[cardId].updated_at = Date.now();
         saveLocalCardMeanings();
       }
     }, 100);
   }
-  
-  // 强制可编辑区域粘贴纯文本，不带格式
-  container.querySelectorAll('.pattern-editable').forEach(el => {
+
+  document.querySelectorAll('.pattern-editable').forEach(el => {
     el.addEventListener('paste', (e) => {
       e.preventDefault();
       const text = e.clipboardData.getData('text/plain');
       document.execCommand('insertText', false, text);
-      updateLocalImmediately(); // 先立即更新本地
-      saveCardMeaning(cardId); // 再尝试提交网络
+      updateLocalImmediately();
+      saveCardMeaning(cardId);
     });
     el.addEventListener('input', updateLocalImmediately);
   });
@@ -4655,20 +4675,6 @@ function showQuickQueryDetail(cardId) {
 // 本地牌义持久化
 // ------------------------------
 const LOCAL_CARD_MEANINGS_KEY = 'localCardMeanings';
-
-function loadPendingSyncMeanings() {
-  try {
-    const pending = localStorage.getItem('pendingSync');
-    if (pending) {
-      const data = JSON.parse(pending);
-      return data.cardMeanings || {};
-    }
-    return {};
-  } catch (e) {
-    console.error('读取待同步牌义失败', e);
-    return {};
-  }
-}
 
 function saveLocalCardMeanings() {
   try {
@@ -4750,7 +4756,7 @@ async function syncAllPending() {
     for (const cardId of cardIds) {
       try {
         const meaning = pending.cardMeanings[cardId];
-        await updateCardMeaningApi(cardId, meaning);
+        const result = await updateCardMeaningApi(cardId, meaning);
         if (cardMeaningsFromDB) {
           if (!cardMeaningsFromDB[cardId]) {
             cardMeaningsFromDB[cardId] = getCardMeaning(cardId);
@@ -4758,6 +4764,7 @@ async function syncAllPending() {
           cardMeaningsFromDB[cardId].upright = meaning.upright;
           cardMeaningsFromDB[cardId].reversed = meaning.reversed;
           cardMeaningsFromDB[cardId].pattern = meaning.pattern;
+          cardMeaningsFromDB[cardId].updated_at = (result && result.updated_at) ? result.updated_at : Date.now();
         }
         removeCardMeaningFromPending(cardId);
       } catch {
@@ -4836,7 +4843,7 @@ async function saveCardMeaning(cardId) {
 
   // 本地已经是最新，不需要再更新，直接提交网络
   try {
-    await updateCardMeaningApi(cardId, meaning);
+    const result = await updateCardMeaningApi(cardId, meaning);
     removeCardMeaningFromPending(cardId);
     // 确保本地缓存与服务端同步
     if (cardMeaningsFromDB) {
@@ -4846,10 +4853,23 @@ async function saveCardMeaning(cardId) {
       cardMeaningsFromDB[cardId].upright = newUpright;
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
+      // 记录服务器返回的时间戳
+      cardMeaningsFromDB[cardId].updated_at = (result && result.updated_at) ? result.updated_at : Date.now();
       saveLocalCardMeanings();
     }
     await syncAllPending(); // 保存成功后，尝试同步其他待同步内容
   } catch (e) {
+    // 本地立即保存 updated_at，标记本地最新
+    if (cardMeaningsFromDB) {
+      if (!cardMeaningsFromDB[cardId]) {
+        cardMeaningsFromDB[cardId] = { ...old };
+      }
+      cardMeaningsFromDB[cardId].upright = newUpright;
+      cardMeaningsFromDB[cardId].reversed = newReversed;
+      cardMeaningsFromDB[cardId].pattern = newPattern;
+      cardMeaningsFromDB[cardId].updated_at = Date.now();
+      saveLocalCardMeanings();
+    }
     addCardMeaningToPending(cardId, meaning);
     setTempTip('⚠️ 网络异常，已暂存本地，网络恢复后自动同步');
   }

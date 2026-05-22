@@ -235,7 +235,7 @@ module.exports = async (req, res) => {
     // ==================== 获取牌义（按用户） ====================
     if (req.method === 'GET' && path === '/api/card-meanings') {
       const result = await pool.query(
-        'SELECT card_id, name, upright, reversed, pattern FROM card_meanings WHERE user_id = $1 ORDER BY card_id ASC',
+        'SELECT card_id, name, upright, reversed, pattern, EXTRACT(EPOCH FROM updated_at) * 1000 AS updated_at FROM card_meanings WHERE user_id = $1 ORDER BY card_id ASC',
         [userPayload.userId]
       );
       
@@ -245,7 +245,8 @@ module.exports = async (req, res) => {
           name: row.name,
           upright: row.upright,
           reversed: row.reversed,
-          pattern: row.pattern
+          pattern: row.pattern,
+          updated_at: row.updated_at ? Number(row.updated_at) : 0
         };
       });
       
@@ -266,7 +267,7 @@ module.exports = async (req, res) => {
         const card = cards[i];
         if (card && card.name) {
           await pool.query(
-            'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern) VALUES ($1, $2, $3, $4, $5, $6)',
+            'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
             [userPayload.userId, i + 1, card.name, card.upright || '', card.reversed || '', card.pattern || '']
           );
         }
@@ -292,17 +293,24 @@ module.exports = async (req, res) => {
       
       if (existing.rows.length > 0) {
         await pool.query(
-          'UPDATE card_meanings SET name = $1, upright = $2, reversed = $3, pattern = $4 WHERE user_id = $5 AND card_id = $6',
+          'UPDATE card_meanings SET name = $1, upright = $2, reversed = $3, pattern = $4, updated_at = NOW() WHERE user_id = $5 AND card_id = $6',
           [name || '', upright || '', reversed || '', pattern || '', userPayload.userId, cardId]
         );
       } else {
         await pool.query(
-          'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern) VALUES ($1, $2, $3, $4, $5, $6)',
+          'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
           [userPayload.userId, cardId, name || '', upright || '', reversed || '', pattern || '']
         );
       }
       
-      return res.json({ success: true });
+      // 返回服务器当前的 updated_at 时间戳
+      const updated = await pool.query(
+        'SELECT EXTRACT(EPOCH FROM updated_at) * 1000 AS updated_at FROM card_meanings WHERE user_id = $1 AND card_id = $2',
+        [userPayload.userId, cardId]
+      );
+      const serverTimestamp = updated.rows[0]?.updated_at ? Number(updated.rows[0].updated_at) : Date.now();
+      
+      return res.json({ success: true, updated_at: serverTimestamp });
     }
     
     return res.status(404).json({ error: 'Not Found' });
