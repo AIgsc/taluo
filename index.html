@@ -3086,7 +3086,10 @@ window.onload = async () => {
         const uprightEl = container.querySelector('.upright');
         const reversedEl = container.querySelector('.reversed');
         const patternEl = container.querySelector('.pattern');
-        const old = getCardMeaning(currentEditingCardId);
+        // 对比原始数据！不是 getCardMeaning 的结果！
+        const old = window.currentOriginalCardData;
+
+        if (!old) return; // 没有原始数据就不管了
 
         const newUpright = uprightEl?.innerHTML || '';
         const newReversed = reversedEl?.innerHTML || '';
@@ -4573,6 +4576,15 @@ function showQuickQueryDetail(cardId) {
   const cardImage = cardImages[cardId] || '';
   const isLoggedIn = !!AUTH_STATE.token;
 
+  // 保存正在编辑的牌的原始数据，用于后续对比！
+  const originalCardData = {
+    name: cardInfo.name || '',
+    upright: cardInfo.upright || '',
+    reversed: cardInfo.reversed || '',
+    pattern: cardInfo.pattern || '',
+    updated_at: cardInfo.updated_at || 0
+  };
+
   document.querySelectorAll('.quick-query-card-btn').forEach(btn => {
     btn.classList.remove('active');
   });
@@ -4624,7 +4636,7 @@ function showQuickQueryDetail(cardId) {
       const newPattern = patternEl.innerHTML;
 
       if (cardMeaningsFromDB) {
-        const old = getCardMeaning(cardId);
+        const old = { ...originalCardData };
         if (!cardMeaningsFromDB[cardId]) {
           cardMeaningsFromDB[cardId] = { ...old };
         }
@@ -4636,6 +4648,9 @@ function showQuickQueryDetail(cardId) {
       }
     }, 100);
   }
+
+  // 把原始数据挂到 window 上，给 saveCardMeaning 用！
+  window.currentOriginalCardData = originalCardData;
 
   container.querySelectorAll('.pattern-editable').forEach(el => {
     el.addEventListener('paste', (e) => {
@@ -4809,10 +4824,12 @@ async function saveCardMeaning(cardId) {
   const newUpright = uprightEl.innerHTML;
   const newReversed = reversedEl.innerHTML;
   const newPattern = patternEl.innerHTML;
-  const old = getCardMeaning(cardId);
+  // 对比原始数据！不是 getCardMeaning 的结果！
+  const old = window.currentOriginalCardData;
 
-  console.log('旧数据:', old);
+  console.log('原始数据:', old);
   console.log('新数据:', { newUpright, newReversed, newPattern });
+  if (!old) return; // 没有原始数据就不管了
   if (newUpright === old.upright && newReversed === old.reversed && newPattern === old.pattern) {
     console.log('数据没有变化，不保存');
     return;
