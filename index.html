@@ -2881,10 +2881,8 @@ async function updateCardMeaningApi(cardId, meaning) {
 // ------------------------------
 function exportAllCardMeanings() {
   try {
-    // 优先用 localStorage 里的牌义（持久化存储，最新）
     let meaningsData = loadLocalCardMeanings();
     
-    // 如果 localStorage 里没有，用内存里的 cardMeaningsFromDB
     if (!meaningsData || Object.keys(meaningsData).length === 0) {
       meaningsData = cardMeaningsFromDB;
     }
@@ -2894,29 +2892,36 @@ function exportAllCardMeanings() {
       return;
     }
     
-    // 转换成数组，按 cardId 1-78 排序
-    const arrayData = [];
+    const lines = [];
+    lines.push('const cardMeanings = [');
+    lines.push('  {},');
+    
     for (let cardId = 1; cardId <= 78; cardId++) {
       const meaning = meaningsData[cardId];
       if (meaning) {
-        arrayData.push({
-          name: meaning.name || '',
-          upright: meaning.upright || '',
-          reversed: meaning.reversed || '',
-          pattern: meaning.pattern || ''
-        });
+        const name = meaning.name || '';
+        const upright = meaning.upright || '';
+        const reversed = meaning.reversed || '';
+        const pattern = meaning.pattern || '';
+        
+        lines.push(`  // ${cardId} ${name}`);
+        lines.push('  {');
+        lines.push(`    name: ${JSON.stringify(name)},`);
+        lines.push(`    upright: ${JSON.stringify(upright)},`);
+        lines.push(`    reversed: ${JSON.stringify(reversed)},`);
+        lines.push(`    pattern: ${JSON.stringify(pattern)}`);
+        lines.push('  },');
       }
     }
     
-    // 生成和 index.html 结构完全一致的内容
-    const content = `const cardMeanings = ${JSON.stringify(arrayData, null, 2)};`;
+    lines.push('];');
     
-    // 创建下载链接
-    const blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `card-meanings-${new Date().toISOString().slice(0, 10)}.js`;
+    a.download = `card-meanings-${new Date().toISOString().slice(0, 10)}.txt`;
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
