@@ -2811,13 +2811,6 @@ function debounce(fn, delay = 500) {
 window.onload = async () => {
   // 0. 初始化认证状态
   const isLoggedIn = loadAuthState();
-  if (isLoggedIn) {
-    fetchCardMeanings();
-    // 有网时后台同步待队列，不阻塞页面加载
-    if (window.navigator.onLine) {
-      syncAllPending();
-    }
-  }
 
   // 0.1 绑定登录/注册相关事件
   document.getElementById('userBtn').addEventListener('click', () => {
@@ -2839,8 +2832,17 @@ window.onload = async () => {
   // 1. 显示加载进度条
   DOM.progressContainer.style.display = 'block';
   
-  // 2. 加载牌背图片
+  // 2. 加载牌背图片（优先加载，不被其他网络请求阻塞）
   await loadImage(backImg);
+  
+  // 3. 牌背加载完成后，才处理牌义和同步（避免占据网络连接池阻塞图片加载）
+  if (isLoggedIn) {
+    fetchCardMeanings();
+    // 有网时后台同步待队列，不阻塞页面
+    if (window.navigator.onLine) {
+      syncAllPending();
+    }
+  }
   
   // 3. 并行加载所有卡牌图片（性能优化）
   parallelLoadImages(cardImages.slice(1, 79));
