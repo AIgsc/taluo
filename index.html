@@ -1825,6 +1825,7 @@ const backImg = "images/back.jpg";
 const defaultImg = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzY2NiIvPjx0ZXh0IHg9IjUwIiB5PSI3NSIgZmlsbD0iI2ZmZiIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPuWQteWNjuWPlumfsDwvdGV4dD48L3N2Zz4=";
 
 // 78张卡牌释义【顺序正确，无需修改，完整保留】
+// ⚠️ 注意：此数组是只读的！永远不要直接修改它！
 const cardMeanings = [
   {},
   // 1 愚人
@@ -2379,8 +2380,16 @@ const cardMeanings = [
 let cardMeaningsFromDB = null;
 
 // 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值
+// ⚠️ 注意：总是返回一个安全的新对象！避免引用污染！
 function getCardMeaning(cardId) {
-  return cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {};
+  const source = cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {};
+  return {
+    name: source.name || '',
+    upright: source.upright || '',
+    reversed: source.reversed || '',
+    pattern: source.pattern || '',
+    updated_at: source.updated_at || 0
+  };
 }
 
 
@@ -4682,7 +4691,15 @@ async function syncAllPending() {
         const result = await updateCardMeaningApi(cardId, meaning);
         if (cardMeaningsFromDB) {
           if (!cardMeaningsFromDB[cardId]) {
-            cardMeaningsFromDB[cardId] = getCardMeaning(cardId);
+            // 确保是新对象！不要共享引用！
+            const base = getCardMeaning(cardId);
+            cardMeaningsFromDB[cardId] = {
+              name: base.name || '',
+              upright: base.upright || '',
+              reversed: base.reversed || '',
+              pattern: base.pattern || '',
+              updated_at: 0
+            };
           }
           cardMeaningsFromDB[cardId].upright = meaning.upright;
           cardMeaningsFromDB[cardId].reversed = meaning.reversed;
