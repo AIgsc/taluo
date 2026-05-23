@@ -1825,7 +1825,6 @@ const backImg = "images/back.jpg";
 const defaultImg = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzY2NiIvPjx0ZXh0IHg9IjUwIiB5PSI3NSIgZmlsbD0iI2ZmZiIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgYWxpZ25tZW50LWJhc2VsaW5lPSJtaWRkbGUiPuWQteWNjuWPlumfsDwvdGV4dD48L3N2Zz4=";
 
 // 78张卡牌释义【顺序正确，无需修改，完整保留】
-// ⚠️ 注意：此数组是只读的！永远不要直接修改它！
 const cardMeanings = [
   {},
   // 1 愚人
@@ -2379,17 +2378,19 @@ const cardMeanings = [
 // 数据库牌义缓存（初始化时从 D1 加载，覆盖硬编码的默认值）
 let cardMeaningsFromDB = null;
 
-// 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值
-// ⚠️ 注意：总是返回一个安全的新对象！避免引用污染！
+// 获取牌义的统一入口：有 DB 数据则用 DB 的，name 永远来自硬编码数组
 function getCardMeaning(cardId) {
-  const source = cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {};
-  return {
-    name: source.name || '',
-    upright: source.upright || '',
-    reversed: source.reversed || '',
-    pattern: source.pattern || '',
-    updated_at: source.updated_at || 0
-  };
+  const dbData = cardMeaningsFromDB?.[cardId];
+  const defaultData = cardMeanings[cardId] || {};
+  
+  if (dbData) {
+    // name 永远用硬编码的正确值！防止被污染！
+    return {
+      ...dbData,
+      name: defaultData.name || ''
+    };
+  }
+  return defaultData;
 }
 
 
@@ -2768,6 +2769,7 @@ async function fetchCardMeanings() {
         const pendingTime = pendingMeaning?.updated_at || 0;
         const localTime = localMeaning?.updated_at || 0;
         const serverTime = serverMeaning?.updated_at || 0;
+        const correctName = cardMeanings[cardId]?.name || '';
         
         // 找到这三个里最新的时间戳
         const maxTime = Math.max(localTime, serverTime, pendingTime);
@@ -2775,35 +2777,26 @@ async function fetchCardMeanings() {
         if (maxTime === 0) {
           // 三个地方都没数据 → null
           finalData[cardId] = null;
-        } else {
-          // ⚠️ 始终创建新对象！避免引用共享！
-          let source;
-          if (maxTime === pendingTime) {
-            source = pendingMeaning;
-            if (!pending.cardMeanings[cardId]) {
-              addCardMeaningToPending(cardId, pendingMeaning);
-            }
-          } else if (maxTime === serverTime) {
-            source = serverMeaning;
-            if (pending.cardMeanings[cardId]) {
-              delete pending.cardMeanings[cardId];
-              savePendingSync(pending);
-            }
-            needUpdateLocal = true;
-          } else {
-            source = localMeaning;
-            if (!pending.cardMeanings[cardId]) {
-              addCardMeaningToPending(cardId, localMeaning);
-            }
+        } else if (maxTime === pendingTime) {
+          // pending 数据最新 → 用 pending，加入队列保留（syncAllPending同步
+          finalData[cardId] = { ...pendingMeaning, name: correctName };
+          if (!pending.cardMeanings[cardId]) {
+            addCardMeaningToPending(cardId, finalData[cardId]);
           }
-          // 始终创建新对象！
-          finalData[cardId] = {
-            name: source.name || '',
-            upright: source.upright || '',
-            reversed: source.reversed || '',
-            pattern: source.pattern || '',
-            updated_at: source.updated_at || 0
-          };
+        } else if (maxTime === serverTime) {
+          // 服务器数据最新 → 用服务器，删除该牌的pending
+          finalData[cardId] = { ...serverMeaning, name: correctName };
+          if (pending.cardMeanings[cardId]) {
+            delete pending.cardMeanings[cardId];
+            savePendingSync(pending);
+          }
+          needUpdateLocal = true;
+        } else {
+          // 本地数据最新 → 用本地，加入 pending（如果没有）
+          finalData[cardId] = { ...localMeaning, name: correctName };
+          if (!pending.cardMeanings[cardId]) {
+            addCardMeaningToPending(cardId, finalData[cardId]);
+          }
         }
       }
       
@@ -4584,10 +4577,11 @@ function showQuickQueryDetail(cardId) {
       const newPattern = patternEl.innerHTML;
 
       if (cardMeaningsFromDB) {
-        const old = { ...originalCardData };
+        const correctName = cardMeanings[cardId]?.name || '';
         if (!cardMeaningsFromDB[cardId]) {
-          cardMeaningsFromDB[cardId] = { ...old };
+          cardMeaningsFromDB[cardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
         }
+        cardMeaningsFromDB[cardId].name = correctName; // 强制确保 name 正确！
         cardMeaningsFromDB[cardId].upright = newUpright;
         cardMeaningsFromDB[cardId].reversed = newReversed;
         cardMeaningsFromDB[cardId].pattern = newPattern;
@@ -4662,14 +4656,7 @@ function clearPendingSync() {
 
 function addCardMeaningToPending(cardId, meaning) {
   const pending = getPendingSync();
-  // ⚠️ 创建新对象！避免引用共享！
-  pending.cardMeanings[cardId] = {
-    name: meaning.name || '',
-    upright: meaning.upright || '',
-    reversed: meaning.reversed || '',
-    pattern: meaning.pattern || '',
-    updated_at: meaning.updated_at || 0
-  };
+  pending.cardMeanings[cardId] = meaning;
   savePendingSync(pending);
 }
 
@@ -4707,15 +4694,7 @@ async function syncAllPending() {
         const result = await updateCardMeaningApi(cardId, meaning);
         if (cardMeaningsFromDB) {
           if (!cardMeaningsFromDB[cardId]) {
-            // 确保是新对象！不要共享引用！
-            const base = getCardMeaning(cardId);
-            cardMeaningsFromDB[cardId] = {
-              name: base.name || '',
-              upright: base.upright || '',
-              reversed: base.reversed || '',
-              pattern: base.pattern || '',
-              updated_at: 0
-            };
+            cardMeaningsFromDB[cardId] = getCardMeaning(cardId);
           }
           cardMeaningsFromDB[cardId].upright = meaning.upright;
           cardMeaningsFromDB[cardId].reversed = meaning.reversed;
@@ -4795,7 +4774,7 @@ async function saveCardMeaning(cardId) {
   }
 
   const meaning = {
-    name: old.name,
+    // name 永远不用提交，用硬编码的固定值！防止污染！
     upright: newUpright,
     reversed: newReversed,
     pattern: newPattern,
@@ -4807,9 +4786,11 @@ async function saveCardMeaning(cardId) {
     removeCardMeaningFromPending(cardId);
     // 确保本地缓存与服务端同步
     if (cardMeaningsFromDB) {
+      const correctName = cardMeanings[cardId]?.name || '';
       if (!cardMeaningsFromDB[cardId]) {
-        cardMeaningsFromDB[cardId] = { ...old };
+        cardMeaningsFromDB[cardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
       }
+      cardMeaningsFromDB[cardId].name = correctName; // 强制确保 name 正确！
       cardMeaningsFromDB[cardId].upright = newUpright;
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
@@ -4823,16 +4804,18 @@ async function saveCardMeaning(cardId) {
   } catch (e) {
     // 本地立即保存 updated_at，标记本地最新
     if (cardMeaningsFromDB) {
+      const correctName = cardMeanings[cardId]?.name || '';
       if (!cardMeaningsFromDB[cardId]) {
-        cardMeaningsFromDB[cardId] = { ...old };
+        cardMeaningsFromDB[cardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
       }
+      cardMeaningsFromDB[cardId].name = correctName; // 强制确保 name 正确！
       cardMeaningsFromDB[cardId].upright = newUpright;
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
       cardMeaningsFromDB[cardId].updated_at = Date.now();
       saveLocalCardMeanings();
     }
-    addCardMeaningToPending(cardId, meaning);
+    addCardMeaningToPending(cardId, { ...meaning, name: cardMeanings[cardId]?.name || '' });
     setTempTip('⚠️ 网络异常，已暂存本地，网络恢复后自动同步');
   }
 }
