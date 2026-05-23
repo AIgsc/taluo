@@ -2775,26 +2775,35 @@ async function fetchCardMeanings() {
         if (maxTime === 0) {
           // 三个地方都没数据 → null
           finalData[cardId] = null;
-        } else if (maxTime === pendingTime) {
-          // pending 数据最新 → 用 pending，加入队列保留（syncAllPending同步
-          finalData[cardId] = pendingMeaning;
-          if (!pending.cardMeanings[cardId]) {
-            addCardMeaningToPending(cardId, pendingMeaning);
-          }
-        } else if (maxTime === serverTime) {
-          // 服务器数据最新 → 用服务器，删除该牌的pending
-          finalData[cardId] = serverMeaning;
-          if (pending.cardMeanings[cardId]) {
-            delete pending.cardMeanings[cardId];
-            savePendingSync(pending);
-          }
-          needUpdateLocal = true;
         } else {
-          // 本地数据最新 → 用本地，加入 pending（如果没有）
-          finalData[cardId] = localMeaning;
-          if (!pending.cardMeanings[cardId]) {
-            addCardMeaningToPending(cardId, localMeaning);
+          // ⚠️ 始终创建新对象！避免引用共享！
+          let source;
+          if (maxTime === pendingTime) {
+            source = pendingMeaning;
+            if (!pending.cardMeanings[cardId]) {
+              addCardMeaningToPending(cardId, pendingMeaning);
+            }
+          } else if (maxTime === serverTime) {
+            source = serverMeaning;
+            if (pending.cardMeanings[cardId]) {
+              delete pending.cardMeanings[cardId];
+              savePendingSync(pending);
+            }
+            needUpdateLocal = true;
+          } else {
+            source = localMeaning;
+            if (!pending.cardMeanings[cardId]) {
+              addCardMeaningToPending(cardId, localMeaning);
+            }
           }
+          // 始终创建新对象！
+          finalData[cardId] = {
+            name: source.name || '',
+            upright: source.upright || '',
+            reversed: source.reversed || '',
+            pattern: source.pattern || '',
+            updated_at: source.updated_at || 0
+          };
         }
       }
       
@@ -4653,7 +4662,14 @@ function clearPendingSync() {
 
 function addCardMeaningToPending(cardId, meaning) {
   const pending = getPendingSync();
-  pending.cardMeanings[cardId] = meaning;
+  // ⚠️ 创建新对象！避免引用共享！
+  pending.cardMeanings[cardId] = {
+    name: meaning.name || '',
+    upright: meaning.upright || '',
+    reversed: meaning.reversed || '',
+    pattern: meaning.pattern || '',
+    updated_at: meaning.updated_at || 0
+  };
   savePendingSync(pending);
 }
 
