@@ -2747,7 +2747,6 @@ async function fetchCardMeanings() {
     
     // 第三步：逐张牌对比 updated_at 时间戳，最新的胜出
     let needUpdateLocal = false;
-    let needRefreshUI = false;
     const pending = getPendingSync();
     
     if (serverData) {
@@ -2781,7 +2780,6 @@ async function fetchCardMeanings() {
             savePendingSync(pending);
           }
           needUpdateLocal = true;
-          needRefreshUI = true;
         } else {
           // 本地数据最新 → 用本地，加入 pending（如果没有）
           finalData[cardId] = localMeaning;
@@ -2797,22 +2795,6 @@ async function fetchCardMeanings() {
       // 保存到本地
       if (needUpdateLocal) {
         saveLocalCardMeanings();
-      }
-      
-      // 如果数据库更新了，刷新当前UI
-      if (needRefreshUI) {
-        // 如果快速查询弹窗开着，更新当前显示的牌义
-        const quickQueryModal = document.getElementById('quickQueryModal');
-        if (quickQueryModal && quickQueryModal.style.display !== 'none') {
-          const activeBtn = document.querySelector('.quick-query-card-btn.active');
-          if (activeBtn) {
-            const cardId = parseInt(activeBtn.dataset.cardId);
-            if (currentEditingCardId === cardId) {
-              // 只需要重新渲染一下当前内容
-              showQuickQueryDetail(cardId);
-            }
-          }
-        }
       }
     }
   } catch (e) {
