@@ -2802,7 +2802,8 @@ async function fetchCardMeanings() {
       // 如果数据库更新了，刷新当前UI
       if (needRefreshUI) {
         // 如果快速查询弹窗开着，更新当前显示的牌义
-        if (DOM.quickQueryCardList && DOM.quickQueryCardList.style.display !== 'none') {
+        const quickQueryModal = document.getElementById('quickQueryModal');
+        if (quickQueryModal && quickQueryModal.style.display !== 'none') {
           const activeBtn = document.querySelector('.quick-query-card-btn.active');
           if (activeBtn) {
             const cardId = parseInt(activeBtn.dataset.cardId);
