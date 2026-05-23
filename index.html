@@ -209,30 +209,7 @@ h1 {
   font-size: 14px;
 }
 
-.taro-load__container {
-  max-width: 400px;
-  margin: 0 auto 20px;
-  display: none; /* 默认隐藏，开始加载时显示 */
-}
-.taro-load__text {
-  font-size: 13px;
-  color: #ccc;
-  margin-bottom: 6px;
-}
-.taro-load__bar {
-  width: 100%;
-  height: 8px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.taro-load__fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #6c63ff, #a89fff);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
+
 /* 牌堆区域 - 核心动画容器（响应式） */
 .taro-stack__area {
   position: relative;
@@ -1501,12 +1478,7 @@ h1 {
   <h1>塔罗牌占卜</h1>
 </div>
 
-<div class="taro-load__container" id="loadProgress">
-  <div class="taro-load__text" id="progressText">图片加载中：0/79</div>
-  <div class="taro-load__bar">
-    <div class="taro-load__fill" id="progressFill"></div>
-  </div>
-</div>
+
 
 <div class="taro-stack__area" id="stack"></div>
 <div class="taro-picked__box">
@@ -1521,7 +1493,7 @@ h1 {
 
 <div id="cardModal">
   <button id="closeModal">✕</button>
-  <img id="modalCard" alt="塔罗牌">
+  <img loading="lazy" id="modalCard" alt="塔罗牌">
   <div id="cardMeaning"></div>
 </div>
 
@@ -2481,7 +2453,6 @@ function escapeRegExp(string) {
 
 // 常量配置（规范化状态管理，消除魔法字符串）
 const CONFIG = {
-  TOTAL_IMAGES: 79,       // 总图片数量（78张牌 + 1张牌背）
   MAX_SUPPORT: 2,          // 每张大阿卡那最多补抽数量
   CUT_MIN: 15,             // 切牌最小数量
   GAME_STATES: {
@@ -2494,7 +2465,6 @@ const CONFIG = {
 
 // 核心状态对象（优化全局变量 + 新增防抖标志）
 const STATE = {
-  loadedCount: 0,                // 已加载图片数量
   fullDeck: [],                  // 完整牌组（包含所有78张牌的状态）
   pickRounds: [[]],              // 抽牌回合（每轮抽的牌）
   currentRound: 0,               // 当前回合索引
@@ -2512,9 +2482,6 @@ const STATE = {
 
 // DOM缓存（减少重复查询，提高性能）
 const DOM = {
-  progressContainer: document.getElementById('loadProgress'),
-  progressText: document.getElementById('progressText'),
-  progressFill: document.getElementById('progressFill'),
   stack: document.getElementById('stack'),
   spread: document.getElementById('spread'),
   pickedBox: document.getElementById('picked'),
@@ -2967,55 +2934,48 @@ window.onload = async () => {
   document.getElementById('authSwitchBtn').addEventListener('click', toggleAuthMode);
   document.getElementById('authSubmitBtn').addEventListener('click', handleAuthSubmit);
   
-  // 1. 显示加载进度条
-  DOM.progressContainer.style.display = 'block';
-  
-  // 2. 加载牌背图片（优先加载，不被其他网络请求阻塞）
+  // 1. 加载牌背图片
   await loadImage(backImg);
   
-  // 3. 牌背加载完成后，才处理牌义和同步（避免占据网络连接池阻塞图片加载）
+  // 2. 设置初始提示
+  setTip("🔮 触摸屏幕，开始塔罗牌占卜");
+  
+  // 4. 后台处理牌义和同步（不阻塞用户操作）
   if (isLoggedIn) {
-    // 先获取数据库最新数据（含时间戳），完成后才同步待同步队列——避免竞态条件导致旧 pending 覆盖新数据
     fetchCardMeanings().then(() => {
       if (window.navigator.onLine) {
         syncAllPending();
       }
     });
   }
-  
-  // 3. 并行加载所有卡牌图片（性能优化）
-  parallelLoadImages(cardImages.slice(1, 79));
 
-  // 4. 触摸采集（兼容PC点击）
-  // 仅保留touchstart，兼容所有移动端/PC
+  // 5. 触摸采集（兼容PC点击）
   DOM.touchMask.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    collectTouchSeed(e); // 采集触摸种子，增强随机性
+    collectTouchSeed(e);
   }, { once: true });
-  // PC端兼容
   DOM.touchMask.addEventListener('click', (e) => {
-    collectTouchSeed(e); // 采集点击种子，增强随机性
+    collectTouchSeed(e);
   }, { once: true });
 
-  // 5. 按钮绑定防抖（防止重复点击）
-  DOM.refreshBtn.addEventListener('click', debounce(refreshPage)); // 重新洗牌
-  DOM.newRoundBtn.addEventListener('click', debounce(startNewRound)); // 开始新轮次
-  DOM.reSortBtn.addEventListener('click', debounce(reSortForSupport)); // 补抽排序
+  // 6. 按钮绑定防抖
+  DOM.refreshBtn.addEventListener('click', debounce(refreshPage));
+  DOM.newRoundBtn.addEventListener('click', debounce(startNewRound));
+  DOM.reSortBtn.addEventListener('click', debounce(reSortForSupport));
 
-  // 6. 卡牌事件委托（性能优化，仅绑定1次）
+  // 7. 卡牌事件委托
   DOM.spread.addEventListener('click', (e) => {
     const card = e.target.closest('.taro-spread__card');
     if(!card) return;
     const index = Array.from(DOM.spread.children).indexOf(card);
-    pickCard(index); // 处理抽牌逻辑
+    pickCard(index);
   });
 
-  // 7. 键盘事件：ESC键关闭弹窗
+  // 8. 键盘事件：ESC键关闭弹窗
   document.addEventListener('keydown', e => e.key === 'Escape' && closeCardModal());
   
-  // 8. 初始化状态
-  updateButtonStatus(); // 更新按钮状态
-  setTip("🔮 触摸屏幕，开始塔罗牌占卜"); // 设置初始提示
+  // 9. 初始化状态
+  updateButtonStatus();
   
   // 9. 绑定隐藏/展开按钮事件 + 动态撑高
   const toggleBtn = document.getElementById('toggleSpreadBtn');
@@ -3747,7 +3707,7 @@ function renderMainCard(group, idx, gIdx, isCurrentRound) {
   return `
     <button class="taro-btn__undo" ${!isCurrentRound || STATE.lockCurrentMainDelete || STATE.lockPicking ? 'disabled' : ''} onclick="deleteMainCard(${idx},${gIdx})">撤销</button>
     <div class="taro-card__picked" data-card-id="${group.mainCard.cardId}" data-rotate="${group.mainCard.rotate}">
-      <img src="${cardImages[group.mainCard.cardId]}" style="--rotate: ${group.mainCard.rotate}deg; transform: rotate(var(--rotate))" onerror="this.src='${backImg}'">
+      <img loading="lazy" src="${cardImages[group.mainCard.cardId]}" style="--rotate: ${group.mainCard.rotate}deg; transform: rotate(var(--rotate))" onerror="this.src='${backImg}'">
       <div class="taro-card__tag">${cardName} ${group.mainCard.rotate === 0 ? '正位' : '逆位'}</div>
     </div>
   `;
@@ -3764,7 +3724,7 @@ function renderSupportCard(group, idx, gIdx) {
     <div class="taro-support__wrapper">
       <button class="taro-btn__undo" ${canWithdraw ? '' : 'disabled'} onclick="deleteSupportCard(${idx},${gIdx},${sIdx})">撤销</button>
       <div class="taro-card__support" data-card-id="${sup.cardId}" data-rotate="${sup.rotate}">
-        <img src="${cardImages[sup.cardId]}" style="--rotate: ${sup.rotate}deg; transform: rotate(var(--rotate))" onerror="this.src='${backImg}'">
+        <img loading="lazy" src="${cardImages[sup.cardId]}" style="--rotate: ${sup.rotate}deg; transform: rotate(var(--rotate))" onerror="this.src='${backImg}'">
         <div class="taro-card__tag">${cardName} ${sup.rotate === 0 ? '正位' : '逆位'}</div>
       </div>
     </div>
@@ -4075,31 +4035,13 @@ DOM.closeModal.onclick = () => closeCardModal();
 
 // 延时函数
 function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-// 图片加载 - 并行加载（性能优化：依赖浏览器 HTTP 缓存，不额外做 Blob URL 缓存）
+// 图片加载 - 仅用于加载关键资源
 function loadImage(url) {
   return new Promise(resolve => {
     const img = new Image();
     img.src = url;
-    img.onload = img.onerror = () => {
-      STATE.loadedCount++;
-      updateLoadProgress();
-      resolve();
-    };
+    img.onload = img.onerror = resolve;
   });
-}
-// 批量并行加载
-async function parallelLoadImages(urlList) {
-  const promises = urlList.map(url => loadImage(url));
-  await Promise.all(promises);
-}
-function updateLoadProgress() {
-  const percent = (STATE.loadedCount / CONFIG.TOTAL_IMAGES) * 100;
-  DOM.progressText.textContent = `🔮 卡牌加载中：${STATE.loadedCount}/${CONFIG.TOTAL_IMAGES}`;
-  DOM.progressFill.style.width = `${percent}%`;
-  if (STATE.loadedCount >= CONFIG.TOTAL_IMAGES) {
-    setTempTip("✨ 卡牌加载完成，请触摸屏幕开始");
-    setTimeout(() => DOM.progressContainer.style.display = 'none', 500);
-  }
 }
 
 
@@ -4609,7 +4551,7 @@ function showQuickQueryDetail(cardId) {
   container.innerHTML = `
     <div class="quick-query-detail">
       <div class="quick-query-image-container">
-        <img src="${cardImage}" alt="${cardInfo.name}" class="quick-query-card-image">
+        <img loading="lazy" src="${cardImage}" alt="${cardInfo.name}" class="quick-query-card-image">
       </div>
       <div id="quickQueryTextArea" class="quick-query-text-area" onclick="toggleQuickQueryText()">
         <div class="quick-query-hint">👆 解牌</div>
