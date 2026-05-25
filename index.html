@@ -2378,19 +2378,9 @@ const cardMeanings = [
 // 数据库牌义缓存（初始化时从 D1 加载，覆盖硬编码的默认值）
 let cardMeaningsFromDB = null;
 
-// 获取牌义的统一入口：有 DB 数据则用 DB 的，name 永远来自硬编码数组
+// 获取牌义的统一入口：有 DB 数据则用 DB 的，否则用硬编码默认值
 function getCardMeaning(cardId) {
-  const dbData = cardMeaningsFromDB?.[cardId];
-  const defaultData = cardMeanings[cardId] || {};
-  
-  if (dbData) {
-    // name 永远用硬编码的正确值！防止被污染！
-    return {
-      ...dbData,
-      name: defaultData.name || ''
-    };
-  }
-  return defaultData;
+  return cardMeaningsFromDB?.[cardId] || cardMeanings[cardId] || {};
 }
 
 
@@ -2762,21 +2752,10 @@ async function fetchCardMeanings() {
     if (serverData) {
       const finalData = {};
       
-      // 安全地提取数据（只保留需要的字段，忽略可能存在的 name）
-      const extractSafeData = (data) => {
-        if (!data) return null;
-        return {
-          upright: data.upright || '',
-          reversed: data.reversed || '',
-          pattern: data.pattern || '',
-          updated_at: data.updated_at || 0
-        };
-      };
-      
       for (let cardId = 1; cardId <= 78; cardId++) {
-        const serverMeaning = extractSafeData(serverData[cardId]);
-        const localMeaning = extractSafeData(localData ? localData[cardId] : null);
-        const pendingMeaning = extractSafeData(pending.cardMeanings[cardId]);
+        const serverMeaning = serverData[cardId];
+        const localMeaning = localData ? localData[cardId] : null;
+        const pendingMeaning = pending.cardMeanings[cardId];
         const pendingTime = pendingMeaning?.updated_at || 0;
         const localTime = localMeaning?.updated_at || 0;
         const serverTime = serverMeaning?.updated_at || 0;
@@ -3067,9 +3046,11 @@ window.onload = async () => {
         if (newUpright !== old.upright || newReversed !== old.reversed || newPattern !== old.pattern) {
           // 立即更新本地
           if (cardMeaningsFromDB) {
+            const correctName = cardMeanings[currentEditingCardId]?.name || '';
             if (!cardMeaningsFromDB[currentEditingCardId]) {
-              cardMeaningsFromDB[currentEditingCardId] = { upright: '', reversed: '', pattern: '', updated_at: 0 };
+              cardMeaningsFromDB[currentEditingCardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
             }
+            cardMeaningsFromDB[currentEditingCardId].name = correctName;
             cardMeaningsFromDB[currentEditingCardId].upright = newUpright;
             cardMeaningsFromDB[currentEditingCardId].reversed = newReversed;
             cardMeaningsFromDB[currentEditingCardId].pattern = newPattern;
@@ -3078,6 +3059,7 @@ window.onload = async () => {
           }
           
           addCardMeaningToPending(currentEditingCardId, {
+            name: cardMeanings[currentEditingCardId]?.name || '',
             upright: newUpright,
             reversed: newReversed,
             pattern: newPattern,
@@ -4586,9 +4568,11 @@ function showQuickQueryDetail(cardId) {
       const newPattern = patternEl.innerHTML;
 
       if (cardMeaningsFromDB) {
+        const correctName = cardMeanings[cardId]?.name || '';
         if (!cardMeaningsFromDB[cardId]) {
-          cardMeaningsFromDB[cardId] = { upright: '', reversed: '', pattern: '', updated_at: 0 };
+          cardMeaningsFromDB[cardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
         }
+        cardMeaningsFromDB[cardId].name = correctName;
         cardMeaningsFromDB[cardId].upright = newUpright;
         cardMeaningsFromDB[cardId].reversed = newReversed;
         cardMeaningsFromDB[cardId].pattern = newPattern;
@@ -4663,8 +4647,8 @@ function clearPendingSync() {
 
 function addCardMeaningToPending(cardId, meaning) {
   const pending = getPendingSync();
-  // 只存安全字段，忽略可能存在的 name
   pending.cardMeanings[cardId] = {
+    name: meaning.name || cardMeanings[cardId]?.name || '',
     upright: meaning.upright || '',
     reversed: meaning.reversed || '',
     pattern: meaning.pattern || '',
@@ -4706,9 +4690,11 @@ async function syncAllPending() {
         const meaning = pending.cardMeanings[cardId];
         const result = await updateCardMeaningApi(cardId, meaning);
         if (cardMeaningsFromDB) {
+          const correctName = cardMeanings[cardId]?.name || '';
           if (!cardMeaningsFromDB[cardId]) {
-            cardMeaningsFromDB[cardId] = { upright: '', reversed: '', pattern: '', updated_at: 0 };
+            cardMeaningsFromDB[cardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
           }
+          cardMeaningsFromDB[cardId].name = correctName;
           cardMeaningsFromDB[cardId].upright = meaning.upright;
           cardMeaningsFromDB[cardId].reversed = meaning.reversed;
           cardMeaningsFromDB[cardId].pattern = meaning.pattern;
@@ -4786,8 +4772,9 @@ async function saveCardMeaning(cardId) {
     return;
   }
 
+  const correctName = cardMeanings[cardId]?.name || '';
   const meaning = {
-    // name 永远不用提交，用硬编码的固定值！防止污染！
+    name: correctName,
     upright: newUpright,
     reversed: newReversed,
     pattern: newPattern,
@@ -4800,8 +4787,9 @@ async function saveCardMeaning(cardId) {
     // 确保本地缓存与服务端同步
     if (cardMeaningsFromDB) {
       if (!cardMeaningsFromDB[cardId]) {
-        cardMeaningsFromDB[cardId] = { upright: '', reversed: '', pattern: '', updated_at: 0 };
+        cardMeaningsFromDB[cardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
       }
+      cardMeaningsFromDB[cardId].name = correctName;
       cardMeaningsFromDB[cardId].upright = newUpright;
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
@@ -4816,8 +4804,9 @@ async function saveCardMeaning(cardId) {
     // 本地立即保存 updated_at，标记本地最新
     if (cardMeaningsFromDB) {
       if (!cardMeaningsFromDB[cardId]) {
-        cardMeaningsFromDB[cardId] = { upright: '', reversed: '', pattern: '', updated_at: 0 };
+        cardMeaningsFromDB[cardId] = { name: correctName, upright: '', reversed: '', pattern: '', updated_at: 0 };
       }
+      cardMeaningsFromDB[cardId].name = correctName;
       cardMeaningsFromDB[cardId].upright = newUpright;
       cardMeaningsFromDB[cardId].reversed = newReversed;
       cardMeaningsFromDB[cardId].pattern = newPattern;
