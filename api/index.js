@@ -313,6 +313,190 @@ module.exports = async (req, res) => {
       return res.json({ success: true, updated_at: serverTimestamp });
     }
     
+    // ==================== 训练系统：建表 ====================
+    if (req.method === 'POST' && path === '/api/training/init') {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_progress (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL,
+          card_id INT NOT NULL,
+          orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
+          progress INT DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+          correct_count INT DEFAULT 0,
+          error_count INT DEFAULT 0,
+          last_time TIMESTAMPTZ DEFAULT NOW(),
+          UNIQUE(user_id, card_id, orientation)
+        )
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_errors (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL,
+          card_id INT NOT NULL,
+          orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
+          error_count INT DEFAULT 0,
+          last_error_time TIMESTAMPTZ DEFAULT NOW(),
+          continuous_correct INT DEFAULT 0,
+          UNIQUE(user_id, card_id, orientation)
+        )
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS user_exams (
+          id SERIAL PRIMARY KEY,
+          user_id INT NOT NULL,
+          exam_time TIMESTAMPTZ DEFAULT NOW(),
+          total INT NOT NULL,
+          score INT NOT NULL,
+          correct_rate FLOAT NOT NULL,
+          duration INT NOT NULL,
+          error_ids TEXT DEFAULT ''
+        )
+      `);
+      return res.json({ success: true });
+    }
+    
+    // ==================== 训练系统：获取进度 ====================
+    if (req.method === 'GET' && path === '/api/training/progress') {
+      const result = await pool.query(
+        'SELECT card_id, orientation, progress, correct_count, error_count FROM user_progress WHERE user_id = $1 ORDER BY card_id, orientation',
+        [userPayload.userId]
+      );
+      return res.json(result.rows);
+    }
+    
+    // ==================== 训练系统：更新进度 ====================
+    if (req.method === 'POST' && path === '/api/training/progress') {
+      const { card_id, orientation, is_correct } = req.body;
+      
+      if (!card_id || !orientation) {
+        return res.status(400).json({ error: '缺少必要参数' });
+      }
+      
+      // 读取当前进度
+      const curr = await pool.query(
+        'SELECT progress, correct_count, error_count FROM user_progress WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
+        [userPayload.userId, card_id, orientation]
+      );
+      
+      const oldProgress = curr.rows[0]?.progress || 0;
+      const oldCorrect = curr.rows[0]?.correct_count || 0;
+      const oldError = curr.rows[0]?.error_count || 0;
+      
+      let newProgress;
+      if (is_correct) {
+        newProgress = Math.min(100, oldProgress + 10);
+      } else {
+        newProgress = Math.max(0, oldProgress - 15);
+      }
+      
+      await pool.query(
+        `INSERT INTO user_progress (user_id, card_id, orientation, progress, correct_count, error_count, last_time)
+         VALUES ($1,$2,$3,$4,$5,$6,NOW())
+         ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
+           progress=$4, correct_count=$5, error_count=$6, last_time=NOW()`,
+        [userPayload.userId, card_id, orientation,
+         newProgress,
+         is_correct ? oldCorrect + 1 : oldCorrect,
+         is_correct ? oldError : oldError + 1]
+      );
+      
+      return res.json({ progress: newProgress, correct_count: is_correct ? oldCorrect+1 : oldCorrect, error_count: is_correct ? oldError : oldError+1 });
+    }
+    
+    // ==================== 训练系统：删除进度 ====================
+    if (req.method === 'DELETE' && path === '/api/training/progress') {
+      await pool.query('DELETE FROM user_progress WHERE user_id = $1', [userPayload.userId]);
+      return res.json({ success: true });
+    }
+    
+    // ==================== 训练系统：获取错题 ====================
+    if (req.method === 'GET' && path === '/api/training/errors') {
+      const result = await pool.query(
+        'SELECT card_id, orientation, error_count, continuous_correct FROM user_errors WHERE user_id = $1 ORDER BY error_count DESC',
+        [userPayload.userId]
+      );
+      return res.json(result.rows);
+    }
+    
+    // ==================== 训练系统：记录错题 ====================
+    if (req.method === 'POST' && path === '/api/training/errors') {
+      const { card_id, orientation, is_correct } = req.body;
+      
+      if (!card_id || !orientation) {
+        return res.status(400).json({ error: '缺少必要参数' });
+      }
+      
+      const curr = await pool.query(
+        'SELECT error_count, continuous_correct FROM user_errors WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
+        [userPayload.userId, card_id, orientation]
+      );
+      
+      const oldErrors = curr.rows[0]?.error_count || 0;
+      const oldContCorrect = curr.rows[0]?.continuous_correct || 0;
+      
+      let newErrors = oldErrors;
+      let newContCorrect = oldContCorrect;
+      
+      if (is_correct) {
+        newContCorrect = oldContCorrect + 1;
+      } else {
+        newErrors = oldErrors + 1;
+        newContCorrect = 0;
+      }
+      
+      await pool.query(
+        `INSERT INTO user_errors (user_id, card_id, orientation, error_count, last_error_time, continuous_correct)
+         VALUES ($1,$2,$3,$4,NOW(),$5)
+         ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
+           error_count=$4, last_error_time=NOW(), continuous_correct=$5`,
+        [userPayload.userId, card_id, orientation, newErrors, newContCorrect]
+      );
+      
+      return res.json({ error_count: newErrors, continuous_correct: newContCorrect });
+    }
+    
+    // ==================== 训练系统：清除错题 ====================
+    if (req.method === 'DELETE' && path === '/api/training/errors') {
+      const { card_id, orientation } = req.body;
+      if (card_id && orientation) {
+        await pool.query(
+          'DELETE FROM user_errors WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
+          [userPayload.userId, card_id, orientation]
+        );
+      } else {
+        await pool.query('DELETE FROM user_errors WHERE user_id = $1', [userPayload.userId]);
+      }
+      return res.json({ success: true });
+    }
+    
+    // ==================== 训练系统：获取考试记录 ====================
+    if (req.method === 'GET' && path === '/api/training/exams') {
+      const result = await pool.query(
+        'SELECT id, exam_time, total, score, correct_rate, duration, error_ids FROM user_exams WHERE user_id = $1 ORDER BY exam_time DESC LIMIT 200',
+        [userPayload.userId]
+      );
+      return res.json(result.rows);
+    }
+    
+    // ==================== 训练系统：保存考试记录 ====================
+    if (req.method === 'POST' && path === '/api/training/exams') {
+      const { total, score, correct_rate, duration, error_ids } = req.body;
+      
+      await pool.query(
+        `INSERT INTO user_exams (user_id, exam_time, total, score, correct_rate, duration, error_ids)
+         VALUES ($1, NOW(), $2, $3, $4, $5, $6)`,
+        [userPayload.userId, total, score, correct_rate, duration, error_ids || '']
+      );
+      
+      return res.json({ success: true });
+    }
+    
+    // ==================== 训练系统：删除考试记录 ====================
+    if (req.method === 'DELETE' && path === '/api/training/exams') {
+      await pool.query('DELETE FROM user_exams WHERE user_id = $1', [userPayload.userId]);
+      return res.json({ success: true });
+    }
+    
     return res.status(404).json({ error: 'Not Found' });
     
   } catch (e) {

@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>塔罗牌义记忆训练</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#1a1a2e;color:#e0d8c8;min-height:100vh;overflow-x:hidden}
+.screen{display:none;padding:16px;min-height:100vh}
+.screen.active{display:block}
+
+/* 顶部标题栏 */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px;border-bottom:1px solid #2a2a4a;margin-bottom:16px}
+.topbar .back-btn{background:none;border:none;color:#a09070;font-size:20px;cursor:pointer;padding:4px 8px}
+.topbar h1{font-size:18px;color:#d4b87a;font-weight:600}
+.topbar .menu-btn{background:none;border:none;color:#a09070;font-size:18px;cursor:pointer;padding:4px 8px}
+
+/* 底部导航 */
+.navbar{position:fixed;bottom:0;left:0;right:0;background:#16213e;display:flex;border-top:1px solid #2a2a4a;z-index:100}
+.navbar button{flex:1;padding:12px 8px;background:none;border:none;color:#8a7a60;font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.navbar button.active{color:#d4b87a}
+.navbar button .nav-icon{font-size:18px}
+
+/* 通用 */
+.card{padding:16px;border-radius:12px;margin-bottom:12px}
+label{font-size:13px;color:#8a7a60;margin-bottom:4px;display:block}
+input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #3a3a5a;background:#16213e;color:#e0d8c8;font-size:15px;margin-bottom:12px}
+input:focus,select:focus{outline:none;border-color:#d4b87a}
+.btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px;transition:all .2s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,#d4b87a,#b8955a);color:#1a1a2e}
+.btn-outline{background:transparent;border:1px solid #d4b87a;color:#d4b87a}
+.btn-danger{background:#4a2020;color:#e0a0a0;border:1px solid #6a3030}
+.btn-sm{padding:8px 16px;font-size:13px;width:auto;display:inline-block}
+
+/* 参数设置 */
+.setup-card{border:1px solid #3a3a5a;background:#16213e;padding:20px;border-radius:14px;margin-bottom:16px}
+.setup-card h3{font-size:15px;color:#d4b87a;margin-bottom:14px}
+.option-row{display:flex;gap:10px;flex-wrap:wrap}
+.option-tag{padding:8px 14px;border-radius:20px;border:1px solid #3a3a5a;font-size:13px;cursor:pointer;background:#1a1a2e;color:#8a7a60;transition:all .2s}
+.option-tag.selected{background:#2a2030;border-color:#d4b87a;color:#d4b87a}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row input[type=range]{flex:1;margin:0}
+
+/* 答题界面 */
+.quiz-header{display:flex;justify-content:space-between;align-items:center;padding:12px 0;margin-bottom:16px}
+.quiz-progress-text{font-size:13px;color:#8a7a60}
+.quiz-timer{font-size:15px;color:#d4b87a;font-weight:600}
+.quiz-timer.warning{color:#e06060;animation:blink .5s infinite}
+@keyframes blink{50%{opacity:.5}}
+.quiz-question{margin-bottom:20px}
+.quiz-question .card-name{font-size:20px;color:#fff;font-weight:700;margin-bottom:8px}
+.quiz-question .orientation-tag{display:inline-block;padding:4px 12px;border-radius:12px;font-size:13px;margin-bottom:12px}
+.orientation-tag.upright{background:#2a3a20;color:#8ad88a}
+.orientation-tag.reversed{background:#3a2020;color:#e08080}
+.quiz-question .q-text{font-size:15px;color:#c0b8a8;line-height:1.6}
+.quiz-card-img{display:block;width:120px;height:auto;border-radius:10px;margin:0 auto 12px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.quiz-options{display:flex;flex-direction:column;gap:10px}
+.quiz-option{padding:14px 16px;border-radius:10px;border:1px solid #3a3a5a;background:#16213e;font-size:15px;color:#e0d8c8;cursor:pointer;text-align:left;transition:all .2s;line-height:1.5}
+.quiz-option:active{background:#2a2a4a}
+.quiz-option.correct{background:#1a3a1a;border-color:#4a8a4a;color:#a0f0a0}
+.quiz-option.wrong{background:#3a1a1a;border-color:#8a4a4a;color:#f0a0a0}
+.quiz-option.disabled{pointer-events:none;opacity:.8}
+.quiz-input-wrap{display:flex;gap:8px}
+.quiz-input-wrap input{flex:1;margin:0}
+.quiz-input-wrap button{width:auto}
+.quiz-feedback{text-align:center;padding:16px;margin-top:12px;border-radius:10px;font-size:14px;line-height:1.6}
+.quiz-feedback.correct{background:#1a2a1a;color:#a0f0a0}
+.quiz-feedback.wrong{background:#2a1a1a;color:#f0a0a0}
+.quiz-next-btn{margin-top:16px}
+
+/* 结果页 */
+.result-score{text-align:center;padding:30px 0}
+.result-score .big-num{font-size:56px;font-weight:800;color:#d4b87a}
+.result-score .label{font-size:14px;color:#8a7a60;margin-top:4px}
+.result-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:20px 0}
+.stat-item{background:#16213e;border-radius:10px;padding:14px;text-align:center;border:1px solid #2a2a4a}
+.stat-item .val{font-size:20px;font-weight:700;color:#d4b87a}
+.stat-item .lbl{font-size:11px;color:#8a7a60;margin-top:4px}
+.error-list{max-height:300px;overflow-y:auto;margin:16px 0}
+.error-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #2a2a4a;font-size:14px}
+.error-item .err-card{color:#e08080}
+.error-item .err-answer{color:#8a7a60;font-size:12px}
+
+/* 进度页 */
+.progress-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.progress-filter .filter-tag{padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer;background:#16213e;border:1px solid #3a3a5a;color:#8a7a60}
+.progress-filter .filter-tag.active{background:#2a2030;border-color:#d4b87a;color:#d4b87a}
+.progress-group{margin-bottom:20px}
+.progress-group h4{font-size:14px;color:#d4b87a;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #2a2a4a}
+.progress-card{padding:12px;margin-bottom:8px;border-radius:8px;background:#16213e;border:1px solid #2a2a4a}
+.progress-card .pc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.progress-card .pc-name{font-size:14px;font-weight:600}
+.progress-card .pc-ori{font-size:11px;padding:2px 8px;border-radius:8px}
+.progress-card .pc-ori.up{background:#1a2a1a;color:#8ad88a}
+.progress-card .pc-ori.rev{background:#2a1a1a;color:#e08080}
+.progress-bar-wrap{height:8px;background:#1a1a2e;border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;transition:width .5s}
+.progress-bar-fill.low{background:#e06060}
+.progress-bar-fill.mid{background:#d4b87a}
+.progress-bar-fill.high{background:#60c060}
+.progress-bar-fill.max{background:#40a0ff}
+
+/* 错题强化 */
+.review-empty{text-align:center;padding:40px 20px}
+.review-empty .icon{font-size:48px;margin-bottom:12px}
+.review-empty p{color:#8a7a60;font-size:14px}
+
+/* toast */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 底部导航（仅在主屏显示） -->
+<nav class="navbar" id="navbar">
+  <button onclick="showScreen('setup')" id="nav-setup"><span class="nav-icon">📝</span>训练</button>
+  <button onclick="showScreen('review')" id="nav-review"><span class="nav-icon">🔄</span>错题</button>
+  <button onclick="showScreen('progress')" id="nav-progress"><span class="nav-icon">📊</span>进度</button>
+</nav>
+
+<!-- ========== 屏幕1：首页 ========== -->
+<div class="screen active" id="screen-setup">
+  <div class="topbar">
+    <span></span>
+    <h1>塔罗牌义记忆训练</h1>
+    <span></span>
+  </div>
+
+  <div style="text-align:center;padding:60px 20px">
+    <div style="font-size:64px;margin-bottom:16px">🃏</div>
+    <p style="color:#8a7a60;font-size:14px;line-height:1.8;margin-bottom:24px">
+      100题 · 全部78张牌 · 正位+逆位 · 薄弱优先
+    </p>
+    <div style="color:#6a5a40;font-size:12px;margin-bottom:30px">
+      单选35% / 倒序记忆20% / 判断20% / 填空10% / 图片联想10% / 逆位逻辑5%
+    </div>
+    <button class="btn btn-primary" onclick="startExam()" style="max-width:280px;margin:0 auto">开始训练</button>
+    <button class="btn" style="background:none;color:#6a4a4a;font-size:12px;padding:8px;margin-top:8px;border:none;text-decoration:underline" onclick="clearAllData()">清空数据，重新开始</button>
+  </div>
+</div>
+
+<!-- ========== 屏幕2：答题中 ========== -->
+<div class="screen" id="screen-exam">
+  <div class="topbar">
+    <span style="font-size:13px;color:#8a7a60" id="exam-info">考试中</span>
+    <h1 id="exam-title">第 1/10 题</h1>
+    <button class="btn btn-sm btn-outline" onclick="submitExam()" id="submit-btn">交卷</button>
+  </div>
+
+  <div class="quiz-header">
+    <span class="quiz-progress-text" id="quiz-type-label">单选题</span>
+    <span class="quiz-timer" id="quiz-timer">30s</span>
+  </div>
+
+  <div class="quiz-question" id="quiz-question-area"></div>
+  <div class="quiz-options" id="quiz-options-area"></div>
+  <div id="quiz-feedback-area"></div>
+</div>
+
+<!-- ========== 屏幕3：考试结果 ========== -->
+<div class="screen" id="screen-result">
+  <div class="topbar">
+    <span></span>
+    <h1>考试结果</h1>
+    <span></span>
+  </div>
+
+  <div class="result-score">
+    <div class="big-num" id="result-score">0</div>
+    <div class="label">正确率</div>
+  </div>
+
+  <div class="result-stats">
+    <div class="stat-item">
+      <div class="val" id="result-total">0</div>
+      <div class="lbl">总题数</div>
+    </div>
+    <div class="stat-item">
+      <div class="val" id="result-correct">0</div>
+      <div class="lbl">答对</div>
+    </div>
+    <div class="stat-item">
+      <div class="val" id="result-duration">0s</div>
+      <div class="lbl">用时</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:14px;color:#d4b87a;margin:16px 0 8px">错题回顾</h3>
+  <div class="error-list" id="error-review-list"></div>
+
+  <button class="btn btn-primary" onclick="showScreen('setup')">再来一场</button>
+  <button class="btn btn-outline" onclick="startReview(true)">错题强化</button>
+</div>
+
+<!-- ========== 屏幕4：错题强化 ========== -->
+<div class="screen" id="screen-review">
+  <div class="topbar">
+    <span></span>
+    <h1>错题强化</h1>
+    <span style="font-size:12px;color:#8a7a60" id="review-count-info"></span>
+  </div>
+
+  <div class="progress-filter" style="margin-bottom:12px">
+    <span class="filter-tag active" onclick="reviewFilter='all';renderReviewList()">全部错题</span>
+    <span class="filter-tag" onclick="reviewFilter='weak';renderReviewList()">薄弱卡牌</span>
+  </div>
+
+  <div id="review-list-area">
+    <div class="review-empty">
+      <div class="icon">🎉</div>
+      <p>暂无错题，继续保持！</p>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="review-start-btn" onclick="startReview()" style="margin-top:16px">开始错题训练</button>
+</div>
+
+<!-- ========== 屏幕5：记忆进度 ========== -->
+<div class="screen" id="screen-progress">
+  <div class="topbar">
+    <span></span>
+    <h1>记忆进度</h1>
+    <span style="font-size:12px;color:#8a7a60" id="progress-summary"></span>
+  </div>
+
+  <div class="progress-filter">
+    <span class="filter-tag active" data-pf="all" onclick="progressFilter='all';renderProgress()">全部</span>
+    <span class="filter-tag" data-pf="stranger" onclick="progressFilter='stranger';renderProgress()">陌生(0-30%)</span>
+    <span class="filter-tag" data-pf="unmastered" onclick="progressFilter='unmastered';renderProgress()">未精通(0-99%)</span>
+    <span class="filter-tag" data-pf="errors" onclick="progressFilter='errors';renderProgress()">有错题</span>
+  </div>
+
+  <div id="progress-list-area"></div>
+</div>
+
+<script>
+// ======================== 全局状态 ========================
+const STORAGE_KEY_PROGRESS = 'taro_train_progress';
+const STORAGE_KEY_ERRORS = 'taro_train_errors';
+const STORAGE_KEY_EXAMS = 'taro_train_exams';
+let progressFilter = 'all', reviewFilter = 'all';
+let currentExam = null, examTimer = null, questionTimer = null;
+let questionTimeoutId = null;
+
+// ======================== 78张塔罗牌数据（从DB加载，硬编码兜底） ========================
+// 训练专用硬编码关键词（出题兜底，仅在DB无数据时使用）
+const TRAIN_FALLBACK = [
+  { id:1, uk:"新开始", ud:"新计划忽视风险", rk:"不听建议", rd:"开始不顺利" },
+  { id:2, uk:"有资源", ud:"善于沟通", rk:"没资源", rd:"沟通受阻有隐瞒" },
+  { id:3, uk:"静观其变", ud:"理智冷静", rk:"有情绪", rd:"识人不清" },
+  { id:4, uk:"踏实认真", ud:"负责成熟", rk:"不踏实", rd:"无规划自私" },
+  { id:5, uk:"靠谱坚定", ud:"稳重有规划", rk:"不靠谱", rd:"大男子主义" },
+  { id:6, uk:"有人听从", ud:"沟通顺畅", rk:"无人听从", rd:"第三方干扰" },
+  { id:7, uk:"平衡稳定", ud:"双向奔赴", rk:"失衡", rd:"三方关系" },
+  { id:8, uk:"可控", ud:"主导解决问题", rk:"失控", rd:"失去主动权" },
+  { id:9, uk:"温柔控制", ud:"智慧掌控", rk:"难控制", rd:"无能力" },
+  { id:10, uk:"迷茫", ud:"寻找方向", rk:"更迷茫", rd:"极度迷茫" },
+  { id:11, uk:"运势变动", ud:"自然起伏", rk:"运势低迷", rd:"受外界影响" },
+  { id:12, uk:"平衡规则", ud:"平等讲原则", rk:"失衡", rd:"关系不对等" },
+  { id:13, uk:"精神共鸣", ud:"在乎同频", rk:"精神压力", rd:"相处不适" },
+  { id:14, uk:"结束新生", ud:"新旧交替", rk:"未结束", rd:"反复纠缠" },
+  { id:15, uk:"平衡自律", ud:"自律平衡", rk:"沟通阻碍", rd:"沟通不畅" },
+  { id:16, uk:"长期欲望", ud:"三方关系", rk:"短期欲望", rd:"短暂纠葛" },
+  { id:17, uk:"突发变故", ud:"不可抗力", rk:"已知变故", rd:"问题暴露" },
+  { id:18, uk:"有期望", ud:"信心满满", rk:"没期望", rd:"消极无信心" },
+  { id:19, uk:"隐藏看不清", ud:"有隐患", rk:"看清真相", rd:"发现问题" },
+  { id:20, uk:"积极阳光", ud:"相处快乐", rk:"不明朗", rd:"有第三方" },
+  { id:21, uk:"抉择", ud:"适合做决定", rk:"问题反复", rd:"自欺欺人" },
+  { id:22, uk:"克服阻碍", ud:"结果完美", rk:"难克服", rd:"环境阻碍大" },
+  { id:23, uk:"想法一致", ud:"主动规划", rk:"想法不一", rd:"规划冲突" },
+  { id:24, uk:"选择纠结", ud:"自我蒙蔽", rk:"放下选择", rd:"放弃纠结" },
+  { id:25, uk:"扎心不开心", ud:"情绪低落", rk:"更扎心", rd:"持续低落" },
+  { id:26, uk:"停滞冷战", ud:"关系停滞", rk:"行动起来", rd:"需主动推进" },
+  { id:27, uk:"争执冲突", ud:"吵架矛盾", rk:"退让", rd:"妥协有第三方" },
+  { id:28, uk:"进展慢", ud:"发展缓慢", rk:"关系崩", rd:"矛盾破裂" },
+  { id:29, uk:"隐藏问题", ud:"侥幸心理", rk:"问题暴露", rd:"隐瞒被发现" },
+  { id:30, uk:"束缚难行动", ud:"自我束缚", rk:"挣脱", rd:"逃离困境" },
+  { id:31, uk:"想得多焦虑", ud:"失眠焦虑", rk:"长期焦虑", rd:"状态极差" },
+  { id:32, uk:"彻底结束", ud:"关系终结", rk:"藕断丝连", rd:"未断干净" },
+  { id:33, uk:"张望找机会", ud:"不专心", rk:"难推进", rd:"压力大不想做" },
+  { id:34, uk:"主动推进", ud:"积极明确", rk:"想法不一", rd:"难以沟通" },
+  { id:35, uk:"有原则直接", ud:"理性直接", rk:"挑剔", rd:"苛刻主观" },
+  { id:36, uk:"责任担当", ud:"执行力强", rk:"欺骗", rd:"隐瞒不负责任" },
+  { id:37, uk:"有规划新开始", ud:"脚踏实地", rk:"没规划", rd:"无目标" },
+  { id:38, uk:"平衡权衡", ud:"计较得失", rk:"失衡", rd:"利益失衡" },
+  { id:39, uk:"学习讨论", ud:"交流咨询", rk:"第三方", rd:"他人挑拨" },
+  { id:40, uk:"稳定保守", ud:"维持现状", rk:"不稳定", rd:"发展不稳" },
+  { id:41, uk:"发展慢", ud:"物质影响", rk:"回暖", rd:"感情回升" },
+  { id:42, uk:"付出平衡", ud:"平等付出", rk:"三角关系", rd:"付出不均" },
+  { id:43, uk:"思考安排", ud:"犹豫规划", rk:"关系不稳", rd:"摇摇欲坠" },
+  { id:44, uk:"专注自身", ud:"忙于事业", rk:"付出少回报", rd:"不愿投入" },
+  { id:45, uk:"享乐享受", ud:"物质丰富", rk:"过于享乐", rd:"不务实" },
+  { id:46, uk:"合家欢乐", ud:"家庭和睦", rk:"现实危机", rd:"易分离" },
+  { id:47, uk:"有规划慢发展", ud:"稳步发展", rk:"没规划", rd:"易受影响" },
+  { id:48, uk:"稳定专一", ud:"现实专一", rk:"不专一", rd:"精力分散" },
+  { id:49, uk:"踏实认真", ud:"愿意付出", rk:"不踏实", rd:"缺乏责任心" },
+  { id:50, uk:"顾家负责", ud:"兑现承诺", rk:"不负责", rd:"出轨逃避" },
+  { id:51, uk:"主动出击", ud:"三分钟热度", rk:"不主动", rd:"没兴趣" },
+  { id:52, uk:"观望权衡", ud:"看外界", rk:"回归现实", rd:"放弃空想" },
+  { id:53, uk:"出发行动", ud:"遇新感情", rk:"想放下", rd:"疲惫放弃" },
+  { id:54, uk:"发展稳定", ud:"桃花优质", rk:"不稳定", rd:"异地聚少离多" },
+  { id:55, uk:"冲突争执", ud:"吵架矛盾", rk:"退让妥协", rd:"冲突平息" },
+  { id:56, uk:"成功吸引", ud:"有魅力", rk:"无吸引力", rd:"沟通变差" },
+  { id:57, uk:"克服困难", ud:"独自抗压", rk:"难克服", rd:"想放弃" },
+  { id:58, uk:"快速推进", ud:"同频共鸣", rk:"推进不顺", rd:"他人不支持" },
+  { id:59, uk:"防御防备", ud:"沟通隔阂", rk:"放下防备", rd:"顺利发展" },
+  { id:60, uk:"忙迷茫", ud:"压力巨大", rk:"想放弃", rd:"濒临分手" },
+  { id:61, uk:"感兴趣", ud:"积极主动", rk:"没兴趣", rd:"好感下降" },
+  { id:62, uk:"积极主动", ud:"讨好对方", rk:"不主动", rd:"吸引力下降" },
+  { id:63, uk:"积极负责", ud:"有主见", rk:"不负责", rd:"闹脾气" },
+  { id:64, uk:"专一负责", ud:"主导关系", rk:"不专一", rd:"大男子主义" },
+  { id:65, uk:"沟通喜欢", ud:"新人聊得来", rk:"不沟通", rd:"关系难推进" },
+  { id:66, uk:"沟通平衡", ud:"双向奔赴", rk:"沟通失衡", rd:"敷衍有误会" },
+  { id:67, uk:"社交愉快", ud:"人缘好", rk:"第三方干扰", rd:"感情不稳" },
+  { id:68, uk:"爱搭不理", ud:"看不上示好", rk:"放下过去", rd:"关系破冰" },
+  { id:69, uk:"情绪失落", ud:"只看缺点", rk:"释怀", rd:"情绪转好" },
+  { id:70, uk:"主动关爱", ud:"提供情绪价值", rk:"单方付出", rd:"乏味有竞争" },
+  { id:71, uk:"做梦画饼", ud:"不切实际", rk:"梦想破灭", rd:"看清真相" },
+  { id:72, uk:"想离开", ud:"纠结犹豫", rk:"无法离开", rd:"拖延耗着" },
+  { id:73, uk:"得意满足", ud:"高姿态", rk:"失望", rd:"失去信心" },
+  { id:74, uk:"合家欢乐", ud:"稳定结婚", rk:"分离", rd:"濒临分手" },
+  { id:75, uk:"主动关心", ud:"聊天愉快", rk:"沟通变差", rd:"打击对方" },
+  { id:76, uk:"沟通贴心", ud:"温柔细心", rk:"欺骗", rd:"光说不做" },
+  { id:77, uk:"不满意低落", ud:"要求高", rk:"沟通阻碍", rd:"冷战断联" },
+  { id:78, uk:"浪漫情商高", ud:"完美恋人", rk:"渣男", rd:"欺骗出轨" }
+];
+
+let TAROT_CARDS = []; // 运行时填充
+
+// 卡牌名称（78张，索引=cardId）
+const TAROT_NAMES = [
+  "", "愚人","魔术师","女祭司","女皇","皇帝","教皇","恋人","战车","力量","隐者",
+  "命运之轮","正义","倒吊人","死神","节制","恶魔","高塔","星星","月亮","太阳","审判","世界",
+  "宝剑一","宝剑二","宝剑三","宝剑四","宝剑五","宝剑六","宝剑七","宝剑八","宝剑九","宝剑十",
+  "宝剑侍从","宝剑骑士","宝剑女王","宝剑国王",
+  "星币一","星币二","星币三","星币四","星币五","星币六","星币七","星币八","星币九","星币十",
+  "星币侍从","星币骑士","星币女王","星币国王",
+  "权杖一","权杖二","权杖三","权杖四","权杖五","权杖六","权杖七","权杖八","权杖九","权杖十",
+  "权杖侍从","权杖骑士","权杖女王","权杖国王",
+  "圣杯一","圣杯二","圣杯三","圣杯四","圣杯五","圣杯六","圣杯七","圣杯八","圣杯九","圣杯十",
+  "圣杯侍从","圣杯骑士","圣杯女王","圣杯国王"
+];
+
+function getCardType(cardId) {
+  if (cardId <= 22) return '大阿卡纳';
+  if (cardId <= 36) return '宝剑';
+  if (cardId <= 50) return '星币';
+  if (cardId <= 64) return '权杖';
+  return '圣杯';
+}
+
+// 解析DB中单张牌的 meaning 对象为训练格式
+function parseCardMeaning(dbCard) {
+  const fb = TRAIN_FALLBACK[dbCard.card_id - 1] || {};
+  let uk = fb.uk || '', ud = fb.ud || '', rk = fb.rk || '', rd = fb.rd || '';
+  
+  if (dbCard.upright) {
+    const m = dbCard.upright.match(/^正位[：:]\s*(.+)/);
+    if (m) uk = m[1].trim().replace(/[，,、].*$/, '');
+  }
+  if (dbCard.reversed) {
+    const m = dbCard.reversed.match(/^逆位[：:]\s*(.+)/);
+    if (m) rk = m[1].trim().replace(/[，,、].*$/, '');
+  }
+  if (dbCard.pattern) {
+    const clean = dbCard.pattern.replace(/<[^>]+>/g, '');
+    const um = clean.match(/正位[：:]\s*(.+?)(?:逆位|$)/);
+    if (um) ud = um[1].trim();
+    const rm = clean.match(/逆位[：:]\s*(.+)$/);
+    if (rm) rd = rm[1].trim();
+  }
+  
+  return {
+    id: dbCard.card_id,
+    name: dbCard.name || TAROT_NAMES[dbCard.card_id] || '',
+    type: getCardType(dbCard.card_id),
+    uk, ud, rk, rd,
+    pattern: dbCard.pattern || ''
+  };
+}
+
+// 从主站 /api/card-meanings 加载用户牌义数据
+async function loadCardDataFromDB() {
+  const token = localStorage.getItem('taroToken');
+  if (!token) { buildFallbackCards(); return; }
+  try {
+    const res = await fetch('/api/card-meanings', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) { buildFallbackCards(); return; }
+    const data = await res.json();
+    if (!data || Object.keys(data).length === 0) { buildFallbackCards(); return; }
+    TAROT_CARDS = [];
+    for (let i = 1; i <= 78; i++) {
+      TAROT_CARDS.push(parseCardMeaning({ card_id: i, ...(data[i] || {}) }));
+    }
+  } catch(e) { buildFallbackCards(); }
+}
+
+function buildFallbackCards() {
+  TAROT_CARDS = TRAIN_FALLBACK.map(fb => ({
+    id: fb.id, name: TAROT_NAMES[fb.id] || fb.uk, type: getCardType(fb.id), uk: fb.uk, ud: fb.ud, rk: fb.rk, rd: fb.rd, pattern: ''
+  }));
+}
+
+// 牌组定义
+const CARD_GROUPS = {
+  all: [1,78], major: [1,22], swords: [23,36], pentacles: [37,50], wands: [51,64], cups: [65,78]
+};
+
+// 卡牌图片路径（从主站复用）
+const cardImages = ["",
+  "images/1愚人.jpg","images/2魔术师.jpg","images/3女祭司.jpg","images/4女皇.jpg",
+  "images/5皇帝.jpg","images/6教皇.jpg","images/7恋人.jpg","images/8战车.jpg",
+  "images/9力量.jpg","images/10隐者.jpg","images/11命运之轮.jpg","images/12正义.jpg",
+  "images/13倒吊人.jpg","images/14死神.jpg","images/15节制.jpg","images/16恶魔.jpg",
+  "images/17高塔.jpg","images/18星星.jpg","images/19月亮.jpg","images/20太阳.jpg",
+  "images/21审判.jpg","images/22世界.jpg",
+  "images/23宝剑一.jpg","images/24宝剑二.jpg","images/25宝剑三.jpg","images/26宝剑四.jpg",
+  "images/27宝剑五.jpg","images/28宝剑六.jpg","images/29宝剑七.jpg","images/30宝剑八.jpg",
+  "images/31宝剑九.jpg","images/32宝剑十.jpg","images/33宝剑侍从.jpg","images/34宝剑骑士.jpg",
+  "images/35宝剑女王.jpg","images/36宝剑国王.jpg",
+  "images/37星币一.jpg","images/38星币二.jpg","images/39星币三.jpg","images/40星币四.jpg",
+  "images/41星币五.jpg","images/42星币六.jpg","images/43星币七.jpg","images/44星币八.jpg",
+  "images/45星币九.jpg","images/46星币十.jpg","images/47星币侍从.jpg","images/48星币骑士.jpg",
+  "images/49星币女王.jpg","images/50星币国王.jpg",
+  "images/51权杖一.jpg","images/52权杖二.jpg","images/53权杖三.jpg","images/54权杖四.jpg",
+  "images/55权杖五.jpg","images/56权杖六.jpg","images/57权杖七.jpg","images/58权杖八.jpg",
+  "images/59权杖九.jpg","images/60权杖十.jpg","images/61权杖侍从.jpg","images/62权杖骑士.jpg",
+  "images/63权杖女王.jpg","images/64权杖国王.jpg",
+  "images/65圣杯一.jpg","images/66圣杯二.jpg","images/67圣杯三.jpg","images/68圣杯四.jpg",
+  "images/69圣杯五.jpg","images/70圣杯六.jpg","images/71圣杯七.jpg","images/72圣杯八.jpg",
+  "images/73圣杯九.jpg","images/74圣杯十.jpg","images/75圣杯侍从.jpg","images/76圣杯骑士.jpg",
+  "images/77圣杯女王.jpg","images/78圣杯国王.jpg"
+];
+
+// 清空所有训练数据
+function clearAllData() {
+  if (!confirm('确定要清空所有训练数据吗？（进度、错题、考试记录将全部删除）')) return;
+  localStorage.removeItem(STORAGE_KEY_PROGRESS);
+  localStorage.removeItem(STORAGE_KEY_ERRORS);
+  localStorage.removeItem(STORAGE_KEY_EXAMS);
+  localStorage.removeItem('taro_train_inited');
+  apiCall('DELETE', '/api/training/progress');
+  apiCall('DELETE', '/api/training/errors');
+  apiCall('DELETE', '/api/training/exams');
+  toast('数据已清空');
+  renderProgress();
+  renderReviewList();
+}
+
+function getCardsInGroup(group) {
+  const r = CARD_GROUPS[group];
+  if (!r) return [];
+  const ids = [];
+  for (let i = r[0]; i <= r[1]; i++) ids.push(i);
+  return ids;
+}
+
+function getCardById(id) {
+  return TAROT_CARDS.find(c => c.id === id);
+}
+
+// ======================== 本地存储 ========================
+function getProgress() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_PROGRESS)) || {}; } catch(e) { return {}; }
+}
+function saveProgress(p) { localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(p)); }
+function getErrors() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_ERRORS)) || {}; } catch(e) { return {}; }
+}
+function saveErrors(e) { localStorage.setItem(STORAGE_KEY_ERRORS, JSON.stringify(e)); }
+function getExams() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_EXAMS)) || []; } catch(e) { return []; }
+}
+function saveExams(e) { localStorage.setItem(STORAGE_KEY_EXAMS, JSON.stringify(e)); }
+
+function buildProgressKey(cardId, orientation) { return `${cardId}_${orientation}`; }
+
+function getProgressValue(cardId, orientation) {
+  const p = getProgress();
+  return p[buildProgressKey(cardId, orientation)] || 0;
+}
+
+function updateProgress(cardId, orientation, isCorrect) {
+  const p = getProgress();
+  const key = buildProgressKey(cardId, orientation);
+  const old = p[key] || 0;
+  p[key] = isCorrect ? Math.min(100, old + 10) : Math.max(0, old - 15);
+  saveProgress(p);
+  // 同步到服务端
+  syncProgressToServer(cardId, orientation, isCorrect);
+  return p[key];
+}
+
+function recordError(cardId, orientation, isCorrect) {
+  const e = getErrors();
+  const key = buildProgressKey(cardId, orientation);
+  if (!e[key]) e[key] = { ec: 0, cc: 0 };
+  if (isCorrect) {
+    e[key].cc++;
+  } else {
+    e[key].ec++;
+    e[key].cc = 0;
+  }
+  saveErrors(e);
+  syncErrorToServer(cardId, orientation, isCorrect);
+}
+
+// ======================== 服务端同步 ========================
+async function apiCall(method, endpoint, body) {
+  const token = localStorage.getItem('taroToken');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+
+  const opts = { method, headers };
+  if (body) opts.body = JSON.stringify(body);
+
+  try {
+    const res = await fetch(endpoint, opts);
+    if (res.ok) return await res.json();
+    if (res.status === 401) { toast('请先登录'); return null; }
+    return null;
+  } catch(e) { return null; }
+}
+
+async function initTrainingTables() {
+  await apiCall('POST', '/api/training/init');
+}
+
+async function syncProgressToServer(cardId, orientation, isCorrect) {
+  await apiCall('POST', '/api/training/progress', { card_id: cardId, orientation, is_correct: isCorrect });
+}
+
+async function syncErrorToServer(cardId, orientation, isCorrect) {
+  await apiCall('POST', '/api/training/errors', { card_id: cardId, orientation, is_correct: isCorrect });
+}
+
+async function syncExamToServer(total, score, rate, duration, errorIds) {
+  await apiCall('POST', '/api/training/exams', {
+    total, score, correct_rate: rate, duration, error_ids: errorIds.join(',')
+  });
+}
+
+async function loadServerProgress() {
+  const data = await apiCall('GET', '/api/training/progress');
+  if (!data || !data.length) return;
+  const p = {};
+  data.forEach(r => { p[buildProgressKey(r.card_id, r.orientation)] = r.progress; });
+  // 合并：取最大值
+  const local = getProgress();
+  for (const key in p) {
+    if (!local[key] || p[key] > local[key]) local[key] = p[key];
+  }
+  saveProgress(local);
+}
+
+async function loadServerErrors() {
+  const data = await apiCall('GET', '/api/training/errors');
+  if (!data || !data.length) return;
+  const e = {};
+  data.forEach(r => { e[buildProgressKey(r.card_id, r.orientation)] = { ec: r.error_count, cc: r.continuous_correct }; });
+  const local = getErrors();
+  for (const key in e) {
+    if (!local[key] || e[key].ec > local[key].ec) local[key] = e[key];
+  }
+  saveErrors(local);
+}
+
+function getAuthToken() {
+  return localStorage.getItem('taroToken');
+}
+
+// ======================== 题库生成算法 ========================
+function buildQuestionPool(group, orientation, mode) {
+  const cardIds = group === 'all' ? getCardsInGroup('all') : getCardsInGroup(group);
+  const oriList = orientation === 'both' ? ['upright', 'reversed'] : [orientation];
+  
+  // 构建所有可能的 cardId + orientation 组合
+  const pool = [];
+  cardIds.forEach(cid => {
+    oriList.forEach(ori => {
+      pool.push({ cardId: cid, orientation: ori });
+    });
+  });
+
+  // 去重准备
+  return pool;
+}
+
+// 获取进度权重 0~30%(5.0) 31~70%(2.0) 71~99%(1.0) 100%(0.2)
+function getProgressWeight(progress) {
+  if (progress <= 30) return 5.0;
+  if (progress <= 70) return 2.0;
+  if (progress <= 99) return 1.0;
+  return 0.2;
+}
+
+// 加权随机选择（不重复抽取，权重实时更新）
+function weightedRandomSelect(pool, mode, count) {
+  if (pool.length <= count) return shuffle([...pool]);
+  
+  if (mode === 'random') {
+    return shuffle([...pool]).slice(0, count);
+  }
+  
+  // mode === 'weak': 按薄弱程度加权
+  const items = pool.map(p => ({
+    ...p,
+    weight: getProgressWeight(getProgressValue(p.cardId, p.orientation))
+  }));
+  
+  const selected = [];
+  const used = new Set();
+  let remainingWeight = items.reduce((s, i) => s + i.weight, 0);
+  
+  while (selected.length < count && used.size < items.length) {
+    let r = Math.random() * remainingWeight;
+    let picked = null;
+    for (let i = 0; i < items.length; i++) {
+      if (used.has(i)) continue;
+      r -= items[i].weight;
+      if (r <= 0) {
+        picked = items[i];
+        used.add(i);
+        remainingWeight -= items[i].weight;
+        break;
+      }
+    }
+    // 浮点精度兜底：选第一个未使用的
+    if (!picked) {
+      for (let i = 0; i < items.length; i++) {
+        if (!used.has(i)) { picked = items[i]; used.add(i); remainingWeight -= items[i].weight; break; }
+      }
+    }
+    if (picked) selected.push(picked);
+  }
+  
+  return selected;
+}
+
+// 题型配比：单选35% 倒序记忆20% 判断20% 填空10% 图片联想10% 逆位逻辑5%
+function allocateQuestionTypes(count) {
+  let sc = Math.floor(count * 0.35);  // 单选 35%
+  let tf = Math.floor(count * 0.20);  // 判断 20%
+  let fb = Math.floor(count * 0.10);  // 填空 10%
+  let rl = Math.floor(count * 0.05);  // 逆位逻辑 5%
+  let rm = Math.floor(count * 0.20);  // 倒序记忆 20%
+  let im = count - sc - tf - fb - rl - rm;  // 图片联想 10%
+  return { single: sc, truefalse: tf, fillblank: fb, reversed: rl, reverse: rm, image: im };
+}
+
+// 生成单选题
+function generateSingleChoice(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  const isUp = poolItem.orientation === 'upright';
+  const correctAnswer = isUp ? card.uk : card.rk;
+  const question = `"${card.name}"${isUp ? '正' : '逆'}位核心含义是？`;
+  
+  // 从其他卡牌中抽3个同状态的干扰项
+  const others = TAROT_CARDS.filter(c => c.id !== card.id).map(c => ({
+    text: isUp ? c.uk : c.rk
+  }));
+  const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
+  
+  const options = shuffle([correctAnswer, ...distractors]);
+  const correctIndex = options.indexOf(correctAnswer);
+  
+  return {
+    type: 'single',
+    question,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    options,
+    correctIndex,
+    correctAnswer,
+    explanation: `${card.name}${isUp ? '正' : '逆'}位代表：${isUp ? card.ud : card.rd}`
+  };
+}
+
+// 生成判断题
+function generateTrueFalse(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  const isUp = poolItem.orientation === 'upright';
+  const trueDesc = isUp ? card.ud : card.rd;
+  
+  // 50%用真实描述，50%用其他卡牌描述
+  let statement, correctAnswer;
+  if (Math.random() < 0.5) {
+    statement = trueDesc;
+    correctAnswer = true;
+  } else {
+    // 用其他卡牌的描述作为错误干扰
+    const others = TAROT_CARDS.filter(c => c.id !== card.id);
+    const other = others[Math.floor(Math.random() * others.length)];
+    statement = isUp ? other.ud : other.rd;
+    correctAnswer = false;
+  }
+  
+  return {
+    type: 'truefalse',
+    question: `"${card.name}"${isUp ? '正' : '逆'}位代表：${statement}`,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    options: ['对', '错'],
+    correctIndex: correctAnswer ? 0 : 1,
+    correctAnswer: correctAnswer ? '对' : '错',
+    explanation: `${card.name}${isUp ? '正' : '逆'}位代表：${isUp ? card.ud : card.rd}`
+  };
+}
+
+// 生成填空题
+function generateFillBlank(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  const isUp = poolItem.orientation === 'upright';
+  const keyword = isUp ? card.uk : card.rk;
+  const desc = isUp ? card.ud : card.rd;
+  
+  return {
+    type: 'fillblank',
+    question: `"${card.name}"${isUp ? '正' : '逆'}位核心含义是？`,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    correctAnswer: keyword,
+    hint: `提示：${desc}`,
+    explanation: `${card.name}${isUp ? '正' : '逆'}位代表：${desc}（关键词：${keyword}）`
+  };
+}
+
+// 生成逆位逻辑题
+function generateReversedLogic(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  // 逆位逻辑题：用正位关键词做题干，逆位关键词做答案
+  if (poolItem.orientation === 'upright') {
+    // 逻辑题必须用逆位出题，如果抽到正位就跳过（实际pool里会保证）
+    return null;
+  }
+  
+  const uprightKW = card.uk;
+  const correctAnswer = card.rk;
+  
+  const others = TAROT_CARDS.filter(c => c.id !== card.id).map(c => c.rk);
+  const distractors = shuffle([...others]).slice(0, 3);
+  const options = shuffle([correctAnswer, ...distractors]);
+  const correctIndex = options.indexOf(correctAnswer);
+  
+  return {
+    type: 'reversed',
+    question: `"${card.name}"正位是「${uprightKW}」，逆位最可能是？`,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: 'reversed',
+    options,
+    correctIndex,
+    correctAnswer,
+    explanation: `${card.name}逆位代表：${card.rd}`
+  };
+}
+
+// 生成倒序记忆题（看牌义选牌名）
+function generateReverseMemory(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  const isUp = poolItem.orientation === 'upright';
+  const desc = isUp ? `${card.uk}，${card.ud}` : `${card.rk}，${card.rd}`;
+  
+  const others = TAROT_CARDS.filter(c => c.id !== card.id);
+  const distractors = shuffle([...others]).slice(0, 3).map(c => c.name);
+  const options = shuffle([card.name, ...distractors]);
+  const correctIndex = options.indexOf(card.name);
+  
+  return {
+    type: 'reverse',
+    question: `以下描述对应哪张牌的${isUp ? '正' : '逆'}位？`,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    desc: `「${desc}」`,
+    options,
+    correctIndex,
+    correctAnswer: card.name,
+    explanation: `${card.name}${isUp ? '正' : '逆'}位代表：${desc}`
+  };
+}
+
+// 生成图片联想题（看图片不看牌名，回忆牌义）
+function generateImageAssociation(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  const isUp = poolItem.orientation === 'upright';
+  const correctAnswer = isUp ? card.uk : card.rk;
+  
+  const others = TAROT_CARDS.filter(c => c.id !== card.id).map(c => ({
+    text: isUp ? c.uk : c.rk
+  }));
+  const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
+  const options = shuffle([correctAnswer, ...distractors]);
+  const correctIndex = options.indexOf(correctAnswer);
+  
+  return {
+    type: 'image',
+    question: `只看图片，这张牌${isUp ? '正' : '逆'}位核心含义是？`,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    showImageOnly: true,
+    options,
+    correctIndex,
+    correctAnswer,
+    explanation: `${card.name}${isUp ? '正' : '逆'}位代表：${isUp ? card.uk + '，' + card.ud : card.rk + '，' + card.rd}`
+  };
+}
+
+// ======================== 考试流程 ========================
+function startExam() {
+  // 固定参数：100题、全部78张牌、正位+逆位、薄弱优先、30秒
+  const count = 100;
+  const timeLimit = 30;
+  const pool = buildQuestionPool('all', 'both', 'weak');
+  const selectedItems = weightedRandomSelect(pool, 'weak', count);
+  const typeAlloc = allocateQuestionTypes(count);
+  
+  // 按题型配比生成题
+  const questions = [];
+  let remaining = [...selectedItems];
+  
+  // 逆位逻辑优先（从 remaining 中取逆位项，防止被单选/判断抢走）
+  const reversedFromRemaining = remaining.filter(i => i.orientation === 'reversed');
+  const rlItems = reversedFromRemaining.splice(0, typeAlloc.reversed);
+  rlItems.forEach(item => {
+    const idx = remaining.findIndex(r => r.cardId === item.cardId && r.orientation === item.orientation);
+    if (idx >= 0) remaining.splice(idx, 1);
+    const q = generateReversedLogic(item);
+    if (q) questions.push(q);
+  });
+  
+  // 单选
+  const scItems = remaining.splice(0, typeAlloc.single);
+  scItems.forEach(item => questions.push(generateSingleChoice(item)));
+  
+  // 判断
+  const tfItems = remaining.splice(0, typeAlloc.truefalse);
+  tfItems.forEach(item => questions.push(generateTrueFalse(item)));
+  
+  // 填空
+  const fbItems = remaining.splice(0, typeAlloc.fillblank);
+  fbItems.forEach(item => questions.push(generateFillBlank(item)));
+  
+  // 倒序记忆
+  const rmItems = remaining.splice(0, typeAlloc.reverse);
+  rmItems.forEach(item => questions.push(generateReverseMemory(item)));
+  
+  // 图片联想
+  const imItems = remaining.splice(0, typeAlloc.image);
+  imItems.forEach(item => questions.push(generateImageAssociation(item)));
+  
+  // 如果不够，用单选题补
+  while (questions.length < count) {
+    const idx = selectedItems.findIndex(si => !questions.some(q => q.cardId === si.cardId && q.orientation === si.orientation));
+    if (idx >= 0) questions.push(generateSingleChoice(selectedItems[idx]));
+    else break;
+  }
+  
+  // 打乱题目顺序
+  const finalQuestions = shuffle(questions).slice(0, count);
+  
+  currentExam = {
+    questions: finalQuestions,
+    currentIndex: 0,
+    timeLimit,
+    startTime: Date.now(),
+    answers: [],
+    totalCount: finalQuestions.length
+  };
+  
+  showScreen('exam');
+  renderQuestion();
+  startExamTimer();
+}
+
+function startExamTimer() {
+  if (examTimer) clearInterval(examTimer);
+  examTimer = setInterval(() => {
+    if (!currentExam) return;
+    const elapsed = Math.floor((Date.now() - currentExam.startTime) / 1000);
+    document.getElementById('exam-info').textContent = `已用时 ${elapsed}s`;
+  }, 1000);
+}
+
+function renderQuestion() {
+  if (!currentExam || currentExam.currentIndex >= currentExam.totalCount) {
+    finishExam();
+    return;
+  }
+  
+  const q = currentExam.questions[currentExam.currentIndex];
+  const idx = currentExam.currentIndex + 1;
+  const total = currentExam.totalCount;
+  
+  document.getElementById('exam-title').textContent = `第 ${idx}/${total} 题`;
+  document.getElementById('quiz-type-label').textContent = 
+    q.type === 'single' ? '单选题' : q.type === 'truefalse' ? '判断题' : q.type === 'fillblank' ? '填空题' : q.type === 'reversed' ? '逆位逻辑题' : q.type === 'reverse' ? '倒序记忆' : '图片联想';
+  
+  // 渲染题干
+  const tagClass = q.orientation === 'upright' ? 'upright' : 'reversed';
+  const tagText = q.orientation === 'upright' ? '正位' : '逆位';
+  
+  if (q.type === 'image') {
+    // 图片联想：只显示图片，不显示牌名
+    document.getElementById('quiz-question-area').innerHTML = `
+      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="?" loading="lazy" onerror="this.style.display='none'" style="width:140px">
+      <div class="q-text">${q.question}</div>
+    `;
+  } else if (q.type === 'reverse') {
+    // 倒序记忆：显示描述文字，不显示牌名
+    document.getElementById('quiz-question-area').innerHTML = `
+      <div class="q-text" style="font-size:16px;color:#d4b87a;font-weight:600;text-align:center;padding:10px 0">${q.desc}</div>
+      <div class="q-text">${q.question}</div>
+    `;
+  } else {
+    document.getElementById('quiz-question-area').innerHTML = `
+      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'">
+      <div class="card-name">${q.cardName}</div>
+      <span class="orientation-tag ${tagClass}">${tagText}</span>
+      <div class="q-text">${q.question}</div>
+    `;
+  }
+  
+  // 渲染选项
+  const optionsArea = document.getElementById('quiz-options-area');
+  document.getElementById('quiz-feedback-area').innerHTML = '';
+  
+  if (q.type === 'fillblank') {
+    optionsArea.innerHTML = `
+      ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
+      <div class="quiz-input-wrap">
+        <input type="text" id="fill-answer" placeholder="输入关键词...">
+        <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
+      </div>
+    `;
+    document.getElementById('fill-answer').focus();
+  } else {
+    optionsArea.innerHTML = q.options.map((opt, i) => `
+      <button class="quiz-option" data-index="${i}" onclick="answerQuestion(${i})">${opt}</button>
+    `).join('');
+  }
+  
+  // 启动倒计时
+  startQuestionTimer();
+}
+
+function startQuestionTimer() {
+  if (questionTimer) clearInterval(questionTimer);
+  if (questionTimeoutId) clearTimeout(questionTimeoutId);
+  
+  const timerEl = document.getElementById('quiz-timer');
+  let remaining = currentExam.timeLimit;
+  timerEl.textContent = remaining + 's';
+  timerEl.classList.remove('warning');
+  
+  questionTimer = setInterval(() => {
+    remaining--;
+    timerEl.textContent = remaining + 's';
+    if (remaining <= 5) timerEl.classList.add('warning');
+    if (remaining <= 0) {
+      clearInterval(questionTimer);
+      onTimeout();
+    }
+  }, 1000);
+}
+
+function onTimeout() {
+  const q = currentExam.questions[currentExam.currentIndex];
+  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true });
+  updateProgress(q.cardId, q.orientation, false);
+  recordError(q.cardId, q.orientation, false);
+  showFeedback(false, '时间到！', q.explanation);
+}
+
+function answerQuestion(optionIndex) {
+  if (questionTimer) clearInterval(questionTimer);
+  if (questionTimeoutId) clearTimeout(questionTimeoutId);
+  
+  const q = currentExam.questions[currentExam.currentIndex];
+  const isCorrect = optionIndex === q.correctIndex;
+  
+  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false });
+  updateProgress(q.cardId, q.orientation, isCorrect);
+  recordError(q.cardId, q.orientation, isCorrect);
+  
+  // 高亮选项
+  const options = document.querySelectorAll('.quiz-option');
+  options.forEach((opt, i) => {
+    opt.classList.add('disabled');
+    if (i === q.correctIndex) opt.classList.add('correct');
+    if (i === optionIndex && !isCorrect) opt.classList.add('wrong');
+  });
+  
+  showFeedback(isCorrect, isCorrect ? '回答正确！' : '回答错误', q.explanation);
+}
+
+function submitFillAnswer() {
+  if (questionTimer) clearInterval(questionTimer);
+  if (questionTimeoutId) clearTimeout(questionTimeoutId);
+  
+  const input = document.getElementById('fill-answer');
+  const userAnswer = input.value.trim();
+  const q = currentExam.questions[currentExam.currentIndex];
+  const isCorrect = q.correctAnswer.includes(userAnswer) || userAnswer.includes(q.correctAnswer);
+  
+  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false });
+  updateProgress(q.cardId, q.orientation, isCorrect);
+  recordError(q.cardId, q.orientation, isCorrect);
+  
+  document.getElementById('quiz-options-area').innerHTML = '';
+  showFeedback(isCorrect,
+    isCorrect ? '回答正确！' : `回答错误，正确答案是：${q.correctAnswer}`,
+    q.explanation
+  );
+}
+
+function showFeedback(isCorrect, msg, explanation) {
+  document.getElementById('quiz-feedback-area').innerHTML = `
+    <div class="quiz-feedback ${isCorrect ? 'correct' : 'wrong'}">
+      <div style="font-weight:700;font-size:16px">${msg}</div>
+      <div style="margin-top:8px;opacity:.8">${explanation}</div>
+    </div>
+    <button class="btn btn-primary quiz-next-btn" onclick="nextQuestion()">下一题</button>
+  `;
+}
+
+function nextQuestion() {
+  if (!currentExam) return;
+  currentExam.currentIndex++;
+  if (currentExam.currentIndex >= currentExam.totalCount) {
+    finishExam();
+  } else {
+    renderQuestion();
+  }
+}
+
+function finishExam() {
+  if (examTimer) clearInterval(examTimer);
+  if (questionTimer) clearInterval(questionTimer);
+  if (questionTimeoutId) clearTimeout(questionTimeoutId);
+  
+  if (!currentExam) return;
+  
+  const correctCount = currentExam.answers.filter(a => a.correct).length;
+  const total = currentExam.totalCount;
+  const rate = total > 0 ? Math.round(correctCount / total * 100) : 0;
+  const duration = Math.floor((Date.now() - currentExam.startTime) / 1000);
+  
+  // 保存考试记录
+  const errorIds = currentExam.answers.filter(a => !a.correct).map(a => `${a.cardId}_${a.orientation}`);
+  
+  // 本地保存
+  const exams = getExams();
+  exams.push({ time: new Date().toISOString(), total, score: correctCount, rate, duration, errorIds });
+  saveExams(exams);
+  
+  // 服务端保存
+  syncExamToServer(total, correctCount, rate, duration, errorIds);
+  
+  // 渲染结果
+  document.getElementById('result-score').textContent = rate + '%';
+  document.getElementById('result-total').textContent = total;
+  document.getElementById('result-correct').textContent = correctCount;
+  document.getElementById('result-duration').textContent = duration + 's';
+  
+  // 错题列表
+  const errorList = document.getElementById('error-review-list');
+  const errors = currentExam.questions.filter((q, i) => !currentExam.answers[i]?.correct);
+  if (errors.length === 0) {
+    errorList.innerHTML = '<div style="text-align:center;padding:20px;color:#8a7a60">全部答对！太厉害了！</div>';
+  } else {
+    errorList.innerHTML = errors.map((q, i) => {
+      const ai = currentExam.questions.indexOf(q);
+      const ans = currentExam.answers[ai];
+      return `
+        <div class="error-item">
+          <div>
+            <span class="err-card">${q.cardName} ${q.orientation === 'upright' ? '正' : '逆'}位</span>
+            ${ans?.timeout ? '<span style="color:#e08080;font-size:11px">（超时）</span>' : ''}
+          </div>
+          <span class="err-answer">${q.explanation}</span>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  currentExam = null;
+  showScreen('result');
+}
+
+function submitExam() {
+  if (!currentExam) return;
+  // 剩余未答题全部算错
+  while (currentExam.currentIndex < currentExam.totalCount) {
+    const q = currentExam.questions[currentExam.currentIndex];
+    currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true });
+    updateProgress(q.cardId, q.orientation, false);
+    recordError(q.cardId, q.orientation, false);
+    currentExam.currentIndex++;
+  }
+  finishExam();
+}
+
+// ======================== 错题强化 ========================
+function renderReviewList() {
+  const errors = getErrors();
+  const progress = getProgress();
+  const listArea = document.getElementById('review-list-area');
+  const startBtn = document.getElementById('review-start-btn');
+  const countInfo = document.getElementById('review-count-info');
+  
+  let entries = [];
+  for (const key in errors) {
+    const [cardIdStr, orientation] = key.split('_');
+    const cardId = parseInt(cardIdStr);
+    const card = getCardById(cardId);
+    if (!card) continue;
+    
+    const err = errors[key];
+    const prog = progress[key] || 0;
+    
+    // 连续答对2次的不显示
+    if (err.cc >= 2) continue;
+    
+    let include = true;
+    if (reviewFilter === 'weak' && prog > 30) include = false;
+    
+    if (include) {
+      entries.push({ cardId, orientation, card, err, prog, key });
+    }
+  }
+  
+  countInfo.textContent = entries.length > 0 ? `共 ${entries.length} 个薄弱项` : '';
+  
+  if (entries.length === 0) {
+    listArea.innerHTML = `
+      <div class="review-empty">
+        <div class="icon">🎉</div>
+        <p>暂无薄弱项，继续保持！</p>
+      </div>`;
+    startBtn.style.display = 'none';
+  } else {
+    listArea.innerHTML = entries.sort((a, b) => b.err.ec - a.err.ec).map(e => `
+      <div class="error-item" style="flex-direction:column;align-items:stretch">
+        <div style="display:flex;justify-content:space-between">
+          <span><span class="err-card">${e.card.name}</span> ${e.orientation === 'upright' ? '正位' : '逆位'}</span>
+          <span style="color:#8a7a60;font-size:12px">错${e.err.ec}次 | 进度${e.prog}%</span>
+        </div>
+      </div>
+    `).join('');
+    startBtn.style.display = 'block';
+  }
+}
+
+function startReview(fromResult) {
+  const errors = getErrors();
+  const progress = getProgress();
+  
+  let pool = [];
+  for (const key in errors) {
+    const [cardIdStr, orientation] = key.split('_');
+    const cardId = parseInt(cardIdStr);
+    const card = getCardById(cardId);
+    if (!card) continue;
+    
+    const err = errors[key];
+    if (err.cc >= 2) continue;
+    
+    let include = true;
+    if (!fromResult && reviewFilter === 'weak') {
+      if ((progress[key] || 0) > 30) include = false;
+    }
+    
+    if (include) {
+      pool.push({ cardId, orientation, card, err, key });
+    }
+  }
+  
+  if (pool.length === 0) {
+    toast('没有需要强化的错题');
+    return;
+  }
+  
+  // 按错误次数排序，优先推高频错题
+  pool.sort((a, b) => b.err.ec - a.err.ec);
+  
+  // 生成题目（全部用单选题）
+  const questions = pool.map(p => {
+    const isUp = p.orientation === 'upright';
+    const correctAnswer = isUp ? p.card.uk : p.card.rk;
+    const others = TAROT_CARDS.filter(c => c.id !== p.cardId).map(c => ({
+      text: isUp ? c.uk : c.rk
+    }));
+    const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
+    const options = shuffle([correctAnswer, ...distractors]);
+    
+    return {
+      type: 'single',
+      question: `"${p.card.name}"${isUp ? '正' : '逆'}位核心含义是？`,
+      cardName: p.card.name,
+      cardId: p.cardId,
+      orientation: p.orientation,
+      options,
+      correctIndex: options.indexOf(correctAnswer),
+      correctAnswer,
+      explanation: `${p.card.name}${isUp ? '正' : '逆'}位代表：${isUp ? p.card.ud : p.card.rd}`
+    };
+  });
+  
+  currentExam = {
+    questions,
+    currentIndex: 0,
+    timeLimit: 30,
+    startTime: Date.now(),
+    answers: [],
+    totalCount: questions.length,
+    isReview: true
+  };
+  
+  showScreen('exam');
+  renderQuestion();
+  startExamTimer();
+}
+
+// ======================== 进度展示 ========================
+function renderProgress() {
+  const progress = getProgress();
+  const errors = getErrors();
+  const listArea = document.getElementById('progress-list-area');
+  const summary = document.getElementById('progress-summary');
+  
+  // 分组
+  const groups = [
+    { name: '大阿卡纳', cards: TAROT_CARDS.filter(c => c.id <= 22) },
+    { name: '宝剑', cards: TAROT_CARDS.filter(c => c.id >= 23 && c.id <= 36) },
+    { name: '星币', cards: TAROT_CARDS.filter(c => c.id >= 37 && c.id <= 50) },
+    { name: '权杖', cards: TAROT_CARDS.filter(c => c.id >= 51 && c.id <= 64) },
+    { name: '圣杯', cards: TAROT_CARDS.filter(c => c.id >= 65 && c.id <= 78) }
+  ];
+  
+  let totalSlots = 0, filledSlots = 0;
+  let html = '';
+  
+  groups.forEach(group => {
+    let groupCards = [];
+    group.cards.forEach(card => {
+      ['upright', 'reversed'].forEach(ori => {
+        const key = buildProgressKey(card.id, ori);
+        const prog = progress[key] || 0;
+        const hasError = errors[key] && errors[key].ec > 0;
+        
+        // 筛选
+        let show = true;
+        if (progressFilter === 'stranger' && prog > 30) show = false;
+        if (progressFilter === 'unmastered' && prog >= 100) show = false;
+        if (progressFilter === 'errors' && !hasError) show = false;
+        
+        if (show) {
+          groupCards.push({ card, ori, prog, hasError });
+        }
+        
+        totalSlots++;
+        if (prog > 0) filledSlots++;
+      });
+    });
+    
+    if (groupCards.length > 0) {
+      html += `<div class="progress-group"><h4>${group.name}</h4>`;
+      groupCards.forEach(gc => {
+        const barClass = gc.prog <= 30 ? 'low' : gc.prog <= 70 ? 'mid' : gc.prog < 100 ? 'high' : 'max';
+        html += `
+          <div class="progress-card">
+            <div class="pc-header">
+              <div>
+                <span class="pc-name">${gc.card.name}</span>
+                <span class="pc-ori ${gc.ori === 'upright' ? 'up' : 'rev'}">${gc.ori === 'upright' ? '正' : '逆'}</span>
+                ${gc.hasError ? '<span style="color:#e08080;font-size:10px;margin-left:4px">有错题</span>' : ''}
+              </div>
+              <span style="font-size:13px;color:#8a7a60">${gc.prog}%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar-fill ${barClass}" style="width:${gc.prog}%"></div>
+            </div>
+          </div>`;
+      });
+      html += '</div>';
+    }
+  });
+  
+  summary.textContent = `已掌握 ${filledSlots}/${totalSlots}`;
+  listArea.innerHTML = html || '<div style="text-align:center;padding:20px;color:#8a7a60">当前筛选条件下无数据</div>';
+}
+
+// ======================== UI 工具 ========================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const screenEl = document.getElementById('screen-' + name);
+  if (screenEl) screenEl.classList.add('active');
+  
+  // 更新底部导航
+  document.querySelectorAll('.navbar button').forEach(b => b.classList.remove('active'));
+  const navBtn = document.getElementById('nav-' + name);
+  if (navBtn) navBtn.classList.add('active');
+  
+  // 显示/隐藏导航栏
+  const navbar = document.getElementById('navbar');
+  if (name === 'exam' || name === 'result') {
+    navbar.style.display = 'none';
+  } else {
+    navbar.style.display = 'flex';
+  }
+  
+  // 切换时清空考试状态
+  if (name !== 'exam' && currentExam && name !== 'result') {
+    if (examTimer) clearInterval(examTimer);
+    if (questionTimer) clearInterval(questionTimer);
+    if (questionTimeoutId) clearTimeout(questionTimeoutId);
+    currentExam = null;
+  }
+  
+  // 渲染对应内容
+  if (name === 'review') renderReviewList();
+  if (name === 'progress') renderProgress();
+  
+  // 滚动到顶部
+  window.scrollTo(0, 0);
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ======================== 事件绑定 ========================
+// 进度筛选标签点击
+document.querySelector('#screen-progress .progress-filter').addEventListener('click', e => {
+  const tag = e.target.closest('.filter-tag');
+  if (!tag) return;
+  document.querySelectorAll('#screen-progress .filter-tag').forEach(t => t.classList.remove('active'));
+  tag.classList.add('active');
+});
+
+// ======================== 初始化 ========================
+async function init() {
+  const token = getAuthToken();
+  
+  // 1. 从数据库加载牌义数据（兜底硬编码）
+  await loadCardDataFromDB();
+  
+  // 2. 服务端同步
+  if (token) {
+    // 首次使用时建表
+    if (!localStorage.getItem('taro_train_inited')) {
+      await initTrainingTables();
+      localStorage.setItem('taro_train_inited', '1');
+    }
+    loadServerProgress();
+    loadServerErrors();
+  }
+  
+  renderProgress();
+}
+
+init();
+</script>
+</body>
+</html>
