@@ -57,6 +57,48 @@ module.exports = async (req, res) => {
       ssl: { rejectUnauthorized: false }
     });
     
+    // 自动建表（首次访问时自动创建）
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS card_meanings (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        card_id INT NOT NULL,
+        name VARCHAR(255) DEFAULT '',
+        upright TEXT DEFAULT '',
+        reversed TEXT DEFAULT '',
+        pattern TEXT DEFAULT '',
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, card_id)
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS taro_records (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        record_id VARCHAR(255) NOT NULL,
+        timestamp BIGINT DEFAULT 0,
+        rounds TEXT DEFAULT '[]',
+        game_state TEXT DEFAULT '{}',
+        current_round INT DEFAULT 0,
+        full_deck TEXT DEFAULT '[]',
+        cached_numbers TEXT DEFAULT '[]',
+        re_sort_count INT DEFAULT 0,
+        lock_picking INT DEFAULT 0,
+        lock_current_main_delete INT DEFAULT 0,
+        type VARCHAR(50) DEFAULT '',
+        title VARCHAR(255) DEFAULT '',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, record_id)
+      )
+    `);
+    
     // ==================== 健康检查 ====================
     if (req.method === 'GET' && path === '/api/health') {
       return res.json({ status: 'ok', timestamp: Date.now(), version: 'V2-20260511-neon-userid' });

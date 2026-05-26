@@ -4545,6 +4545,7 @@ function showQuickQueryDetail(cardId) {
     ${isLoggedIn ? `
       <div class="quick-query-actions">
         <button id="exportCardMeaningsBtn" class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button>
+        <button id="openTrainBtn" class="quick-query-export-btn" onclick="window.open('train.html','_blank')" style="margin-top:8px">🧠 牌义记忆训练</button>
       </div>
     ` : ''}
   `;
