@@ -99,6 +99,45 @@ module.exports = async (req, res) => {
       )
     `);
     
+    // 训练系统表（与上方业务表统一在此自动创建）
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_progress (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        card_id INT NOT NULL,
+        orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
+        progress INT DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+        correct_count INT DEFAULT 0,
+        error_count INT DEFAULT 0,
+        last_time TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, card_id, orientation)
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_errors (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        card_id INT NOT NULL,
+        orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
+        error_count INT DEFAULT 0,
+        last_error_time TIMESTAMPTZ DEFAULT NOW(),
+        continuous_correct INT DEFAULT 0,
+        UNIQUE(user_id, card_id, orientation)
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_exams (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL,
+        exam_time TIMESTAMPTZ DEFAULT NOW(),
+        total INT NOT NULL,
+        score INT NOT NULL,
+        correct_rate FLOAT NOT NULL,
+        duration INT NOT NULL,
+        error_ids TEXT DEFAULT ''
+      )
+    `);
+    
     // ==================== 健康检查 ====================
     if (req.method === 'GET' && path === '/api/health') {
       return res.json({ status: 'ok', timestamp: Date.now(), version: 'V2-20260511-neon-userid' });
