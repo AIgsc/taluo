@@ -4430,12 +4430,6 @@ document.getElementById('quickQueryBtn').addEventListener('click', openQuickQuer
 
 document.getElementById('closeQuickQueryModal').addEventListener('click', closeQuickQueryModal);
 
-document.getElementById('quickQueryModal').addEventListener('click', (e) => {
-  if (e.target.id === 'quickQueryModal') {
-    closeQuickQueryModal();
-  }
-});
-
 // 快速查询 - 事件委托（优化：避免重复绑定监听器）
 document.getElementById('quickQueryList').addEventListener('click', (e) => {
   const btn = e.target.closest('.quick-query-card-btn');
