@@ -569,10 +569,6 @@ async function apiCall(method, endpoint, body) {
   } catch(e) { return null; }
 }
 
-async function initTrainingTables() {
-  await apiCall('POST', '/api/training/init');
-}
-
 async function syncProgressToServer(cardId, orientation, isCorrect) {
   await apiCall('POST', '/api/training/progress', { card_id: cardId, orientation, is_correct: isCorrect });
 }
@@ -1538,12 +1534,6 @@ async function init() {
   
   // 后台异步同步服务端数据
   if (token) {
-    // 首次使用时建表
-    if (!localStorage.getItem('taro_train_inited')) {
-      initTrainingTables().then(() => {
-        localStorage.setItem('taro_train_inited', '1');
-      });
-    }
     loadServerProgress();
     loadServerErrors();
   }
