@@ -132,16 +132,31 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
     <span></span>
   </div>
 
-  <div style="text-align:center;padding:60px 20px">
-    <div style="font-size:64px;margin-bottom:16px">🃏</div>
-    <p style="color:#8a7a60;font-size:14px;line-height:1.8;margin-bottom:24px">
-      100题 · 全部78张牌 · 正位+逆位 · 薄弱优先
-    </p>
-    <div style="color:#6a5a40;font-size:12px;margin-bottom:30px">
-      单选35% / 倒序记忆20% / 判断20% / 填空10% / 图片联想10% / 逆位逻辑5%
+  <div style="padding:20px">
+    <div style="text-align:center;padding:30px 0">
+      <div style="font-size:64px;margin-bottom:16px">🃏</div>
+      <p style="color:#8a7a60;font-size:14px;line-height:1.8;margin-bottom:24px">
+        100题 · 全部78张牌 · 正位+逆位 · 薄弱优先
+      </p>
+      <div style="color:#6a5a40;font-size:12px;margin-bottom:12px" id="type-ratio-info">
+        题型比例：随机
+      </div>
     </div>
-    <button class="btn btn-primary" onclick="startExam()" style="max-width:280px;margin:0 auto">开始训练</button>
-    <button class="btn" style="background:none;color:#6a4a4a;font-size:12px;padding:8px;margin-top:8px;border:none;text-decoration:underline" onclick="clearAllData()">清空数据，重新开始</button>
+
+    <div class="setup-card">
+      <h3>每题时间限制</h3>
+      <div class="option-row" id="time-options">
+        <span class="option-tag selected" data-time="30" onclick="setTimeLimit(30)">30秒</span>
+        <span class="option-tag" data-time="60" onclick="setTimeLimit(60)">60秒</span>
+        <span class="option-tag" data-time="90" onclick="setTimeLimit(90)">90秒</span>
+        <span class="option-tag" data-time="120" onclick="setTimeLimit(120)">120秒</span>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px">
+      <button class="btn btn-primary" onclick="startExam()" style="max-width:280px;margin:0 auto">开始训练</button>
+      <button class="btn" style="background:none;color:#6a4a4a;font-size:12px;padding:8px;margin-top:8px;border:none;text-decoration:underline" onclick="clearAllData()">清空数据，重新开始</button>
+    </div>
   </div>
 </div>
 
@@ -247,6 +262,7 @@ const STORAGE_KEY_EXAMS = 'taro_train_exams';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
 let questionTimeoutId = null;
+let selectedTimeLimit = 30; // 默认30秒
 
 // ======================== 78张塔罗牌数据（从DB加载，硬编码兜底） ========================
 // 训练专用硬编码关键词（出题兜底，仅在DB无数据时使用）
@@ -360,18 +376,27 @@ function parseCardMeaning(dbCard) {
   const fb = TRAIN_FALLBACK[dbCard.card_id - 1] || {};
   let uk = fb.uk || '', ud = fb.ud || '', rk = fb.rk || '', rd = fb.rd || '';
   
+  // 1. upright 字段：去掉"正位："前缀，全部作为 uk（关键词，支持多个）
   if (dbCard.upright) {
     const m = dbCard.upright.match(/^正位[：:]\s*(.+)/);
-    if (m) uk = m[1].trim().replace(/[，,、].*$/, '');
+    if (m) uk = m[1].trim();
   }
+  
+  // 2. reversed 字段：去掉"逆位："前缀，全部作为 rk（关键词，支持多个）
   if (dbCard.reversed) {
     const m = dbCard.reversed.match(/^逆位[：:]\s*(.+)/);
-    if (m) rk = m[1].trim().replace(/[，,、].*$/, '');
+    if (m) rk = m[1].trim();
   }
+  
+  // 3. pattern 字段：分别提取正位和逆位的详细解释
   if (dbCard.pattern) {
     const clean = dbCard.pattern.replace(/<[^>]+>/g, '');
+    
+    // 提取正位详细解释（"正位：" 到 "逆位：" 或结束）
     const um = clean.match(/正位[：:]\s*(.+?)(?:逆位|$)/);
     if (um) ud = um[1].trim();
+    
+    // 提取逆位详细解释（"逆位：" 到结束）
     const rm = clean.match(/逆位[：:]\s*(.+)$/);
     if (rm) rd = rm[1].trim();
   }
@@ -463,6 +488,17 @@ function getCardsInGroup(group) {
 
 function getCardById(id) {
   return TAROT_CARDS.find(c => c.id === id);
+}
+
+function setTimeLimit(seconds) {
+  selectedTimeLimit = seconds;
+  document.querySelectorAll('#time-options .option-tag').forEach(tag => {
+    tag.classList.toggle('selected', parseInt(tag.dataset.time) === seconds);
+  });
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 // ======================== 本地存储 ========================
@@ -643,15 +679,42 @@ function weightedRandomSelect(pool, mode, count) {
   return selected;
 }
 
-// 题型配比：单选35% 倒序记忆20% 判断20% 填空10% 图片联想10% 逆位逻辑5%
+// 题型配比：每个题型10%-50%随机
 function allocateQuestionTypes(count) {
-  let sc = Math.floor(count * 0.35);  // 单选 35%
-  let tf = Math.floor(count * 0.20);  // 判断 20%
-  let fb = Math.floor(count * 0.10);  // 填空 10%
-  let rl = Math.floor(count * 0.05);  // 逆位逻辑 5%
-  let rm = Math.floor(count * 0.20);  // 倒序记忆 20%
-  let im = count - sc - tf - fb - rl - rm;  // 图片联想 10%
-  return { single: sc, truefalse: tf, fillblank: fb, reversed: rl, reverse: rm, image: im };
+  const types = ['single', 'truefalse', 'fillblank', 'reversed', 'reverse', 'image'];
+  let alloc = {};
+  let remaining = count;
+  
+  // 先给每个题型随机分配10-50之间的基础题数（按比例）
+  let ratios = [];
+  for (let i = 0; i < types.length; i++) {
+    ratios.push(randomInt(10, 50));
+  }
+  let totalRatio = ratios.reduce((a, b) => a + b, 0);
+  
+  // 按比例分配
+  let assigned = 0;
+  types.forEach((type, i) => {
+    if (i === types.length - 1) {
+      // 最后一个题型用剩余
+      alloc[type] = remaining;
+    } else {
+      alloc[type] = Math.max(1, Math.floor(ratios[i] / totalRatio * count));
+      assigned += alloc[type];
+      remaining = count - assigned;
+    }
+  });
+  
+  // 显示当前比例在首页
+  const names = {
+    single: '单选', truefalse: '判断', fillblank: '填空', 
+    reversed: '逆位逻辑', reverse: '倒序记忆', image: '图片联想'
+  };
+  const ratioText = types.map(t => `${names[t]}${Math.round(alloc[t]/count*100)}%`).join(' / ');
+  const el = document.getElementById('type-ratio-info');
+  if (el) el.textContent = ratioText;
+  
+  return alloc;
 }
 
 // 生成单选题
@@ -722,6 +785,9 @@ function generateFillBlank(poolItem) {
   const keyword = isUp ? card.uk : card.rk;
   const desc = isUp ? card.ud : card.rd;
   
+  // 将关键词按分隔符拆分（支持逗号、顿号、分号、斜杠、竖线、空格）
+  const keywords = keyword.split(/[，,、；;\|\/\\\s]+/).filter(k => k.trim());
+  
   return {
     type: 'fillblank',
     question: `"${card.name}"${isUp ? '正' : '逆'}位核心含义是？`,
@@ -729,6 +795,7 @@ function generateFillBlank(poolItem) {
     cardId: card.id,
     orientation: poolItem.orientation,
     correctAnswer: keyword,
+    keywords, // 存储拆分后的关键词数组
     hint: `提示：${desc}`,
     explanation: `${card.name}${isUp ? '正' : '逆'}位代表：${desc}（关键词：${keyword}）`
   };
@@ -818,9 +885,9 @@ function generateImageAssociation(poolItem) {
 
 // ======================== 考试流程 ========================
 function startExam() {
-  // 固定参数：100题、全部78张牌、正位+逆位、薄弱优先、30秒
+  // 固定参数：100题、全部78张牌、正位+逆位、薄弱优先
   const count = 100;
-  const timeLimit = 30;
+  const timeLimit = selectedTimeLimit;
   const pool = buildQuestionPool('all', 'both', 'weak');
   const selectedItems = weightedRandomSelect(pool, 'weak', count);
   const typeAlloc = allocateQuestionTypes(count);
@@ -910,10 +977,13 @@ function renderQuestion() {
   const tagClass = q.orientation === 'upright' ? 'upright' : 'reversed';
   const tagText = q.orientation === 'upright' ? '正位' : '逆位';
   
+  // 逆位图片旋转180度
+  const imgRotation = q.orientation === 'reversed' ? 'transform:rotate(180deg)' : '';
+  
   if (q.type === 'image') {
     // 图片联想：只显示图片，不显示牌名
     document.getElementById('quiz-question-area').innerHTML = `
-      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="?" loading="lazy" onerror="this.style.display='none'" style="width:140px">
+      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="?" loading="lazy" onerror="this.style.display='none'" style="width:140px;${imgRotation}">
       <div class="q-text">${q.question}</div>
     `;
   } else if (q.type === 'reverse') {
@@ -924,7 +994,7 @@ function renderQuestion() {
     `;
   } else {
     document.getElementById('quiz-question-area').innerHTML = `
-      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'">
+      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgRotation}">
       <div class="card-name">${q.cardName}</div>
       <span class="orientation-tag ${tagClass}">${tagText}</span>
       <div class="q-text">${q.question}</div>
@@ -1011,7 +1081,18 @@ function submitFillAnswer() {
   const input = document.getElementById('fill-answer');
   const userAnswer = input.value.trim();
   const q = currentExam.questions[currentExam.currentIndex];
-  const isCorrect = q.correctAnswer.includes(userAnswer) || userAnswer.includes(q.correctAnswer);
+  
+  // 判断题：用户输入的内容是否包含任意一个关键词，或者任意关键词包含用户输入
+  let isCorrect = false;
+  const keywords = q.keywords || [q.correctAnswer];
+  for (const kw of keywords) {
+    if (kw && userAnswer) {
+      if (kw.includes(userAnswer) || userAnswer.includes(kw)) {
+        isCorrect = true;
+        break;
+      }
+    }
+  }
   
   currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false });
   updateProgress(q.cardId, q.orientation, isCorrect);
