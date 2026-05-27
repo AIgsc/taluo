@@ -1405,7 +1405,7 @@ function renderQuestion() {
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
   
-  const imgSize = 'width:60vw;max-width:300px';
+  const imgSize = 'width:60vw;max-width:200px';
   
   if (q.type === 'reverse') {
     // 倒序记忆：只显示文字描述，不显示牌名和图片（纯回忆训练）
