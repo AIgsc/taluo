@@ -116,10 +116,6 @@ module.exports = async (req, res) => {
         UNIQUE(user_id, card_id, orientation)
       )
     `);
-    // 兼容旧表：如果表已存在但缺少SM-2字段，自动补上
-    try { await pool.query('ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS interval INT DEFAULT 1'); } catch(e) {}
-    try { await pool.query('ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS ease_factor FLOAT DEFAULT 2.5'); } catch(e) {}
-    try { await pool.query('ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS due_date TIMESTAMPTZ DEFAULT NOW()'); } catch(e) {}
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_errors (
         id SERIAL PRIMARY KEY,

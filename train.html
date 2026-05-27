@@ -399,6 +399,14 @@ function getCardAnchors(cardId, orientation) {
   return anchors.length > 0 ? anchors : null;
 }
 
+function getCardType(cardId) {
+  if (cardId <= 22) return '大阿卡纳';
+  if (cardId <= 36) return '宝剑';
+  if (cardId <= 50) return '星币';
+  if (cardId <= 64) return '权杖';
+  return '圣杯';
+}
+
 // ==================== SM-2算法配置 ====================
 const FAST_THRESHOLD = 15000; // 15秒内答对=快速回忆
 const NORMAL_THRESHOLD = 30000; // 30秒内答对=正常回忆
