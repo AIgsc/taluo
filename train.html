@@ -12,7 +12,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#1a1a2e;color:#e0d8c8;min-height:100vh;overflow-x:hidden}
-.screen{display:none;padding:16px 16px 200px;min-height:100vh}
+.screen{display:none;padding:16px;min-height:100vh}
 .screen.active{display:block}
 #screen-exam,#screen-result{padding-bottom:16px}
 
@@ -1615,6 +1615,12 @@ function showFeedback(isCorrect, msg, explanation) {
   `;
   
   document.getElementById('quiz-feedback-area').innerHTML = feedbackHtml;
+  
+  // 自动滚动到反馈区域，方便点击下一题
+  setTimeout(() => {
+    const fbArea = document.getElementById('quiz-feedback-area');
+    if (fbArea) fbArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 50);
 }
 
 function nextQuestion() {
