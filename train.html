@@ -74,9 +74,26 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .quiz-input-wrap{display:flex;gap:8px}
 .quiz-input-wrap input{flex:1;margin:0}
 .quiz-input-wrap button{width:auto}
-.quiz-feedback{text-align:center;padding:16px;margin-top:12px;border-radius:10px;font-size:14px;line-height:1.6}
-.quiz-feedback.correct{background:#1a2a1a;color:#a0f0a0}
-.quiz-feedback.wrong{background:#2a1a1a;color:#f0a0a0}
+.quiz-feedback{text-align:left;padding:20px;margin-top:12px;border-radius:12px;font-size:14px;line-height:1.7}
+.quiz-feedback.correct{background:linear-gradient(135deg,#1a2e1a,#162416);border:1px solid #2a4a2a;color:#d0e8d0}
+.quiz-feedback.wrong{background:linear-gradient(135deg,#2e1a1a,#241616);border:1px solid #4a2a2a;color:#e0d0c8}
+.fb-status{font-size:15px;font-weight:600;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:6px}
+.fb-status.correct{color:#7acc7a}
+.fb-status.wrong{color:#d47a7a}
+.fb-body{padding:0}
+.fb-identity{font-size:17px;font-weight:700;margin-bottom:4px;color:#f0e8d8}
+.fb-identity .fb-orient{display:inline-block;padding:1px 10px;border-radius:6px;font-size:11px;font-weight:500;margin-left:8px;vertical-align:middle;letter-spacing:.5px}
+.fb-identity .fb-orient.up{background:rgba(74,138,74,.2);color:#7acc7a}
+.fb-identity .fb-orient.rev{background:rgba(200,80,80,.2);color:#d47a7a}
+.fb-answer{font-size:13px;color:#a09070;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.fb-section{margin-bottom:14px}
+.fb-section:last-of-type{margin-bottom:0}
+.fb-section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600}
+.quiz-feedback.correct .fb-section-label{color:#5a8a5a}
+.quiz-feedback.wrong .fb-section-label{color:#8a5a5a}
+.fb-tags{display:flex;flex-wrap:wrap;gap:6px}
+.fb-tag{padding:4px 14px;border-radius:14px;font-size:13px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;line-height:1.4}
+.fb-detail{font-size:13px;color:#a09070;line-height:1.7;padding:10px 14px;border-radius:8px;background:rgba(0,0,0,.15);margin-top:4px}
 .quiz-next-btn{margin-top:16px}
 
 /* 结果页 */
@@ -998,25 +1015,28 @@ function generateImageAnchorQuestion(poolItem) {
     return null;
   }
   
-  const anchor = anchorList[Math.floor(Math.random() * anchorList.length)];
-  
+  // 从画面锚点列表中随机选3个（不足3个则全部选取）
+  const selectedAnchors = shuffle([...anchorList]).slice(0, Math.min(3, anchorList.length));
+  const anchorsText = selectedAnchors.join('、');
+
   const correctAnswer = isUp ? card.uk : card.rk;
   const others = TAROT_CARDS.filter(c => c.id !== card.id && (isUp ? c.uk : c.rk));
   const wrongOptions = shuffle([...others]).slice(0,3).map(c => isUp ? c.uk : c.rk);
-  
+
   const options = shuffle([correctAnswer, ...wrongOptions]);
-  
+
   return {
     type: 'image_anchor',
-    question: `这张牌画面中「${anchor}」对应的核心含义是？`,
+    question: `这张牌画面中「${anchorsText}」对应的核心含义是？`,
     cardName: card.name,
     cardId: card.id,
     orientation: poolItem.orientation,
-    showImageOnly: true, // 只显示卡牌
+    showImageOnly: true,
+    selectedAnchors,
     options,
     correctIndex: options.indexOf(correctAnswer),
     correctAnswer,
-    explanation: `画面锚点「${anchor}」→ 核心含义：${correctAnswer}`
+    explanation: `画面锚点「${anchorsText}」→ 核心含义：${correctAnswer}`
   };
 }
 
@@ -1582,14 +1602,47 @@ function showFeedback(isCorrect, msg, explanation) {
   const q = currentExam ? currentExam.questions[currentExam.currentIndex] : null;
   const idx = currentExam ? currentExam.currentIndex : 0;
   
-  // 构建解析内容（优先显示画面锚点）
-  let enhancedExplanation = explanation;
-  if (q && q.type !== 'image_anchor') {
+  // 构建多行排版反馈
+  let bodyHtml = '';
+  if (q) {
+    const isUp = q.orientation === 'upright';
+    const orientText = isUp ? '正位' : '逆位';
+    const orientClass = isUp ? 'up' : 'rev';
+    
+    // 第1行：卡牌名称 + 正/逆位标签 + 核心答案
+    bodyHtml += `<div class="fb-identity">${q.cardName}<span class="fb-orient ${orientClass}">${orientText}</span></div>`;
+    bodyHtml += `<div class="fb-answer">${q.correctAnswer}</div>`;
+    
+    // 第2行：画面锚点标签
     const anchorList = getCardAnchors(q.cardId, q.orientation);
-    if (anchorList && anchorList.length > 0) {
-      const anchor = anchorList[Math.floor(Math.random() * anchorList.length)];
-      enhancedExplanation = `【画面锚点】「${anchor}」→ ${q.correctAnswer}<br>【完整解析】${explanation}`;
+    let anchorWords;
+    if (q.type === 'image_anchor' && q.selectedAnchors) {
+      anchorWords = q.selectedAnchors;
+    } else {
+      anchorWords = shuffle([...anchorList]).slice(0, Math.min(3, anchorList.length));
     }
+    bodyHtml += `<div class="fb-section"><div class="fb-section-label">画面锚点</div><div class="fb-tags">${anchorWords.map(w => `<span class="fb-tag">${w}</span>`).join('')}</div></div>`;
+    
+    // 第3行：完整解析
+    let cleanExplanation = explanation;
+    if (q.type === 'compare') {
+      cleanExplanation = cleanExplanation.replace(/\n/g, '<br>');
+    } else if (q.type === 'image_anchor') {
+      const card = getCardById(q.cardId);
+      if (card) cleanExplanation = isUp ? card.ud : card.rd;
+    } else {
+      const patterns = [
+        `${q.cardName}${orientText}核心关键词`,
+        `${q.cardName}${orientText}代表`
+      ];
+      for (const p of patterns) {
+        if (cleanExplanation.startsWith(p)) {
+          cleanExplanation = cleanExplanation.substring(p.length).replace(/^[：:]/, '').trim();
+          break;
+        }
+      }
+    }
+    bodyHtml += `<div class="fb-section"><div class="fb-section-label">完整解析</div><div class="fb-detail">${cleanExplanation}</div></div>`;
   }
   
   // 闭眼回忆引导：每完成5道题后插入
@@ -1597,8 +1650,8 @@ function showFeedback(isCorrect, msg, explanation) {
   
   const feedbackHtml = `
     <div class="quiz-feedback ${isCorrect ? 'correct' : 'wrong'}">
-      <div style="font-weight:700;font-size:16px">${msg}</div>
-      <div style="margin-top:8px;opacity:.8">${enhancedExplanation}</div>
+      <div class="fb-status ${isCorrect ? 'correct' : 'wrong'}">${isCorrect ? '✅' : '❌'} ${msg}</div>
+      <div class="fb-body">${bodyHtml}</div>
     </div>
     ${isMilestone ? `
       <div style="text-align:center;padding:16px;color:#8a7a60;font-size:13px" id="recall-reminder">
