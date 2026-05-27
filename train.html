@@ -1617,6 +1617,13 @@ function showFeedback(isCorrect, msg, explanation) {
   
   document.getElementById('quiz-feedback-area').innerHTML = feedbackHtml;
   
+  // 预加载下一题的卡牌图片
+  if (currentExam && currentExam.currentIndex + 1 < currentExam.totalCount) {
+    const nextQ = currentExam.questions[currentExam.currentIndex + 1];
+    const img = new Image();
+    img.src = cardImages[nextQ.cardId];
+  }
+  
   // 自动滚动到反馈区域，方便点击下一题
   setTimeout(() => {
     const fbArea = document.getElementById('quiz-feedback-area');
