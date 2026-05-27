@@ -93,6 +93,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .quiz-feedback.wrong .fb-section-label{color:#8a5a5a}
 .fb-tags{display:flex;flex-wrap:wrap;gap:6px}
 .fb-tag{padding:4px 14px;border-radius:14px;font-size:13px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;line-height:1.4}
+.fb-keyword{font-size:15px;padding:6px 20px;font-weight:500;border-color:rgba(212,184,122,.35);background:rgba(212,184,122,.15)}
 .fb-detail{font-size:13px;color:#a09070;line-height:1.7;padding:10px 14px;border-radius:8px;background:rgba(0,0,0,.15);margin-top:4px}
 .quiz-next-btn{margin-top:16px}
 
@@ -1609,9 +1610,11 @@ function showFeedback(isCorrect, msg, explanation) {
     const orientText = isUp ? '正位' : '逆位';
     const orientClass = isUp ? 'up' : 'rev';
     
-    // 第1行：卡牌名称 + 正/逆位标签 + 核心答案
+    // 第1行：卡牌名称 + 正/逆位标签 + 核心牌义
     bodyHtml += `<div class="fb-identity">${q.cardName}<span class="fb-orient ${orientClass}">${orientText}</span></div>`;
-    bodyHtml += `<div class="fb-answer">${q.correctAnswer}</div>`;
+    const cardData = getCardById(q.cardId);
+    const cardKeyword = cardData ? (isUp ? cardData.uk : cardData.rk) : q.correctAnswer;
+    bodyHtml += `<div class="fb-answer"><span class="fb-tag fb-keyword">${cardKeyword}</span></div>`;
     
     // 第2行：画面锚点标签
     const anchorList = getCardAnchors(q.cardId, q.orientation);
