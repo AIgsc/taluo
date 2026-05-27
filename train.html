@@ -150,6 +150,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
       <div style="color:#6a5a40;font-size:12px;margin-bottom:12px" id="type-ratio-info">
         题型比例：随机
       </div>
+      <div style="color:#6a5a40;font-size:12px" id="home-mastery-info"></div>
     </div>
 
     <div class="setup-card">
@@ -654,26 +655,20 @@ function recordConfusePairError(cardId, orientation) {
 function getProgressValue(cardId, orientation) {
   const p = getProgress();
   const key = buildProgressKey(cardId, orientation);
-  return typeof p[key] === 'object' ? p[key].progress : (p[key] || 0);
+  return p[key]?.progress || 0;
 }
 
 function getSM2Data(cardId, orientation) {
   const p = getProgress();
   const key = buildProgressKey(cardId, orientation);
-  const item = p[key];
-  if (typeof item === 'object') {
-    return { interval: item.interval || 1, easeFactor: item.easeFactor || 2.5, dueDate: item.dueDate || Date.now(), progress: item.progress || 0, correctCount: item.correctCount || 0, errorCount: item.errorCount || 0 };
-  }
-  return { interval: 1, easeFactor: 2.5, dueDate: Date.now(), progress: item || 0, correctCount: 0, errorCount: 0 };
+  const item = p[key] || {};
+  return { interval: item.interval || 1, easeFactor: item.easeFactor || 2.5, dueDate: item.dueDate || Date.now(), progress: item.progress || 0, correctCount: item.correctCount || 0, errorCount: item.errorCount || 0 };
 }
 
 function updateProgress(cardId, orientation, isCorrect, answerTime) {
   const p = getProgress();
   const key = buildProgressKey(cardId, orientation);
-  let oldItem = p[key];
-  if (typeof oldItem !== 'object') {
-    oldItem = { progress: oldItem || 0, correctCount: 0, errorCount: 0, interval: 1, easeFactor: 2.5, dueDate: Date.now() };
-  }
+  const oldItem = p[key] || { progress: 0, correctCount: 0, errorCount: 0, interval: 1, easeFactor: 2.5, dueDate: Date.now() };
   // 保留原有进度加减分
   const newProgress = isCorrect ? Math.min(100, oldItem.progress + 10) : Math.max(0, oldItem.progress - 15);
   // 更新SM-2
@@ -864,10 +859,8 @@ function getDynamicTypeForCard(cardId) {
   const progress = getProgress();
   const upKey = buildProgressKey(cardId, 'upright');
   const revKey = buildProgressKey(cardId, 'reversed');
-  const rawUp = progress[upKey];
-  const rawRev = progress[revKey];
-  const progUp = typeof rawUp === 'object' ? (rawUp.progress || 0) : (rawUp || 0);
-  const progRev = typeof rawRev === 'object' ? (rawRev.progress || 0) : (rawRev || 0);
+  const progUp = progress[upKey]?.progress || 0;
+  const progRev = progress[revKey]?.progress || 0;
   const maxProg = Math.max(progUp, progRev);
   
   let types, weights;
@@ -1679,11 +1672,16 @@ function finishExam() {
     errorList.innerHTML = errors.map((q, i) => {
       const ai = currentExam.questions.indexOf(q);
       const ans = currentExam.answers[ai];
+      const sm2 = getSM2Data(q.cardId, q.orientation);
+      const dueStr = sm2.dueDate ? new Date(sm2.dueDate).toLocaleDateString('zh-CN', { month:'short', day:'numeric' }) : '';
       return `
         <div class="error-item">
           <div>
             <span class="err-card">${q.cardName} ${q.orientation === 'upright' ? '正' : '逆'}位</span>
             ${ans?.timeout ? '<span style="color:#e08080;font-size:11px">（超时）</span>' : ''}
+            <div style="font-size:11px;color:#8a7a60;margin-top:2px">
+              ${sm2.interval > 0 ? `间隔${sm2.interval}天·难度${sm2.easeFactor.toFixed(1)}·${dueStr}` : ''}
+            </div>
           </div>
           <span class="err-answer">${q.explanation}</span>
         </div>
@@ -1727,7 +1725,7 @@ function renderReviewList() {
     
     const err = errors[key];
     const rawProg = progress[key];
-    const prog = typeof rawProg === 'object' ? (rawProg.progress || 0) : (rawProg || 0);
+    const prog = rawProg?.progress || 0;
     
     // 连续答对2次的不显示
     if (err.cc >= 2) continue;
@@ -1779,7 +1777,7 @@ function startReview(fromResult) {
     let include = true;
     if (!fromResult && reviewFilter === 'weak') {
       const rawProg = progress[key];
-      const progVal = typeof rawProg === 'object' ? (rawProg.progress || 0) : (rawProg || 0);
+      const progVal = rawProg?.progress || 0;
       if (progVal > 30) include = false;
     }
     
@@ -1883,7 +1881,7 @@ function renderProgress() {
       ['upright', 'reversed'].forEach(ori => {
         const key = buildProgressKey(card.id, ori);
         const raw = progress[key];
-        const prog = typeof raw === 'object' ? (raw.progress || 0) : (raw || 0);
+        const prog = raw?.progress || 0;
         const hasError = errors[key] && errors[key].ec > 0;
         const isMastered = prog >= 100;
         
@@ -1907,6 +1905,8 @@ function renderProgress() {
       html += `<div class="progress-group"><h4>${group.name}</h4>`;
       groupCards.forEach(gc => {
         const barClass = gc.prog <= 30 ? 'low' : gc.prog <= 70 ? 'mid' : gc.prog < 100 ? 'high' : 'max';
+        const sm2Data = getSM2Data(gc.card.id, gc.ori);
+        const isDue = sm2Data.dueDate <= Date.now() && gc.prog < 100;
         html += `
           <div class="progress-card" data-card-id="${gc.card.id}" data-ori="${gc.ori}" data-card-name="${gc.card.name}">
             <div class="pc-header">
@@ -1914,6 +1914,7 @@ function renderProgress() {
                 <span class="pc-name">${gc.card.name}</span>
                 <span class="pc-ori ${gc.ori === 'upright' ? 'up' : 'rev'}">${gc.ori === 'upright' ? '正' : '逆'}</span>
                 ${gc.hasError ? '<span style="color:#e08080;font-size:10px;margin-left:4px">有错题</span>' : ''}
+                ${isDue ? '<span style="color:#e0a040;font-size:10px;margin-left:4px">⏰到期</span>' : ''}
               </div>
               <span style="font-size:13px;color:#8a7a60">${gc.prog}%</span>
             </div>
@@ -1949,7 +1950,7 @@ function renderProgress() {
       ['upright', 'reversed'].forEach(ori => {
         const key = buildProgressKey(card.id, ori);
         const raw = progress[key];
-        const prog = typeof raw === 'object' ? (raw.progress || 0) : (raw || 0);
+        const prog = raw?.progress || 0;
         const err = errors[key];
         allEntries.push({ card, ori, prog, errCount: err ? err.ec : 0 });
       });
@@ -1971,8 +1972,7 @@ function renderProgress() {
   let reviewCount = 0;
   for (const key in progress) {
     const raw = progress[key];
-    const sm2 = typeof raw === 'object' ? raw : { dueDate: Date.now() };
-    if (sm2.dueDate && sm2.dueDate <= now && (sm2.progress || 0) < 100) reviewCount++;
+    if (raw?.dueDate && raw.dueDate <= now && (raw.progress || 0) < 100) reviewCount++;
   }
   const reviewArea = document.getElementById('review-today-area');
   document.getElementById('review-today-count').textContent = reviewCount;
@@ -2026,7 +2026,7 @@ function showCardDetail(cardId, orientation) {
   const key = buildProgressKey(cardId, orientation);
   const raw = progress[key];
   const isUp = orientation === 'upright';
-  const prog = typeof raw === 'object' ? (raw.progress || 0) : (raw || 0);
+  const prog = raw?.progress || 0;
   const sm2 = getSM2Data(cardId, orientation);
   const err = errors[key];
   const errCount = err ? err.ec : 0;
@@ -2131,6 +2131,20 @@ async function init() {
   if (startBtn) {
     startBtn.disabled = false;
     startBtn.textContent = '开始训练';
+  }
+  
+  // 首页显示总掌握率
+  const homeMastery = document.getElementById('home-mastery-info');
+  if (homeMastery) {
+    const progress = getProgress();
+    let total = 0, mastered = 0;
+    for (const key in progress) {
+      const raw = progress[key];
+      const prog = raw?.progress || 0;
+      total++;
+      if (prog >= 100) mastered++;
+    }
+    homeMastery.textContent = total > 0 ? `已掌握 ${mastered}/${total} (${Math.round(mastered/total*100)}%)` : '';
   }
   
   // 后台异步同步服务端数据
