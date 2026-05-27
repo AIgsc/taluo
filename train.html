@@ -390,15 +390,13 @@ function parseCardMeaning(dbCard) {
   
   // 3. pattern 字段：分别提取正位和逆位的详细解释
   if (dbCard.pattern) {
-    const clean = dbCard.pattern.replace(/<[^>]+>/g, '');
+    // 提取正位详细解释："正位："后面到下一个<div>开始之前，去除HTML标签
+    const um = dbCard.pattern.match(/正位[：:]\s*(.*?)(?=<div)/s);
+    if (um) ud = um[1].replace(/<[^>]+>/g, '').trim();
     
-    // 提取正位详细解释（"正位：" 到 "逆位：" 或结束）
-    const um = clean.match(/正位[：:]\s*(.+?)(?:逆位|$)/);
-    if (um) ud = um[1].trim();
-    
-    // 提取逆位详细解释（"逆位：" 到结束）
-    const rm = clean.match(/逆位[：:]\s*(.+)$/);
-    if (rm) rd = rm[1].trim();
+    // 提取逆位详细解释："逆位："后面到</div>前面结束，去除HTML标签
+    const rm = dbCard.pattern.match(/逆位[：:]\s*(.*?)(?=<\/div)/s);
+    if (rm) rd = rm[1].replace(/<[^>]+>/g, '').trim();
   }
   
   return {
@@ -720,12 +718,14 @@ function allocateQuestionTypes(count) {
 // 生成单选题
 function generateSingleChoice(poolItem) {
   const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
   const isUp = poolItem.orientation === 'upright';
   const correctAnswer = isUp ? card.uk : card.rk;
   const question = `"${card.name}"${isUp ? '正' : '逆'}位核心含义是？`;
   
   // 从其他卡牌中抽3个同状态的干扰项
-  const others = TAROT_CARDS.filter(c => c.id !== card.id).map(c => ({
+  const others = TAROT_CARDS.filter(c => c.id !== card.id && (isUp ? c.uk : c.rk)).map(c => ({
     text: isUp ? c.uk : c.rk
   }));
   const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
@@ -749,6 +749,8 @@ function generateSingleChoice(poolItem) {
 // 生成判断题
 function generateTrueFalse(poolItem) {
   const card = getCardById(poolItem.cardId);
+  if (!card || !card.ud || !card.rd) return null;
+  
   const isUp = poolItem.orientation === 'upright';
   const trueDesc = isUp ? card.ud : card.rd;
   
@@ -759,8 +761,8 @@ function generateTrueFalse(poolItem) {
     correctAnswer = true;
   } else {
     // 用其他卡牌的描述作为错误干扰
-    const others = TAROT_CARDS.filter(c => c.id !== card.id);
-    const other = others[Math.floor(Math.random() * others.length)];
+    const others = TAROT_CARDS.filter(c => c.id !== card.id && (isUp ? c.ud : c.rd));
+    const other = others[Math.floor(Math.random() * others.length)] || card;
     statement = isUp ? other.ud : other.rd;
     correctAnswer = false;
   }
@@ -781,6 +783,8 @@ function generateTrueFalse(poolItem) {
 // 生成填空题
 function generateFillBlank(poolItem) {
   const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
   const isUp = poolItem.orientation === 'upright';
   const keyword = isUp ? card.uk : card.rk;
   const desc = isUp ? card.ud : card.rd;
@@ -804,6 +808,8 @@ function generateFillBlank(poolItem) {
 // 生成逆位逻辑题
 function generateReversedLogic(poolItem) {
   const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
   // 逆位逻辑题：用正位关键词做题干，逆位关键词做答案
   if (poolItem.orientation === 'upright') {
     // 逻辑题必须用逆位出题，如果抽到正位就跳过（实际pool里会保证）
@@ -813,7 +819,7 @@ function generateReversedLogic(poolItem) {
   const uprightKW = card.uk;
   const correctAnswer = card.rk;
   
-  const others = TAROT_CARDS.filter(c => c.id !== card.id).map(c => c.rk);
+  const others = TAROT_CARDS.filter(c => c.id !== card.id && c.rk).map(c => c.rk);
   const distractors = shuffle([...others]).slice(0, 3);
   const options = shuffle([correctAnswer, ...distractors]);
   const correctIndex = options.indexOf(correctAnswer);
@@ -834,6 +840,8 @@ function generateReversedLogic(poolItem) {
 // 生成倒序记忆题（看牌义选牌名）
 function generateReverseMemory(poolItem) {
   const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
   const isUp = poolItem.orientation === 'upright';
   const desc = isUp ? `${card.uk}，${card.ud}` : `${card.rk}，${card.rd}`;
   
@@ -859,10 +867,12 @@ function generateReverseMemory(poolItem) {
 // 生成图片联想题（看图片不看牌名，回忆牌义）
 function generateImageAssociation(poolItem) {
   const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
   const isUp = poolItem.orientation === 'upright';
   const correctAnswer = isUp ? card.uk : card.rk;
   
-  const others = TAROT_CARDS.filter(c => c.id !== card.id).map(c => ({
+  const others = TAROT_CARDS.filter(c => c.id !== card.id && (isUp ? c.uk : c.rk)).map(c => ({
     text: isUp ? c.uk : c.rk
   }));
   const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
@@ -885,6 +895,12 @@ function generateImageAssociation(poolItem) {
 
 // ======================== 考试流程 ========================
 function startExam() {
+  // 检查牌义数据是否已加载
+  if (!TAROT_CARDS || TAROT_CARDS.length < 78) {
+    toast('数据加载中，请稍后再试');
+    return;
+  }
+  
   // 固定参数：100题、全部78张牌、正位+逆位、薄弱优先
   const count = 100;
   const timeLimit = selectedTimeLimit;
@@ -908,33 +924,50 @@ function startExam() {
   
   // 单选
   const scItems = remaining.splice(0, typeAlloc.single);
-  scItems.forEach(item => questions.push(generateSingleChoice(item)));
+  scItems.forEach(item => {
+    const q = generateSingleChoice(item);
+    if (q) questions.push(q);
+  });
   
   // 判断
   const tfItems = remaining.splice(0, typeAlloc.truefalse);
-  tfItems.forEach(item => questions.push(generateTrueFalse(item)));
+  tfItems.forEach(item => {
+    const q = generateTrueFalse(item);
+    if (q) questions.push(q);
+  });
   
   // 填空
   const fbItems = remaining.splice(0, typeAlloc.fillblank);
-  fbItems.forEach(item => questions.push(generateFillBlank(item)));
+  fbItems.forEach(item => {
+    const q = generateFillBlank(item);
+    if (q) questions.push(q);
+  });
   
   // 倒序记忆
   const rmItems = remaining.splice(0, typeAlloc.reverse);
-  rmItems.forEach(item => questions.push(generateReverseMemory(item)));
+  rmItems.forEach(item => {
+    const q = generateReverseMemory(item);
+    if (q) questions.push(q);
+  });
   
   // 图片联想
   const imItems = remaining.splice(0, typeAlloc.image);
-  imItems.forEach(item => questions.push(generateImageAssociation(item)));
+  imItems.forEach(item => {
+    const q = generateImageAssociation(item);
+    if (q) questions.push(q);
+  });
   
   // 如果不够，用单选题补
   while (questions.length < count) {
     const idx = selectedItems.findIndex(si => !questions.some(q => q.cardId === si.cardId && q.orientation === si.orientation));
-    if (idx >= 0) questions.push(generateSingleChoice(selectedItems[idx]));
-    else break;
+    if (idx >= 0) {
+      const q = generateSingleChoice(selectedItems[idx]);
+      if (q) questions.push(q);
+    } else break;
   }
   
-  // 打乱题目顺序
-  const finalQuestions = shuffle(questions).slice(0, count);
+  // 打乱题目顺序，过滤null
+  const finalQuestions = shuffle(questions.filter(q => q)).slice(0, count);
   
   currentExam = {
     questions: finalQuestions,
@@ -965,7 +998,17 @@ function renderQuestion() {
     return;
   }
   
-  const q = currentExam.questions[currentExam.currentIndex];
+  let q = currentExam.questions[currentExam.currentIndex];
+  // 如果当前题无效，就跳过到下一题
+  while (!q && currentExam.currentIndex < currentExam.totalCount - 1) {
+    currentExam.currentIndex++;
+    q = currentExam.questions[currentExam.currentIndex];
+  }
+  if (!q) {
+    finishExam();
+    return;
+  }
+  
   const idx = currentExam.currentIndex + 1;
   const total = currentExam.totalCount;
   
@@ -1446,21 +1489,27 @@ document.querySelector('#screen-progress .progress-filter').addEventListener('cl
 async function init() {
   const token = getAuthToken();
   
-  // 1. 从数据库加载牌义数据（兜底硬编码）
-  await loadCardDataFromDB();
+  // 先立即显示界面（用fallback数据）
+  buildFallbackCards();
+  renderProgress();
   
-  // 2. 服务端同步
+  // 后台异步加载数据库牌义数据
+  loadCardDataFromDB().then(() => {
+    // 数据加载完成后重新渲染
+    renderProgress();
+  });
+  
+  // 后台异步同步服务端数据
   if (token) {
     // 首次使用时建表
     if (!localStorage.getItem('taro_train_inited')) {
-      await initTrainingTables();
-      localStorage.setItem('taro_train_inited', '1');
+      initTrainingTables().then(() => {
+        localStorage.setItem('taro_train_inited', '1');
+      });
     }
-    await loadServerProgress();
-    await loadServerErrors();
+    loadServerProgress();
+    loadServerErrors();
   }
-  
-  renderProgress();
 }
 
 init();
