@@ -7,8 +7,9 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#1a1a2e;color:#e0d8c8;min-height:100vh;overflow-x:hidden}
-.screen{display:none;padding:16px;min-height:100vh}
+.screen{display:none;padding:16px 16px 200px;min-height:100vh}
 .screen.active{display:block}
+#screen-exam,#screen-result{padding-bottom:16px}
 
 /* 顶部标题栏 */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 0 16px;border-bottom:1px solid #2a2a4a;margin-bottom:16px}
@@ -60,7 +61,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .quiz-card-img.pending{width:60vw;max-width:300px;animation:pulse 2s infinite}
 @keyframes pulse{50%{box-shadow:0 0 30px rgba(212,184,122,.3)}}
 .quiz-options{display:flex;flex-direction:column;gap:10px}
-.quiz-option{padding:14px 16px;border-radius:10px;border:1px solid #3a3a5a;background:#16213e;font-size:15px;color:#e0d8c8;cursor:pointer;text-align:left;transition:all .2s;line-height:1.5}
+.quiz-option{padding:16px;border-radius:10px;border:1px solid #3a3a5a;background:#16213e;font-size:15px;color:#e0d8c8;cursor:pointer;text-align:left;transition:all .2s;line-height:1.5;min-height:48px;display:flex;align-items:center}
 .quiz-option:active{background:#2a2a4a}
 .quiz-option.correct{background:#1a3a1a;border-color:#4a8a4a;color:#a0f0a0}
 .quiz-option.wrong{background:#3a1a1a;border-color:#8a4a4a;color:#f0a0a0}
@@ -213,7 +214,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
   <div class="error-list" id="error-review-list"></div>
 
   <button class="btn btn-primary" onclick="showScreen('setup')">再来一场</button>
-  <button class="btn btn-outline" onclick="startReview(true)">错题强化</button>
+  <button class="btn btn-outline" onclick="startReview(true)" style="margin-bottom:80px">错题强化</button>
 </div>
 
 <!-- ========== 屏幕4：错题强化 ========== -->
@@ -265,7 +266,7 @@ const STORAGE_KEY_EXAMS = 'taro_train_exams';
 const STORAGE_KEY_CONFUSE_ERRORS = 'taro_train_confuse_errors';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
-let questionTimeoutId = null, pendingImageTimerId = null;
+let questionTimeoutId = null, pendingImageTimerId = null, pendingImageCdInterval = null;
 let selectedTimeLimit = 30; // 默认30秒
 
 // ======================== 78张塔罗牌数据（从DB加载，硬编码兜底） ========================
@@ -408,8 +409,6 @@ function getCardType(cardId) {
 }
 
 // ==================== SM-2算法配置 ====================
-const FAST_THRESHOLD = 15000; // 15秒内答对=快速回忆
-const NORMAL_THRESHOLD = 30000; // 30秒内答对=正常回忆
 
 // 更新SM-2参数
 function updateSM2(cardId, orientation, isCorrect, answerTime) {
@@ -417,12 +416,17 @@ function updateSM2(cardId, orientation, isCorrect, answerTime) {
   const progress = getProgress();
   const item = progress[key] || { interval: 1, easeFactor: 2.5, dueDate: Date.now(), progress: 0, correctCount: 0, errorCount: 0 };
   
+  // 根据当前题的时间限制动态计算阈值
+  const timeLimit = (currentExam && currentExam.timeLimit) ? currentExam.timeLimit : 30;
+  const fastThreshold = timeLimit * 500; // 50%时间内答对=快速
+  const normalThreshold = timeLimit * 800; // 80%时间内答对=正常
+  
   if (isCorrect) {
-    if (answerTime < FAST_THRESHOLD) {
+    if (answerTime < fastThreshold) {
       // 快速答对：间隔×2.5，难度系数+0.1
       item.interval = Math.round(item.interval * 2.5);
       item.easeFactor = Math.min(3.0, item.easeFactor + 0.1);
-    } else if (answerTime < NORMAL_THRESHOLD) {
+    } else if (answerTime < normalThreshold) {
       // 正常答对：间隔×1.5，难度系数不变
       item.interval = Math.round(item.interval * 1.5);
     } else {
@@ -986,45 +990,6 @@ function generateImageAnchorQuestion(poolItem) {
   };
 }
 
-// 题型配比：每个题型10-50%随机，包含新题型
-function allocateQuestionTypes(count) {
-  const types = ['single', 'truefalse', 'fillblank', 'reversed', 'reverse', 'image', 'compare', 'recall', 'image_anchor'];
-  let alloc = {};
-  let remaining = count;
-  
-  // 先给每个题型随机分配10-50之间的基础题数（按比例）
-  let ratios = [];
-  for (let i = 0; i < types.length; i++) {
-    ratios.push(randomInt(10, 50));
-  }
-  let totalRatio = ratios.reduce((a, b) => a + b, 0);
-  
-  // 按比例分配
-  let assigned = 0;
-  types.forEach((type, i) => {
-    if (i === types.length - 1) {
-      // 最后一个题型用剩余
-      alloc[type] = remaining;
-    } else {
-      alloc[type] = Math.max(1, Math.floor(ratios[i] / totalRatio * count));
-      assigned += alloc[type];
-      remaining = count - assigned;
-    }
-  });
-  
-  // 显示当前比例在首页
-  const names = {
-    single: '单选', truefalse: '判断', fillblank: '填空', 
-    reversed: '逆位逻辑', reverse: '倒序记忆', image: '图片联想',
-    compare: '相似牌对比', recall: '看牌说词', image_anchor: '画面锚点'
-  };
-  const ratioText = types.map(t => `${names[t]}${Math.round(alloc[t]/count*100)}%`).join(' / ');
-  const el = document.getElementById('type-ratio-info');
-  if (el) el.textContent = ratioText;
-  
-  return alloc;
-}
-
 // 生成单选题
 function generateSingleChoice(poolItem) {
   const card = getCardById(poolItem.cardId);
@@ -1391,6 +1356,7 @@ function renderQuestion() {
   
   // 先显示图片（放大到60%屏幕宽度），5秒后显示题目
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
   
   const imgSize = 'width:60vw;max-width:300px';
   
@@ -1414,18 +1380,22 @@ function renderQuestion() {
     document.getElementById('quiz-options-area').innerHTML = '';
     document.getElementById('quiz-feedback-area').innerHTML = '';
     
-    // 5秒倒计时
-    let countdown = 5;
-    const cdInterval = setInterval(() => {
+    if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+  
+  // 5秒倒计时
+  let countdown = 5;
+    if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); }
+    pendingImageCdInterval = setInterval(() => {
       countdown--;
       const cdEl = document.getElementById('image-countdown');
       if (cdEl) cdEl.textContent = countdown;
-      if (countdown <= 0) clearInterval(cdInterval);
+      if (countdown <= 0) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
     }, 1000);
     
     pendingImageTimerId = setTimeout(() => {
       pendingImageTimerId = null;
-      clearInterval(cdInterval);
+      if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
       
       // 现在显示完整题目
       let qHtml = '';
@@ -1619,6 +1589,7 @@ function finishExam() {
   if (questionTimer) clearInterval(questionTimer);
   if (questionTimeoutId) clearTimeout(questionTimeoutId);
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
   
   if (!currentExam) return;
   
@@ -1672,6 +1643,7 @@ function finishExam() {
 function submitExam() {
   if (!currentExam) return;
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
   // 剩余未答题全部算错
   while (currentExam.currentIndex < currentExam.totalCount) {
     const q = currentExam.questions[currentExam.currentIndex];
@@ -1769,27 +1741,50 @@ function startReview(fromResult) {
   // 按错误次数排序，优先推高频错题
   pool.sort((a, b) => b.err.ec - a.err.ec);
   
-  // 生成题目（全部用单选题）
+  // 生成题目（按动态题型配比）
   const questions = pool.map(p => {
+    const type = getDynamicTypeForCard(p.cardId);
     const isUp = p.orientation === 'upright';
     const correctAnswer = isUp ? p.card.uk : p.card.rk;
-    const others = TAROT_CARDS.filter(c => c.id !== p.cardId).map(c => ({
-      text: isUp ? c.uk : c.rk
-    }));
-    const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
-    const options = shuffle([correctAnswer, ...distractors]);
     
-    return {
-      type: 'single',
-      question: `"${p.card.name}"${isUp ? '正' : '逆'}位核心含义是？`,
-      cardName: p.card.name,
-      cardId: p.cardId,
-      orientation: p.orientation,
-      options,
-      correctIndex: options.indexOf(correctAnswer),
-      correctAnswer,
-      explanation: `${p.card.name}${isUp ? '正' : '逆'}位代表：${isUp ? p.card.ud : p.card.rd}`
-    };
+    if (type === 'truefalse') {
+      const trueDesc = isUp ? p.card.ud : p.card.rd;
+      const fakeOthers = TAROT_CARDS.filter(c => c.id !== p.cardId && (isUp ? c.ud : c.rd));
+      const statement = Math.random() < 0.5 ? trueDesc : (fakeOthers[Math.floor(Math.random()*fakeOthers.length)] || {})[isUp?'ud':'rd'] || trueDesc;
+      const correctAnswerBool = statement === trueDesc;
+      return {
+        type: 'truefalse', question: `"${p.card.name}"${isUp ? '正' : '逆'}位代表：${statement}`,
+        cardName: p.card.name, cardId: p.cardId, orientation: p.orientation,
+        options: ['对', '错'], correctIndex: correctAnswerBool ? 0 : 1, correctAnswer: correctAnswerBool ? '对' : '错',
+        explanation: `${p.card.name}${isUp ? '正' : '逆'}位代表：${isUp ? p.card.ud : p.card.rd}`
+      };
+    } else if (type === 'fillblank') {
+      return {
+        type: 'fillblank', question: `"${p.card.name}"${isUp ? '正' : '逆'}位核心含义是？`,
+        cardName: p.card.name, cardId: p.cardId, orientation: p.orientation,
+        correctAnswer, keywords: correctAnswer.split(/[，,、；;\|\/\\\s]+/).filter(k=>k.trim()),
+        hint: `提示：${isUp ? p.card.ud : p.card.rd}`,
+        explanation: `${p.card.name}${isUp ? '正' : '逆'}位代表：${isUp ? p.card.uk+'，'+p.card.ud : p.card.rk+'，'+p.card.rd}`
+      };
+    } else if (type === 'recall') {
+      const keywords = correctAnswer.split(/[，,、；;\|\/\\\s]+/).filter(k => k.trim());
+      return {
+        type: 'recall', question: '看着卡牌，输入所有核心关键词（用逗号分隔）',
+        cardName: p.card.name, cardId: p.cardId, orientation: p.orientation,
+        showImageOnly: true, correctAnswer, keywords,
+        explanation: `${p.card.name}${isUp ? '正' : '逆'}位核心关键词：${correctAnswer}`
+      };
+    } else {
+      const others = TAROT_CARDS.filter(c => c.id !== p.cardId && (isUp ? c.uk : c.rk)).map(c => ({text: isUp ? c.uk : c.rk}));
+      const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
+      const options = shuffle([correctAnswer, ...distractors]);
+      return {
+        type: 'single', question: `"${p.card.name}"${isUp ? '正' : '逆'}位核心含义是？`,
+        cardName: p.card.name, cardId: p.cardId, orientation: p.orientation,
+        options, correctIndex: options.indexOf(correctAnswer), correctAnswer,
+        explanation: `${p.card.name}${isUp ? '正' : '逆'}位代表：${isUp ? p.card.ud : p.card.rd}`
+      };
+    }
   });
   
   currentExam = {
@@ -1902,6 +1897,7 @@ function showScreen(name) {
     if (questionTimer) clearInterval(questionTimer);
     if (questionTimeoutId) clearTimeout(questionTimeoutId);
     if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+    if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
     currentExam = null;
   }
   

@@ -402,7 +402,7 @@ module.exports = async (req, res) => {
     // ==================== 训练系统：获取进度 ====================
     if (req.method === 'GET' && path === '/api/training/progress') {
       const result = await pool.query(
-        'SELECT card_id, orientation, progress, correct_count, error_count, interval, ease_factor, due_date FROM user_progress WHERE user_id = $1 ORDER BY card_id, orientation',
+        'SELECT card_id, orientation, progress, correct_count, error_count, interval, ease_factor, EXTRACT(EPOCH FROM due_date)::bigint * 1000 as due_date FROM user_progress WHERE user_id = $1 ORDER BY card_id, orientation',
         [userPayload.userId]
       );
       return res.json(result.rows);
@@ -442,10 +442,10 @@ module.exports = async (req, res) => {
       
       await pool.query(
         `INSERT INTO user_progress (user_id, card_id, orientation, progress, correct_count, error_count, last_time, interval, ease_factor, due_date)
-         VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8,$9)
+         VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8,to_timestamp($9 / 1000))
          ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
            progress=$4, correct_count=$5, error_count=$6, last_time=NOW(),
-           interval=$7, ease_factor=$8, due_date=$9`,
+           interval=$7, ease_factor=$8, due_date=to_timestamp($9 / 1000)`,
         [userPayload.userId, card_id, orientation,
          newProgress,
          is_correct ? oldCorrect + 1 : oldCorrect,
