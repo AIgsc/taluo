@@ -85,7 +85,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .fb-identity .fb-orient{display:inline-block;padding:1px 10px;border-radius:6px;font-size:11px;font-weight:500;margin-left:8px;vertical-align:middle;letter-spacing:.5px}
 .fb-identity .fb-orient.up{background:rgba(74,138,74,.2);color:#7acc7a}
 .fb-identity .fb-orient.rev{background:rgba(200,80,80,.2);color:#d47a7a}
-.fb-answer{font-size:13px;color:#a09070;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.fb-answer{font-size:13px;color:#a09070;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:6px}
 .fb-section{margin-bottom:14px}
 .fb-section:last-of-type{margin-bottom:0}
 .fb-section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600}
@@ -93,7 +93,6 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .quiz-feedback.wrong .fb-section-label{color:#8a5a5a}
 .fb-tags{display:flex;flex-wrap:wrap;gap:6px}
 .fb-tag{padding:4px 14px;border-radius:14px;font-size:13px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;line-height:1.4}
-.fb-keyword{font-size:15px;padding:6px 20px;font-weight:500;border-color:rgba(212,184,122,.35);background:rgba(212,184,122,.15)}
 .fb-detail{font-size:13px;color:#a09070;line-height:1.7;padding:10px 14px;border-radius:8px;background:rgba(0,0,0,.15);margin-top:4px}
 .quiz-next-btn{margin-top:16px}
 
@@ -1610,11 +1609,15 @@ function showFeedback(isCorrect, msg, explanation) {
     const orientText = isUp ? '正位' : '逆位';
     const orientClass = isUp ? 'up' : 'rev';
     
-    // 第1行：卡牌名称 + 正/逆位标签 + 核心牌义
+    // 第1行：卡牌名称 + 正/逆位标签
     bodyHtml += `<div class="fb-identity">${q.cardName}<span class="fb-orient ${orientClass}">${orientText}</span></div>`;
-    const cardData = getCardById(q.cardId);
-    const cardKeyword = cardData ? (isUp ? cardData.uk : cardData.rk) : q.correctAnswer;
-    bodyHtml += `<div class="fb-answer"><span class="fb-tag fb-keyword">${cardKeyword}</span></div>`;
+    // 核心牌义标签（始终取 card.uk/card.rk，不受题型 correctAnswer 影响）
+    const fbCard = getCardById(q.cardId);
+    if (fbCard) {
+      const coreMeaning = isUp ? fbCard.uk : fbCard.rk;
+      const kwList = coreMeaning.split(/[，,、；;]/).filter(k => k.trim());
+      bodyHtml += `<div class="fb-answer">${kwList.map(k => `<span class="fb-tag">${k.trim()}</span>`).join('')}</div>`;
+    }
     
     // 第2行：画面锚点标签
     const anchorList = getCardAnchors(q.cardId, q.orientation);
