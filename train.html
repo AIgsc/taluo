@@ -251,8 +251,16 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
   <div class="progress-filter">
     <span class="filter-tag active" data-pf="all" onclick="progressFilter='all';renderProgress()">全部</span>
     <span class="filter-tag" data-pf="stranger" onclick="progressFilter='stranger';renderProgress()">陌生(0-30%)</span>
-    <span class="filter-tag" data-pf="unmastered" onclick="progressFilter='unmastered';renderProgress()">未精通(0-99%)</span>
+    <span class="filter-tag" data-pf="unmastered" onclick="progressFilter='unmastered';renderProgress()">未精通(30-99%)</span>
     <span class="filter-tag" data-pf="errors" onclick="progressFilter='errors';renderProgress()">有错题</span>
+    <span class="filter-tag" data-pf="mastered" onclick="progressFilter='mastered';renderProgress()">已掌握(100%)</span>
+  </div>
+
+  <div class="result-stats" id="progress-stats" style="margin:16px 0;grid-template-columns:1fr 1fr 1fr 1fr">
+    <div class="stat-item"><div class="val" id="stat-total-q">0</div><div class="lbl">总答题</div></div>
+    <div class="stat-item"><div class="val" id="stat-avg-rate">0%</div><div class="lbl">平均正确率</div></div>
+    <div class="stat-item"><div class="val" id="stat-total-time">0h</div><div class="lbl">总学习时长</div></div>
+    <div class="stat-item"><div class="val" id="stat-streak">0天</div><div class="lbl">连续学习</div></div>
   </div>
 
   <div id="progress-list-area"></div>
@@ -1361,7 +1369,7 @@ function renderQuestion() {
   const imgSize = 'width:60vw;max-width:300px';
   
   if (q.type === 'reverse') {
-    // 倒序记忆：没有图片，直接显示
+    // 倒序记忆：只显示文字描述，不显示牌名和图片（纯回忆训练）
     document.getElementById('quiz-question-area').innerHTML = `
       <div class="q-text" style="font-size:16px;color:#d4b87a;font-weight:600;text-align:center;padding:10px 0">${q.desc}</div>
       <div class="q-text">${q.question}</div>
@@ -1419,7 +1427,7 @@ function renderQuestion() {
         document.getElementById('quiz-options-area').innerHTML = `
           ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
           <div class="quiz-input-wrap">
-            <input type="text" id="fill-answer" placeholder="${q.type === 'recall' ? '输入关键词，用逗号分隔...' : '输入关键词...'}">
+            <input type="text" id="fill-answer" placeholder="${q.type === 'recall' ? '输入关键词，用逗号分隔...' : '输入关键词...'}" onkeydown="if(event.key==='Enter')submitFillAnswer()">
             <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
           </div>
         `;
@@ -1806,6 +1814,7 @@ function startReview(fromResult) {
 function renderProgress() {
   const progress = getProgress();
   const errors = getErrors();
+  const exams = getExams();
   const listArea = document.getElementById('progress-list-area');
   const summary = document.getElementById('progress-summary');
   
@@ -1818,7 +1827,7 @@ function renderProgress() {
     { name: '圣杯', cards: TAROT_CARDS.filter(c => c.id >= 65 && c.id <= 78) }
   ];
   
-  let totalSlots = 0, filledSlots = 0;
+  let totalSlots = 0, masteredSlots = 0;
   let html = '';
   
   groups.forEach(group => {
@@ -1829,19 +1838,21 @@ function renderProgress() {
         const raw = progress[key];
         const prog = typeof raw === 'object' ? (raw.progress || 0) : (raw || 0);
         const hasError = errors[key] && errors[key].ec > 0;
+        const isMastered = prog >= 100;
         
         // 筛选
         let show = true;
         if (progressFilter === 'stranger' && prog > 30) show = false;
-        if (progressFilter === 'unmastered' && prog >= 100) show = false;
+        if (progressFilter === 'unmastered' && (prog < 30 || prog >= 100)) show = false;
         if (progressFilter === 'errors' && !hasError) show = false;
+        if (progressFilter === 'mastered' && !isMastered) show = false;
         
         if (show) {
-          groupCards.push({ card, ori, prog, hasError });
+          groupCards.push({ card, ori, prog, hasError, isMastered });
         }
         
         totalSlots++;
-        if (prog > 0) filledSlots++;
+        if (isMastered) masteredSlots++;
       });
     });
     
@@ -1868,8 +1879,46 @@ function renderProgress() {
     }
   });
   
-  summary.textContent = `已掌握 ${filledSlots}/${totalSlots}`;
+  summary.textContent = `已掌握 ${masteredSlots}/${totalSlots}`;
   listArea.innerHTML = html || '<div style="text-align:center;padding:20px;color:#8a7a60">当前筛选条件下无数据</div>';
+  
+  // 更新统计仪表盘
+  // 总答题数 & 平均正确率
+  let totalQuestions = 0, totalCorrect = 0;
+  exams.forEach(ex => { totalQuestions += ex.total || 0; totalCorrect += ex.score || 0; });
+  document.getElementById('stat-total-q').textContent = totalQuestions;
+  document.getElementById('stat-avg-rate').textContent = totalQuestions > 0 ? Math.round(totalCorrect / totalQuestions * 100) + '%' : '0%';
+  
+  // 总学习时长
+  let totalSeconds = 0;
+  exams.forEach(ex => { totalSeconds += ex.duration || 0; });
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  document.getElementById('stat-total-time').textContent = hours > 0 ? `${hours}h${mins}m` : `${mins}m`;
+  
+  // 连续学习天数
+  if (exams.length > 0) {
+    const dates = exams.map(e => {
+      const d = new Date(e.time);
+      return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    });
+    const uniqueDates = [...new Set(dates)].sort().reverse();
+    let streak = 1;
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+    if (uniqueDates[0] === todayStr || uniqueDates[0] === `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()-1}`) {
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const prev = new Date(uniqueDates[i-1]);
+        const curr = new Date(uniqueDates[i]);
+        const diff = (prev - curr) / 86400000;
+        if (diff <= 1.5) streak++;
+        else break;
+      }
+    } else {
+      streak = 0;
+    }
+    document.getElementById('stat-streak').textContent = streak + '天';
+  }
 }
 
 // ======================== UI 工具 ========================
