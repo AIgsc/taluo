@@ -154,7 +154,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
     </div>
 
     <div style="text-align:center;margin-top:20px">
-      <button class="btn btn-primary" onclick="startExam()" style="max-width:280px;margin:0 auto">开始训练</button>
+      <button class="btn btn-primary" id="start-exam-btn" onclick="startExam()" style="max-width:280px;margin:0 auto" disabled>加载中...</button>
       <button class="btn" style="background:none;color:#6a4a4a;font-size:12px;padding:8px;margin-top:8px;border:none;text-decoration:underline" onclick="clearAllData()">清空数据，重新开始</button>
     </div>
   </div>
@@ -411,7 +411,11 @@ function parseCardMeaning(dbCard) {
 // 从主站 /api/card-meanings 加载用户牌义数据
 async function loadCardDataFromDB() {
   const token = localStorage.getItem('taroToken');
-  if (!token) { buildFallbackCards(); return; }
+  if (!token) { 
+    // 没token，用fallback
+    buildFallbackCards(); 
+    return; 
+  }
   try {
     const res = await fetch('/api/card-meanings', { headers: { 'Authorization': 'Bearer ' + token } });
     if (!res.ok) { buildFallbackCards(); return; }
@@ -421,7 +425,10 @@ async function loadCardDataFromDB() {
     for (let i = 1; i <= 78; i++) {
       TAROT_CARDS.push(parseCardMeaning({ card_id: i, ...(data[i] || {}) }));
     }
-  } catch(e) { buildFallbackCards(); }
+  } catch(e) { 
+    console.error('加载牌义数据失败', e);
+    buildFallbackCards(); 
+  }
 }
 
 function buildFallbackCards() {
@@ -790,7 +797,9 @@ function generateFillBlank(poolItem) {
   const desc = isUp ? card.ud : card.rd;
   
   // 将关键词按分隔符拆分（支持逗号、顿号、分号、斜杠、竖线、空格）
-  const keywords = keyword.split(/[，,、；;\|\/\\\s]+/).filter(k => k.trim());
+  let keywords = keyword.split(/[，,、；;\|\/\\\s]+/).filter(k => k.trim());
+  // 如果拆分后是空数组，就把整个keyword放进去
+  if (keywords.length === 0) keywords = [keyword];
   
   return {
     type: 'fillblank',
@@ -1488,15 +1497,20 @@ document.querySelector('#screen-progress .progress-filter').addEventListener('cl
 // ======================== 初始化 ========================
 async function init() {
   const token = getAuthToken();
+  const startBtn = document.getElementById('start-exam-btn');
   
   // 先立即显示界面（用fallback数据）
   buildFallbackCards();
   renderProgress();
   
   // 后台异步加载数据库牌义数据
-  loadCardDataFromDB().then(() => {
-    // 数据加载完成后重新渲染
+  loadCardDataFromDB().finally(() => {
+    // 不管加载成功失败，都重新渲染，启用按钮
     renderProgress();
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.textContent = '开始训练';
+    }
   });
   
   // 后台异步同步服务端数据
