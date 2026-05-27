@@ -81,7 +81,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .fb-status.correct{color:#7acc7a}
 .fb-status.wrong{color:#d47a7a}
 .fb-body{padding:0}
-.fb-identity{font-size:17px;font-weight:700;margin-bottom:4px;color:#f0e8d8}
+.fb-identity{font-size:17px;font-weight:700;margin-bottom:12px;color:#f0e8d8}
 .fb-identity .fb-orient{display:inline-block;padding:1px 10px;border-radius:6px;font-size:11px;font-weight:500;margin-left:8px;vertical-align:middle;letter-spacing:.5px}
 .fb-identity .fb-orient.up{background:rgba(74,138,74,.2);color:#7acc7a}
 .fb-identity .fb-orient.rev{background:rgba(200,80,80,.2);color:#d47a7a}
@@ -727,12 +727,18 @@ async function apiCall(method, endpoint, body) {
     const res = await fetch(endpoint, opts);
     if (res.ok) return await res.json();
     if (res.status === 401) { toast('请先登录'); return null; }
+    if (res.status === 500) {
+      const errBody = await res.text();
+      console.error('API 500:', endpoint, errBody, body);
+    }
     return null;
   } catch(e) { return null; }
 }
 
 async function syncProgressToServer(cardId, orientation, isCorrect, interval, ease_factor, due_date, progress, correct_count, error_count) {
-  await apiCall('POST', '/api/training/progress', { card_id: cardId, orientation, is_correct: isCorrect, interval, ease_factor, due_date, progress, correct_count, error_count });
+  // 确保 due_date 是合法数字
+  const safeDueDate = (typeof due_date === 'number' && !isNaN(due_date)) ? due_date : Date.now();
+  await apiCall('POST', '/api/training/progress', { card_id: cardId, orientation, is_correct: isCorrect, interval, ease_factor, due_date: safeDueDate, progress, correct_count, error_count });
 }
 
 async function syncErrorToServer(cardId, orientation, isCorrect, ec, cc) {

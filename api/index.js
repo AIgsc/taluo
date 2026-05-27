@@ -416,6 +416,11 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: '缺少必要参数' });
       }
       
+      // 校验参数合法性
+      if (!['upright', 'reversed'].includes(orientation)) {
+        return res.status(400).json({ error: 'orientation 参数不合法' });
+      }
+      
       // 使用前端传递的progress值（已含答对+10/答错-15），如果没有则用服务端计算
       let newProgress = progress;
       if (newProgress === undefined) {
@@ -429,23 +434,25 @@ module.exports = async (req, res) => {
       
       const newInterval = interval !== undefined ? interval : 1;
       const newEaseFactor = ease_factor !== undefined ? ease_factor : 2.5;
-      const newDueDate = due_date !== undefined ? due_date : new Date();
+      // 确保 due_date 是合法数值
+      const dueDateMs = (typeof due_date === 'number' && !isNaN(due_date)) ? due_date : Date.now();
+      const newDueDate = new Date(dueDateMs);
       const newCorrectCount = correct_count !== undefined ? correct_count : 0;
       const newErrorCount = error_count !== undefined ? error_count : 0;
       
       await pool.query(
         `INSERT INTO user_progress (user_id, card_id, orientation, progress, correct_count, error_count, last_time, "interval", ease_factor, due_date)
-         VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8,to_timestamp($9 / 1000))
+         VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8,$9)
          ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
            progress=$4, correct_count=$5, error_count=$6, last_time=NOW(),
-           "interval"=$7, ease_factor=$8, due_date=to_timestamp($9 / 1000)`,
+           "interval"=$7, ease_factor=$8, due_date=$9`,
         [userPayload.userId, card_id, orientation,
          newProgress,
          newCorrectCount, newErrorCount,
          newInterval, newEaseFactor, newDueDate]
       );
       
-      return res.json({ progress: newProgress, correct_count: newCorrectCount, error_count: newErrorCount, interval: newInterval, ease_factor: newEaseFactor, due_date: newDueDate });
+      return res.json({ progress: newProgress, correct_count: newCorrectCount, error_count: newErrorCount, interval: newInterval, ease_factor: newEaseFactor, due_date: newDueDate.toISOString() });
     }
     
     // ==================== 训练系统：删除进度 ====================
