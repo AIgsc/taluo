@@ -682,7 +682,7 @@ function getSM2Data(cardId, orientation) {
   return { interval: item.interval || 1, easeFactor: item.easeFactor || 2.5, dueDate: item.dueDate || Date.now(), progress: item.progress || 0, correctCount: item.correctCount || 0, errorCount: item.errorCount || 0 };
 }
 
-function updateProgress(cardId, orientation, isCorrect, answerTime) {
+function updateProgress(cardId, orientation, isCorrect, answerTime, noSync) {
   const p = getProgress();
   const key = buildProgressKey(cardId, orientation);
   const oldItem = p[key] || { progress: 0, correctCount: 0, errorCount: 0, interval: 1, easeFactor: 2.5, dueDate: Date.now() };
@@ -695,12 +695,14 @@ function updateProgress(cardId, orientation, isCorrect, answerTime) {
   sm2Item.errorCount = isCorrect ? oldItem.errorCount || 0 : (oldItem.errorCount || 0) + 1;
   p[key] = sm2Item;
   saveProgress(p);
-  // 同步到服务端
-  syncProgressToServer(cardId, orientation, isCorrect, sm2Item.interval, sm2Item.easeFactor, sm2Item.dueDate, sm2Item.progress, sm2Item.correctCount, sm2Item.errorCount);
+  // 同步到服务端（批量操作时可跳过）
+  if (!noSync) {
+    syncProgressToServer(cardId, orientation, isCorrect, sm2Item.interval, sm2Item.easeFactor, sm2Item.dueDate, sm2Item.progress, sm2Item.correctCount, sm2Item.errorCount);
+  }
   return newProgress;
 }
 
-function recordError(cardId, orientation, isCorrect) {
+function recordError(cardId, orientation, isCorrect, noSync) {
   const e = getErrors();
   const key = buildProgressKey(cardId, orientation);
   if (!e[key]) e[key] = { ec: 0, cc: 0 };
@@ -711,7 +713,9 @@ function recordError(cardId, orientation, isCorrect) {
     e[key].cc = 0;
   }
   saveErrors(e);
-  syncErrorToServer(cardId, orientation, isCorrect, e[key].ec, e[key].cc);
+  if (!noSync) {
+    syncErrorToServer(cardId, orientation, isCorrect, e[key].ec, e[key].cc);
+  }
 }
 
 // ======================== 服务端同步 ========================
@@ -761,12 +765,14 @@ async function loadServerProgress() {
       dueDate: r.due_date ? new Date(r.due_date).getTime() : Date.now()
     };
   });
-  // 合并：取最大值
+  // 合并：保留总答题数（correctCount+errorCount）更多的数据
   const local = getProgress();
   for (const key in p) {
     const localItem = local[key];
     const serverItem = p[key];
-    if (!localItem || typeof localItem !== 'object' || serverItem.progress > (localItem.progress || 0)) {
+    const localTotal = (localItem?.correctCount || 0) + (localItem?.errorCount || 0);
+    const serverTotal = (serverItem.correctCount || 0) + (serverItem.errorCount || 0);
+    if (!localItem || typeof localItem !== 'object' || serverTotal > localTotal) {
       local[key] = serverItem;
     }
   }
@@ -783,6 +789,27 @@ async function loadServerErrors() {
     if (!local[key] || e[key].ec > local[key].ec) local[key] = e[key];
   }
   saveErrors(local);
+}
+
+async function loadServerExams() {
+  const data = await apiCall('GET', '/api/training/exams');
+  if (!data || !data.length) return;
+  const local = getExams();
+  const serverTimes = new Set(data.map(r => r.exam_time));
+  // 去重：保留本地有但服务端没有的记录
+  const merged = data.map(r => ({
+    time: r.exam_time, total: r.total, score: r.score, rate: Math.round(r.correct_rate),
+    duration: r.duration, errorIds: (r.error_ids || '').split(',').filter(Boolean)
+  }));
+  // 补回本地有但服务端没有的记录（时间戳精度匹配）
+  for (const item of local) {
+    if (!serverTimes.has(item.time)) {
+      merged.push(item);
+    }
+  }
+  // 按时间降序排列
+  merged.sort((a, b) => new Date(b.time) - new Date(a.time));
+  saveExams(merged);
 }
 
 function getAuthToken() {
@@ -1758,13 +1785,30 @@ function submitExam() {
   if (!currentExam) return;
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+  const updatedKeys = new Set();
   while (currentExam.currentIndex < currentExam.totalCount) {
     const q = currentExam.questions[currentExam.currentIndex];
     const answerTime = 0; // 未答题标记为完全不会
     currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true, answerTime });
-    updateProgress(q.cardId, q.orientation, false, answerTime);
-    recordError(q.cardId, q.orientation, false);
+    updateProgress(q.cardId, q.orientation, false, answerTime, true);
+    recordError(q.cardId, q.orientation, false, true);
+    updatedKeys.add(buildProgressKey(q.cardId, q.orientation));
     currentExam.currentIndex++;
+  }
+  // 批量同步进度和错题（只同步有变化的条目）
+  const progress = getProgress();
+  const errors = getErrors();
+  for (const key of updatedKeys) {
+    const p = progress[key];
+    if (p) {
+      const [cardId, orientation] = key.split('_');
+      syncProgressToServer(Number(cardId), orientation, false, p.interval, p.easeFactor, p.dueDate, p.progress, p.correctCount, p.errorCount);
+    }
+    const e = errors[key];
+    if (e) {
+      const [cardId, orientation] = key.split('_');
+      syncErrorToServer(Number(cardId), orientation, false, e.ec, e.cc);
+    }
   }
   finishExam();
 }
@@ -2212,6 +2256,7 @@ async function init() {
   if (token) {
     loadServerProgress();
     loadServerErrors();
+    loadServerExams();
   }
 }
 
