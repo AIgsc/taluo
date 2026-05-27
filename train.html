@@ -1405,7 +1405,8 @@ function renderQuestion() {
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
   
-  const imgSize = 'width:60vw;max-width:200px';
+  const imgSize = 'width:60vw;max-width:300px';
+  const imgSizeSmall = 'width:60vw;max-width:120px';
   
   if (q.type === 'reverse') {
     // 倒序记忆：只显示文字描述，不显示牌名和图片（纯回忆训练）
@@ -1445,12 +1446,12 @@ function renderQuestion() {
       const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor');
       if (isImageOnly) {
         qHtml = `
-          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
+          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
           <div class="q-text">${q.question}</div>
         `;
       } else {
         qHtml = `
-          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
+          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
           <div class="card-name">${q.cardName}</div>
           <span class="orientation-tag ${tagClass}">${tagText}</span>
           <div class="q-text">${q.question}</div>
