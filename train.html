@@ -921,16 +921,6 @@ function startExam() {
   const questions = [];
   let remaining = [...selectedItems];
   
-  // 逆位逻辑优先（从 remaining 中取逆位项，防止被单选/判断抢走）
-  const reversedFromRemaining = remaining.filter(i => i.orientation === 'reversed');
-  const rlItems = reversedFromRemaining.splice(0, typeAlloc.reversed);
-  rlItems.forEach(item => {
-    const idx = remaining.findIndex(r => r.cardId === item.cardId && r.orientation === item.orientation);
-    if (idx >= 0) remaining.splice(idx, 1);
-    const q = generateReversedLogic(item);
-    if (q) questions.push(q);
-  });
-  
   // 单选
   const scItems = remaining.splice(0, typeAlloc.single);
   scItems.forEach(item => {
@@ -966,6 +956,15 @@ function startExam() {
     if (q) questions.push(q);
   });
   
+  // 逆位逻辑（最后生成，只取剩余的逆位项）
+  const rlItems = remaining.filter(i => i.orientation === 'reversed').slice(0, typeAlloc.reversed);
+  rlItems.forEach(item => {
+    const idx = remaining.findIndex(r => r.cardId === item.cardId && r.orientation === item.orientation);
+    if (idx >= 0) remaining.splice(idx, 1);
+    const q = generateReversedLogic(item);
+    if (q) questions.push(q);
+  });
+  
   // 如果不够，用单选题补
   while (questions.length < count) {
     const idx = selectedItems.findIndex(si => !questions.some(q => q.cardId === si.cardId && q.orientation === si.orientation));
@@ -975,8 +974,29 @@ function startExam() {
     } else break;
   }
   
-  // 打乱题目顺序，过滤null
-  const finalQuestions = shuffle(questions.filter(q => q)).slice(0, count);
+  // 打乱题目顺序，尽量避免连续同一张牌或连续同一题型
+  let shuffled = shuffle(questions.filter(q => q));
+  // 优化排列：如果发现连续同一张牌或同一题型，就和后面的题交换
+  for (let i = 0; i < shuffled.length - 1; i++) {
+    const current = shuffled[i];
+    const next = shuffled[i + 1];
+    if (
+      current.cardId === next.cardId || 
+      current.type === next.type
+    ) {
+      // 找后面一个不同的题交换
+      for (let j = i + 2; j < shuffled.length; j++) {
+        if (
+          shuffled[j].cardId !== current.cardId && 
+          shuffled[j].type !== current.type
+        ) {
+          [shuffled[i + 1], shuffled[j]] = [shuffled[j], shuffled[i + 1]];
+          break;
+        }
+      }
+    }
+  }
+  const finalQuestions = shuffled.slice(0, count);
   
   currentExam = {
     questions: finalQuestions,
@@ -1502,6 +1522,9 @@ async function init() {
   // 先立即显示界面（用fallback数据）
   buildFallbackCards();
   renderProgress();
+  
+  // 生成初始随机题型比例显示
+  allocateQuestionTypes(100);
   
   // 后台异步加载数据库牌义数据
   loadCardDataFromDB().finally(() => {
