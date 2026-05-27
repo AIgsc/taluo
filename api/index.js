@@ -472,14 +472,14 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：记录错题 ====================
     if (req.method === 'POST' && path === '/api/training/errors') {
-      const { card_id, orientation, is_correct, ec, cc } = req.body;
+      const { card_id, orientation, is_correct, error_count, continuous_correct } = req.body;
       
       if (!card_id || !orientation) {
         return res.status(400).json({ error: '缺少必要参数' });
       }
       
-      const newEc = ec !== undefined ? ec : (is_correct ? 0 : 1);
-      const newCc = cc !== undefined ? cc : (is_correct ? 1 : 0);
+      const newEc = error_count !== undefined ? error_count : (is_correct ? 0 : 1);
+      const newCc = continuous_correct !== undefined ? continuous_correct : (is_correct ? 1 : 0);
       
       await pool.query(
         `INSERT INTO user_errors (user_id, card_id, orientation, error_count, continuous_correct, last_error_time)
