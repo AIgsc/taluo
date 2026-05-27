@@ -56,6 +56,9 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .orientation-tag.reversed{background:#3a2020;color:#e08080}
 .quiz-question .q-text{font-size:15px;color:#c0b8a8;line-height:1.6}
 .quiz-card-img{display:block;width:120px;height:auto;border-radius:10px;margin:0 auto 12px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.quiz-card-img.large{width:60vw;max-width:300px}
+.quiz-card-img.pending{width:60vw;max-width:300px;animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 30px rgba(212,184,122,.3)}}
 .quiz-options{display:flex;flex-direction:column;gap:10px}
 .quiz-option{padding:14px 16px;border-radius:10px;border:1px solid #3a3a5a;background:#16213e;font-size:15px;color:#e0d8c8;cursor:pointer;text-align:left;transition:all .2s;line-height:1.5}
 .quiz-option:active{background:#2a2a4a}
@@ -259,9 +262,10 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 const STORAGE_KEY_PROGRESS = 'taro_train_progress';
 const STORAGE_KEY_ERRORS = 'taro_train_errors';
 const STORAGE_KEY_EXAMS = 'taro_train_exams';
+const STORAGE_KEY_CONFUSE_ERRORS = 'taro_train_confuse_errors';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
-let questionTimeoutId = null;
+let questionTimeoutId = null, pendingImageTimerId = null;
 let selectedTimeLimit = 30; // 默认30秒
 
 // ======================== 78张塔罗牌数据（从DB加载，硬编码兜底） ========================
@@ -363,12 +367,72 @@ const TAROT_NAMES = [
   "圣杯侍从","圣杯骑士","圣杯女王","圣杯国王"
 ];
 
-function getCardType(cardId) {
-  if (cardId <= 22) return '大阿卡纳';
-  if (cardId <= 36) return '宝剑';
-  if (cardId <= 50) return '星币';
-  if (cardId <= 64) return '权杖';
-  return '圣杯';
+// ==================== 相似牌对 - 12组高频混淆牌对
+const CONFUSE_PAIRS = [
+  [2, 36],    // 魔术师 ↔ 宝剑国王
+  [52, 38],   // 权杖二 ↔ 星币二
+  [25, 69],   // 宝剑三 ↔ 圣杯五
+  [8, 57],    // 战车 ↔ 权杖七
+  [1, 51],    // 愚人 ↔ 权杖一
+  [3, 77],    // 女祭司 ↔ 圣杯女王
+  [32, 14],   // 宝剑十 ↔ 死神
+  [18, 20],    // 星星 ↔ 太阳
+  [15, 66],   // 节制 ↔ 圣杯二
+  [47, 61],   // 星币侍从 ↔ 权杖侍从
+  [34, 62],   // 宝剑骑士 ↔ 权杖骑士
+  [6, 46]     // 教皇 ↔ 星币十
+];
+
+function getCardAnchors(cardId, orientation) {
+  const card = getCardById(cardId);
+  if (!card || !card.pattern) return null;
+  // 从pattern字段提取：正位画面后面的内容到</div>，或逆位画面后面的内容到</div>
+  const isUp = orientation === 'upright';
+  const prefix = isUp ? '正位画面' : '逆位画面';
+  const regex = new RegExp(prefix + '[：:]\\s*(.*?)(?:<\\/div|$)', 's');
+  const m = card.pattern.match(regex);
+  if (!m) return null;
+  const raw = m[1].replace(/<[^>]+>/g, '').trim();
+  if (!raw) return null;
+  // 按标点符号分割为锚点数组
+  const anchors = raw.split(/[，,、；;。.\s]+/).filter(a => a.trim().length >= 2);
+  return anchors.length > 0 ? anchors : null;
+}
+
+// ==================== SM-2算法配置 ====================
+const FAST_THRESHOLD = 15000; // 15秒内答对=快速回忆
+const NORMAL_THRESHOLD = 30000; // 30秒内答对=正常回忆
+
+// 更新SM-2参数
+function updateSM2(cardId, orientation, isCorrect, answerTime) {
+  const key = buildProgressKey(cardId, orientation);
+  const progress = getProgress();
+  const item = progress[key] || { interval: 1, easeFactor: 2.5, dueDate: Date.now(), progress: 0, correctCount: 0, errorCount: 0 };
+  
+  if (isCorrect) {
+    if (answerTime < FAST_THRESHOLD) {
+      // 快速答对：间隔×2.5，难度系数+0.1
+      item.interval = Math.round(item.interval * 2.5);
+      item.easeFactor = Math.min(3.0, item.easeFactor + 0.1);
+    } else if (answerTime < NORMAL_THRESHOLD) {
+      // 正常答对：间隔×1.5，难度系数不变
+      item.interval = Math.round(item.interval * 1.5);
+    } else {
+      // 慢答对：间隔×1.2，难度系数-0.1
+      item.interval = Math.round(item.interval * 1.2);
+      item.easeFactor = Math.max(1.3, item.easeFactor - 0.1);
+    }
+  } else {
+    // 答错：间隔重置为1天，难度系数-0.2
+    item.interval = 1;
+    item.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
+  }
+  
+  // 计算下次到期时间
+  item.dueDate = Date.now() + item.interval * 86400000;
+  progress[key] = item;
+  saveProgress(progress);
+  return item;
 }
 
 // 解析DB中单张牌的 meaning 对象为训练格式
@@ -474,6 +538,7 @@ async function clearAllData() {
   localStorage.removeItem(STORAGE_KEY_PROGRESS);
   localStorage.removeItem(STORAGE_KEY_ERRORS);
   localStorage.removeItem(STORAGE_KEY_EXAMS);
+  localStorage.removeItem(STORAGE_KEY_CONFUSE_ERRORS);
   localStorage.removeItem('taro_train_inited');
   await apiCall('DELETE', '/api/training/progress');
   await apiCall('DELETE', '/api/training/errors');
@@ -522,20 +587,56 @@ function saveExams(e) { localStorage.setItem(STORAGE_KEY_EXAMS, JSON.stringify(e
 
 function buildProgressKey(cardId, orientation) { return `${cardId}_${orientation}`; }
 
-function getProgressValue(cardId, orientation) {
-  const p = getProgress();
-  return p[buildProgressKey(cardId, orientation)] || 0;
+function getConfuseErrors() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_CONFUSE_ERRORS)) || {}; } catch(e) { return {}; }
+}
+function saveConfuseErrors(e) { localStorage.setItem(STORAGE_KEY_CONFUSE_ERRORS, JSON.stringify(e)); }
+function recordConfusePairError(cardId, orientation) {
+  const pairs = getConfuseErrors();
+  // 找到cardId属于哪个pair
+  const pair = CONFUSE_PAIRS.find(p => p.includes(cardId));
+  if (!pair) return;
+  const pairKey = pair.sort((a,b)=>a-b).join('_');
+  if (!pairs[pairKey]) pairs[pairKey] = 0;
+  pairs[pairKey]++;
+  saveConfuseErrors(pairs);
 }
 
-function updateProgress(cardId, orientation, isCorrect) {
+function getProgressValue(cardId, orientation) {
   const p = getProgress();
   const key = buildProgressKey(cardId, orientation);
-  const old = p[key] || 0;
-  p[key] = isCorrect ? Math.min(100, old + 10) : Math.max(0, old - 15);
+  return typeof p[key] === 'object' ? p[key].progress : (p[key] || 0);
+}
+
+function getSM2Data(cardId, orientation) {
+  const p = getProgress();
+  const key = buildProgressKey(cardId, orientation);
+  const item = p[key];
+  if (typeof item === 'object') {
+    return { interval: item.interval || 1, easeFactor: item.easeFactor || 2.5, dueDate: item.dueDate || Date.now(), progress: item.progress || 0, correctCount: item.correctCount || 0, errorCount: item.errorCount || 0 };
+  }
+  return { interval: 1, easeFactor: 2.5, dueDate: Date.now(), progress: item || 0, correctCount: 0, errorCount: 0 };
+}
+
+function updateProgress(cardId, orientation, isCorrect, answerTime) {
+  const p = getProgress();
+  const key = buildProgressKey(cardId, orientation);
+  let oldItem = p[key];
+  if (typeof oldItem !== 'object') {
+    oldItem = { progress: oldItem || 0, correctCount: 0, errorCount: 0, interval: 1, easeFactor: 2.5, dueDate: Date.now() };
+  }
+  // 保留原有进度加减分
+  const newProgress = isCorrect ? Math.min(100, oldItem.progress + 10) : Math.max(0, oldItem.progress - 15);
+  // 更新SM-2
+  const sm2Item = updateSM2(cardId, orientation, isCorrect, answerTime);
+  sm2Item.progress = newProgress;
+  sm2Item.correctCount = isCorrect ? (oldItem.correctCount || 0) + 1 : oldItem.correctCount || 0;
+  sm2Item.errorCount = isCorrect ? oldItem.errorCount || 0 : (oldItem.errorCount || 0) + 1;
+  p[key] = sm2Item;
   saveProgress(p);
   // 同步到服务端
-  syncProgressToServer(cardId, orientation, isCorrect);
-  return p[key];
+  syncProgressToServer(cardId, orientation, isCorrect, sm2Item.interval, sm2Item.easeFactor, sm2Item.dueDate);
+  return newProgress;
 }
 
 function recordError(cardId, orientation, isCorrect) {
@@ -569,8 +670,8 @@ async function apiCall(method, endpoint, body) {
   } catch(e) { return null; }
 }
 
-async function syncProgressToServer(cardId, orientation, isCorrect) {
-  await apiCall('POST', '/api/training/progress', { card_id: cardId, orientation, is_correct: isCorrect });
+async function syncProgressToServer(cardId, orientation, isCorrect, interval, ease_factor, due_date) {
+  await apiCall('POST', '/api/training/progress', { card_id: cardId, orientation, is_correct: isCorrect, interval, ease_factor, due_date });
 }
 
 async function syncErrorToServer(cardId, orientation, isCorrect) {
@@ -587,11 +688,24 @@ async function loadServerProgress() {
   const data = await apiCall('GET', '/api/training/progress');
   if (!data || !data.length) return;
   const p = {};
-  data.forEach(r => { p[buildProgressKey(r.card_id, r.orientation)] = r.progress; });
+  data.forEach(r => { 
+    p[buildProgressKey(r.card_id, r.orientation)] = {
+      progress: r.progress,
+      correctCount: r.correct_count,
+      errorCount: r.error_count,
+      interval: r.interval || 1,
+      easeFactor: r.ease_factor || 2.5,
+      dueDate: r.due_date ? new Date(r.due_date).getTime() : Date.now()
+    };
+  });
   // 合并：取最大值
   const local = getProgress();
   for (const key in p) {
-    if (!local[key] || p[key] > local[key]) local[key] = p[key];
+    const localItem = local[key];
+    const serverItem = p[key];
+    if (!localItem || typeof localItem !== 'object' || serverItem.progress > (localItem.progress || 0)) {
+      local[key] = serverItem;
+    }
   }
   saveProgress(local);
 }
@@ -629,15 +743,8 @@ function buildQuestionPool(group, orientation, mode) {
   return pool;
 }
 
-// 获取进度权重 0~30%(5.0) 31~70%(2.0) 71~99%(1.0) 100%(0.2)
-function getProgressWeight(progress) {
-  if (progress <= 30) return 5.0;
-  if (progress <= 70) return 2.0;
-  if (progress <= 99) return 1.0;
-  return 0.2;
-}
-
-// 加权随机选择（不重复抽取，权重实时更新）
+// 三级优先级队列选择（到期复习题70%、陌生题20%、熟悉题10%）
+// 进度100%且未到期卡牌权重0.05（极低概率）
 function weightedRandomSelect(pool, mode, count) {
   if (pool.length <= count) return shuffle([...pool]);
   
@@ -645,44 +752,235 @@ function weightedRandomSelect(pool, mode, count) {
     return shuffle([...pool]).slice(0, count);
   }
   
-  // mode === 'weak': 按薄弱程度加权
-  const items = pool.map(p => ({
-    ...p,
-    weight: getProgressWeight(getProgressValue(p.cardId, p.orientation))
-  }));
+  // mode === 'weak': 三级优先级 + 极低权重处理
+  const now = Date.now();
+  const items = pool.map(p => {
+    const sm2 = getSM2Data(p.cardId, p.orientation);
+    let tier = 3;
+    if (sm2.dueDate <= now) tier = 1; // 到期复习题
+    else if (sm2.progress < 30) tier = 2; // 陌生题
+    else if (sm2.progress >= 100) tier = 4; // 已精通且未到期
+    else tier = 3; // 熟悉题
+    return { ...p, sm2, tier };
+  });
+  
+  // 按优先级分组
+  const tier1 = items.filter(i => i.tier === 1);
+  const tier2 = items.filter(i => i.tier === 2);
+  const tier3 = items.filter(i => i.tier === 3);
+  const tier4 = items.filter(i => i.tier === 4);
   
   const selected = [];
   const used = new Set();
-  let remainingWeight = items.reduce((s, i) => s + i.weight, 0);
   
-  while (selected.length < count && used.size < items.length) {
-    let r = Math.random() * remainingWeight;
-    let picked = null;
-    for (let i = 0; i < items.length; i++) {
-      if (used.has(i)) continue;
-      r -= items[i].weight;
-      if (r <= 0) {
-        picked = items[i];
-        used.add(i);
-        remainingWeight -= items[i].weight;
-        break;
-      }
-    }
-    // 浮点精度兜底：选第一个未使用的
-    if (!picked) {
-      for (let i = 0; i < items.length; i++) {
-        if (!used.has(i)) { picked = items[i]; used.add(i); remainingWeight -= items[i].weight; break; }
-      }
-    }
-    if (picked) selected.push(picked);
+  // 计算每级需要的题数
+  let need1 = Math.floor(count * 0.7);
+  let need2 = Math.floor(count * 0.2);
+  let need3 = count - need1 - need2;
+  
+  // 选择一级
+  const selected1 = shuffle(tier1).slice(0, need1);
+  selected1.forEach(i => { used.add(`${i.cardId}_${i.orientation}`); selected.push(i); });
+  
+  // 选择二级
+  const available2 = tier2.filter(i => !used.has(`${i.cardId}_${i.orientation}`));
+  const selected2 = shuffle(available2).slice(0, need2);
+  selected2.forEach(i => { used.add(`${i.cardId}_${i.orientation}`); selected.push(i); });
+  
+  // 选择三级
+  const available3 = tier3.filter(i => !used.has(`${i.cardId}_${i.orientation}`));
+  const selected3 = shuffle(available3).slice(0, need3);
+  selected3.forEach(i => { used.add(`${i.cardId}_${i.orientation}`); selected.push(i); });
+  
+  // 如果还不够，从四级（已精通）中抽取少量（权重0.05）
+  if (selected.length < count) {
+    const available4 = tier4.filter(i => !used.has(`${i.cardId}_${i.orientation}`));
+    // 最多抽取5%的比例，且按0.05概率加权
+    const need4 = Math.min(Math.floor(count * 0.05), count - selected.length);
+    const weighted4 = shuffle(available4).filter(() => Math.random() < 0.05).slice(0, need4);
+    weighted4.forEach(i => { used.add(`${i.cardId}_${i.orientation}`); selected.push(i); });
   }
   
-  return selected;
+  // 如果还不够，从剩余题目中随机补
+  const remaining = items.filter(i => !used.has(`${i.cardId}_${i.orientation}`));
+  if (selected.length < count && remaining.length > 0) {
+    selected.push(...shuffle(remaining).slice(0, count - selected.length));
+  }
+  
+  return shuffle(selected).slice(0, count);
 }
 
-// 题型配比：每个题型10%-50%随机
+// 根据卡牌进度返回动态题型类型
+function getDynamicTypeForCard(cardId) {
+  const progress = getProgress();
+  const upKey = buildProgressKey(cardId, 'upright');
+  const revKey = buildProgressKey(cardId, 'reversed');
+  const rawUp = progress[upKey];
+  const rawRev = progress[revKey];
+  const progUp = typeof rawUp === 'object' ? (rawUp.progress || 0) : (rawUp || 0);
+  const progRev = typeof rawRev === 'object' ? (rawRev.progress || 0) : (rawRev || 0);
+  const maxProg = Math.max(progUp, progRev);
+  
+  let types, weights;
+  if (maxProg <= 30) {
+    types = ['single', 'truefalse', 'fillblank'];
+    weights = [60, 30, 10];
+  } else if (maxProg <= 70) {
+    types = ['single', 'truefalse', 'fillblank'];
+    weights = [33, 22, 45];
+  } else {
+    types = ['fillblank', 'recall'];
+    weights = [50, 50];
+  }
+  
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * totalWeight;
+  for (let i = 0; i < types.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return types[i];
+  }
+  return types[types.length - 1];
+}
+
+// 题型配比：固定对比10% + 画面锚点10% + 80%动态分配
 function allocateQuestionTypes(count) {
-  const types = ['single', 'truefalse', 'fillblank', 'reversed', 'reverse', 'image'];
+  let remaining = count;
+  const alloc = {};
+  
+  // 固定特殊题型
+  alloc.compare = 10;
+  alloc.image_anchor = 10;
+  remaining -= 20;
+  
+  // 逆位逻辑约占5%
+  alloc.reversed = Math.max(3, Math.floor(remaining * 0.05));
+  remaining -= alloc.reversed;
+  
+  // 剩余80%按动态比例分配
+  alloc.single = 0;
+  alloc.truefalse = 0;
+  alloc.fillblank = 0;
+  alloc.recall = 0;
+  alloc.reverse = Math.max(2, Math.floor(remaining * 0.1));
+  alloc.image = Math.max(2, Math.floor(remaining * 0.1));
+  remaining -= (alloc.reverse + alloc.image);
+  // 为另外4种题型分配剩余（按weighted）
+  alloc.single = Math.floor(remaining * 0.25);
+  alloc.truefalse = Math.floor(remaining * 0.15);
+  alloc.fillblank = Math.floor(remaining * 0.3);
+  alloc.recall = remaining - alloc.single - alloc.truefalse - alloc.fillblank;
+  
+  // 显示当前比例在首页
+  const names = {
+    single: '单选', truefalse: '判断', fillblank: '填空', 
+    reversed: '逆位逻辑', reverse: '倒序记忆', image: '图片联想',
+    compare: '对比(10%)', recall: '看牌说词', image_anchor: '画面锚点(10%)'
+  };
+  const ratioText = Object.keys(names).map(t => `${names[t]}${Math.round(alloc[t]/count*100)}%`).join(' / ');
+  const el = document.getElementById('type-ratio-info');
+  if (el) el.textContent = ratioText;
+  
+  return alloc;
+}
+
+// 生成对比题（相似牌对比）
+function generateCompareQuestion(poolItem) {
+  // 找到包含这张牌的相似牌对
+  const pair = CONFUSE_PAIRS.find(p => p.includes(poolItem.cardId));
+  if (!pair) return null;
+  
+  // 确定目标牌和混淆牌
+  const targetIndex = pair.indexOf(poolItem.cardId);
+  const targetId = pair[targetIndex];
+  const confuseId = pair[1 - targetIndex];
+  
+  const targetCard = getCardById(targetId);
+  const confuseCard = getCardById(confuseId);
+  
+  if (!targetCard || !confuseCard || !targetCard.uk || !confuseCard.uk) return null;
+  
+  const isUp = poolItem.orientation === 'upright';
+  const correctAnswer = isUp ? targetCard.uk : targetCard.rk;
+  const confuseAnswer = isUp ? confuseCard.uk : confuseCard.rk;
+  
+  // 再找两个其他干扰项
+  const others = TAROT_CARDS.filter(c => c.id !== targetId && c.id !== confuseId && (isUp ? c.uk : c.rk));
+  const otherOptions = shuffle([...others]).slice(0,2).map(c => isUp ? c.uk : c.rk);
+  
+  const options = shuffle([correctAnswer, confuseAnswer, ...otherOptions]);
+  
+  return {
+    type: 'compare',
+    question: `以下哪项是「${targetCard.name}」${isUp ? '正' : '逆'}位的核心含义？`,
+    cardName: targetCard.name,
+    cardId: targetId,
+    orientation: poolItem.orientation,
+    options,
+    correctIndex: options.indexOf(correctAnswer),
+    correctAnswer,
+    explanation: `✅ 正确：${targetCard.name} = ${correctAnswer}\n❌ 易混淆：${confuseCard.name} = ${confuseAnswer}`
+  };
+}
+
+// 生成纯回忆题（看牌说词）
+function generateRecallQuestion(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
+  const isUp = poolItem.orientation === 'upright';
+  const correctAnswer = isUp ? card.uk : card.rk;
+  const keywords = correctAnswer.split(/[，,、；;\|\/\\\s]+/).filter(k => k.trim());
+  if (keywords.length === 0) keywords.push(correctAnswer);
+  
+  return {
+    type: 'recall',
+    question: '看着卡牌，输入所有核心关键词（用逗号分隔）',
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    showImageOnly: true, // 只显示卡牌，不显示牌名
+    correctAnswer,
+    keywords,
+    explanation: `${card.name}${isUp ? '正' : '逆'}位核心关键词：${correctAnswer}`
+  };
+}
+
+// 生成画面锚点题
+function generateImageAnchorQuestion(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
+  const isUp = poolItem.orientation === 'upright';
+  const anchorList = getCardAnchors(poolItem.cardId, poolItem.orientation);
+  if (!anchorList || anchorList.length === 0) {
+    return null;
+  }
+  
+  const anchor = anchorList[Math.floor(Math.random() * anchorList.length)];
+  
+  const correctAnswer = isUp ? card.uk : card.rk;
+  const others = TAROT_CARDS.filter(c => c.id !== card.id && (isUp ? c.uk : c.rk));
+  const wrongOptions = shuffle([...others]).slice(0,3).map(c => isUp ? c.uk : c.rk);
+  
+  const options = shuffle([correctAnswer, ...wrongOptions]);
+  
+  return {
+    type: 'image_anchor',
+    question: `这张牌画面中「${anchor}」对应的核心含义是？`,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    showImageOnly: true, // 只显示卡牌
+    options,
+    correctIndex: options.indexOf(correctAnswer),
+    correctAnswer,
+    explanation: `画面锚点「${anchor}」→ 核心含义：${correctAnswer}`
+  };
+}
+
+// 题型配比：每个题型10-50%随机，包含新题型
+function allocateQuestionTypes(count) {
+  const types = ['single', 'truefalse', 'fillblank', 'reversed', 'reverse', 'image', 'compare', 'recall', 'image_anchor'];
   let alloc = {};
   let remaining = count;
   
@@ -709,7 +1007,8 @@ function allocateQuestionTypes(count) {
   // 显示当前比例在首页
   const names = {
     single: '单选', truefalse: '判断', fillblank: '填空', 
-    reversed: '逆位逻辑', reverse: '倒序记忆', image: '图片联想'
+    reversed: '逆位逻辑', reverse: '倒序记忆', image: '图片联想',
+    compare: '相似牌对比', recall: '看牌说词', image_anchor: '画面锚点'
   };
   const ratioText = types.map(t => `${names[t]}${Math.round(alloc[t]/count*100)}%`).join(' / ');
   const el = document.getElementById('type-ratio-info');
@@ -911,63 +1210,89 @@ function startExam() {
   const timeLimit = selectedTimeLimit;
   const pool = buildQuestionPool('all', 'both', 'weak');
   const selectedItems = weightedRandomSelect(pool, 'weak', count);
-  const typeAlloc = allocateQuestionTypes(count);
+  // 首页显示题型比例（实际出题由动态配比算法按卡牌进度实时决定）
+  allocateQuestionTypes(count);
   
   // 按题型配比生成题
   const questions = [];
   let remaining = [...selectedItems];
   
-  // 单选
-  const scItems = remaining.splice(0, typeAlloc.single);
-  scItems.forEach(item => {
-    const q = generateSingleChoice(item);
+  // 1. 先挑出适合做对比题的牌对（属于CONFUSE_PAIRS的卡牌）
+  const compareCandidates = remaining.filter(item => 
+    CONFUSE_PAIRS.some(p => p.includes(item.cardId))
+  );
+  // 按混淆错误率排序（优先高频错误牌对）
+  const confuseErrors = getConfuseErrors();
+  const sortedCompare = shuffle(compareCandidates).sort((a, b) => {
+    const pairA = CONFUSE_PAIRS.find(p => p.includes(a.cardId));
+    const pairB = CONFUSE_PAIRS.find(p => p.includes(b.cardId));
+    const errA = pairA ? (confuseErrors[pairA.sort((x,y)=>x-y).join('_')] || 0) : 0;
+    const errB = pairB ? (confuseErrors[pairB.sort((x,y)=>x-y).join('_')] || 0) : 0;
+    return errB - errA; // 错误多的优先
+  });
+  const compareUsed = new Set();
+  const compareItems = sortedCompare.slice(0, 10);
+  compareItems.forEach(item => {
+    compareUsed.add(`${item.cardId}_${item.orientation}`);
+    const q = generateCompareQuestion(item);
     if (q) questions.push(q);
   });
+  remaining = remaining.filter(item => !compareUsed.has(`${item.cardId}_${item.orientation}`));
   
-  // 判断
-  const tfItems = remaining.splice(0, typeAlloc.truefalse);
-  tfItems.forEach(item => {
-    const q = generateTrueFalse(item);
+  // 2. 再挑10张做画面锚点题（需要有锚点数据的卡牌）
+  const anchorCandidates = remaining.filter(item => {
+    const list = getCardAnchors(item.cardId, item.orientation);
+    return list && list.length > 0;
+  });
+  const anchorUsed = new Set();
+  const anchorItems = shuffle(anchorCandidates).slice(0, 10);
+  anchorItems.forEach(item => {
+    anchorUsed.add(`${item.cardId}_${item.orientation}`);
+    const q = generateImageAnchorQuestion(item);
     if (q) questions.push(q);
   });
+  remaining = remaining.filter(item => !anchorUsed.has(`${item.cardId}_${item.orientation}`));
   
-  // 填空
-  const fbItems = remaining.splice(0, typeAlloc.fillblank);
-  fbItems.forEach(item => {
-    const q = generateFillBlank(item);
-    if (q) questions.push(q);
-  });
-  
-  // 倒序记忆
-  const rmItems = remaining.splice(0, typeAlloc.reverse);
-  rmItems.forEach(item => {
-    const q = generateReverseMemory(item);
-    if (q) questions.push(q);
-  });
-  
-  // 图片联想
-  const imItems = remaining.splice(0, typeAlloc.image);
-  imItems.forEach(item => {
-    const q = generateImageAssociation(item);
-    if (q) questions.push(q);
-  });
-  
-  // 逆位逻辑（最后生成，只取剩余的逆位项）
-  const rlItems = remaining.filter(i => i.orientation === 'reversed').slice(0, typeAlloc.reversed);
-  rlItems.forEach(item => {
-    const idx = remaining.findIndex(r => r.cardId === item.cardId && r.orientation === item.orientation);
-    if (idx >= 0) remaining.splice(idx, 1);
+  // 3. 逆位逻辑题（约5题，只从剩余的逆位项中生成）
+  const revCandidates = remaining.filter(i => i.orientation === 'reversed');
+  const revCount = Math.min(Math.max(3, Math.floor(count * 0.05)), revCandidates.length);
+  const revUsed = new Set();
+  shuffle(revCandidates).slice(0, revCount).forEach(item => {
+    revUsed.add(`${item.cardId}_${item.orientation}`);
     const q = generateReversedLogic(item);
     if (q) questions.push(q);
   });
+  remaining = remaining.filter(item => !revUsed.has(`${item.cardId}_${item.orientation}`));
   
-  // 如果不够，用单选题补
-  while (questions.length < count) {
-    const idx = selectedItems.findIndex(si => !questions.some(q => q.cardId === si.cardId && q.orientation === si.orientation));
-    if (idx >= 0) {
-      const q = generateSingleChoice(selectedItems[idx]);
-      if (q) questions.push(q);
-    } else break;
+  // 4. 剩余题目按动态题型配比生成（每张牌根据进度决定题型）
+  remaining.forEach((item, index) => {
+    if (questions.length >= count) return;
+    // 每5题插入一个倒序记忆或图片联想
+    let type;
+    if (index % 5 === 2) {
+      type = Math.random() < 0.5 ? 'reverse' : 'image';
+    } else {
+      type = getDynamicTypeForCard(item.cardId);
+    }
+    
+    let q = null;
+    if (type === 'single') q = generateSingleChoice(item);
+    else if (type === 'truefalse') q = generateTrueFalse(item);
+    else if (type === 'fillblank') q = generateFillBlank(item);
+    else if (type === 'recall') q = generateRecallQuestion(item);
+    else if (type === 'reverse') q = generateReverseMemory(item);
+    else if (type === 'image') q = generateImageAssociation(item);
+    
+    if (q) questions.push(q);
+  });
+  
+  // 5. 如果还不够，用单选题补
+  const usedKeys = new Set(questions.map(q => `${q.cardId}_${q.orientation}`));
+  for (const item of selectedItems) {
+    if (questions.length >= count) break;
+    if (usedKeys.has(`${item.cardId}_${item.orientation}`)) continue;
+    const q = generateSingleChoice(item);
+    if (q) { questions.push(q); usedKeys.add(`${item.cardId}_${item.orientation}`); }
   }
   
   // 打乱题目顺序，尽量避免连续同一张牌或连续同一题型
@@ -999,6 +1324,7 @@ function startExam() {
     currentIndex: 0,
     timeLimit,
     startTime: Date.now(),
+    questionStartTime: Date.now(),
     answers: [],
     totalCount: finalQuestions.length
   };
@@ -1034,12 +1360,19 @@ function renderQuestion() {
     return;
   }
   
+  // 记录这道题的开始时间
+  currentExam.questionStartTime = Date.now();
+  
   const idx = currentExam.currentIndex + 1;
   const total = currentExam.totalCount;
   
   document.getElementById('exam-title').textContent = `第 ${idx}/${total} 题`;
-  document.getElementById('quiz-type-label').textContent = 
-    q.type === 'single' ? '单选题' : q.type === 'truefalse' ? '判断题' : q.type === 'fillblank' ? '填空题' : q.type === 'reversed' ? '逆位逻辑题' : q.type === 'reverse' ? '倒序记忆' : '图片联想';
+  const typeNames = {
+    single: '单选题', truefalse: '判断题', fillblank: '填空题', 
+    reversed: '逆位逻辑题', reverse: '倒序记忆', image: '图片联想',
+    compare: '相似牌对比', recall: '看牌说词', image_anchor: '画面锚点'
+  };
+  document.getElementById('quiz-type-label').textContent = typeNames[q.type] || '未知题型';
   
   // 渲染题干
   const tagClass = q.orientation === 'upright' ? 'upright' : 'reversed';
@@ -1048,48 +1381,80 @@ function renderQuestion() {
   // 逆位图片旋转180度
   const imgRotation = q.orientation === 'reversed' ? 'transform:rotate(180deg)' : '';
   
-  if (q.type === 'image') {
-    // 图片联想：只显示图片，不显示牌名
-    document.getElementById('quiz-question-area').innerHTML = `
-      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="?" loading="lazy" onerror="this.style.display='none'" style="width:140px;${imgRotation}">
-      <div class="q-text">${q.question}</div>
-    `;
-  } else if (q.type === 'reverse') {
-    // 倒序记忆：显示描述文字，不显示牌名
+  // 先显示图片（放大到60%屏幕宽度），5秒后显示题目
+  if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+  
+  const imgSize = 'width:60vw;max-width:300px';
+  
+  if (q.type === 'reverse') {
+    // 倒序记忆：没有图片，直接显示
     document.getElementById('quiz-question-area').innerHTML = `
       <div class="q-text" style="font-size:16px;color:#d4b87a;font-weight:600;text-align:center;padding:10px 0">${q.desc}</div>
       <div class="q-text">${q.question}</div>
     `;
-  } else {
-    document.getElementById('quiz-question-area').innerHTML = `
-      <img class="quiz-card-img" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgRotation}">
-      <div class="card-name">${q.cardName}</div>
-      <span class="orientation-tag ${tagClass}">${tagText}</span>
-      <div class="q-text">${q.question}</div>
-    `;
-  }
-  
-  // 渲染选项
-  const optionsArea = document.getElementById('quiz-options-area');
-  document.getElementById('quiz-feedback-area').innerHTML = '';
-  
-  if (q.type === 'fillblank') {
-    optionsArea.innerHTML = `
-      ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
-      <div class="quiz-input-wrap">
-        <input type="text" id="fill-answer" placeholder="输入关键词...">
-        <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
-      </div>
-    `;
-    document.getElementById('fill-answer').focus();
-  } else {
-    optionsArea.innerHTML = q.options.map((opt, i) => `
+    document.getElementById('quiz-options-area').innerHTML = q.options.map((opt, i) => `
       <button class="quiz-option" data-index="${i}" onclick="answerQuestion(${i})">${opt}</button>
     `).join('');
+    document.getElementById('quiz-feedback-area').innerHTML = '';
+    startQuestionTimer();
+  } else {
+    // 先显示图片 + "仔细观察画面"提示
+    document.getElementById('quiz-question-area').innerHTML = `
+      <img class="quiz-card-img pending" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
+      <div style="text-align:center;color:#d4b87a;font-size:14px;margin:8px 0">🔍 仔细观察画面 <span id="image-countdown">5</span>s</div>
+    `;
+    document.getElementById('quiz-options-area').innerHTML = '';
+    document.getElementById('quiz-feedback-area').innerHTML = '';
+    
+    // 5秒倒计时
+    let countdown = 5;
+    const cdInterval = setInterval(() => {
+      countdown--;
+      const cdEl = document.getElementById('image-countdown');
+      if (cdEl) cdEl.textContent = countdown;
+      if (countdown <= 0) clearInterval(cdInterval);
+    }, 1000);
+    
+    pendingImageTimerId = setTimeout(() => {
+      pendingImageTimerId = null;
+      clearInterval(cdInterval);
+      
+      // 现在显示完整题目
+      let qHtml = '';
+      const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor');
+      if (isImageOnly) {
+        qHtml = `
+          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
+          <div class="q-text">${q.question}</div>
+        `;
+      } else {
+        qHtml = `
+          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
+          <div class="card-name">${q.cardName}</div>
+          <span class="orientation-tag ${tagClass}">${tagText}</span>
+          <div class="q-text">${q.question}</div>
+        `;
+      }
+      document.getElementById('quiz-question-area').innerHTML = qHtml;
+      
+      if (q.type === 'fillblank' || q.type === 'recall') {
+        document.getElementById('quiz-options-area').innerHTML = `
+          ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
+          <div class="quiz-input-wrap">
+            <input type="text" id="fill-answer" placeholder="${q.type === 'recall' ? '输入关键词，用逗号分隔...' : '输入关键词...'}">
+            <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
+          </div>
+        `;
+        document.getElementById('fill-answer').focus();
+      } else {
+        document.getElementById('quiz-options-area').innerHTML = q.options.map((opt, i) => `
+          <button class="quiz-option" data-index="${i}" onclick="answerQuestion(${i})">${opt}</button>
+        `).join('');
+      }
+      
+      startQuestionTimer();
+    }, 5000);
   }
-  
-  // 启动倒计时
-  startQuestionTimer();
 }
 
 function startQuestionTimer() {
@@ -1114,8 +1479,9 @@ function startQuestionTimer() {
 
 function onTimeout() {
   const q = currentExam.questions[currentExam.currentIndex];
-  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true });
-  updateProgress(q.cardId, q.orientation, false);
+  const answerTime = Date.now() - currentExam.questionStartTime;
+  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true, answerTime });
+  updateProgress(q.cardId, q.orientation, false, answerTime);
   recordError(q.cardId, q.orientation, false);
   showFeedback(false, '时间到！', q.explanation);
 }
@@ -1126,10 +1492,13 @@ function answerQuestion(optionIndex) {
   
   const q = currentExam.questions[currentExam.currentIndex];
   const isCorrect = optionIndex === q.correctIndex;
+  const answerTime = Date.now() - currentExam.questionStartTime;
   
-  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false });
-  updateProgress(q.cardId, q.orientation, isCorrect);
+  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false, answerTime });
+  updateProgress(q.cardId, q.orientation, isCorrect, answerTime);
   recordError(q.cardId, q.orientation, isCorrect);
+  // 追踪对比题的错误
+  if (q.type === 'compare' && !isCorrect) recordConfusePairError(q.cardId, q.orientation);
   
   // 高亮选项
   const options = document.querySelectorAll('.quiz-option');
@@ -1150,21 +1519,42 @@ function submitFillAnswer() {
   const userAnswer = input.value.trim();
   const q = currentExam.questions[currentExam.currentIndex];
   
-  // 判断题：用户输入的内容是否包含任意一个关键词，或者任意关键词包含用户输入
   let isCorrect = false;
-  const keywords = q.keywords || [q.correctAnswer];
-  for (const kw of keywords) {
-    if (kw && userAnswer) {
-      if (kw.includes(userAnswer) || userAnswer.includes(kw)) {
-        isCorrect = true;
-        break;
+  
+  if (q.type === 'recall') {
+    // 纯回忆题判分：匹配度≥80%算对
+    const correctKeywords = q.keywords || [q.correctAnswer];
+    // 拆分用户输入的关键词
+    const userKeywords = userAnswer.split(/[，,、；;\|\/\\\s]+/).filter(k => k.trim());
+    let matchCount = 0;
+    
+    correctKeywords.forEach(kw => {
+      if (userKeywords.some(uk => (uk && kw && (uk.includes(kw) || kw.includes(uk))))) {
+        matchCount++;
+      }
+    });
+    
+    // 匹配度≥80%算对
+    isCorrect = (matchCount / correctKeywords.length) >= 0.8;
+  } else {
+    // 填空题判分：包含任意一个关键词就算对
+    const keywords = q.keywords || [q.correctAnswer];
+    for (const kw of keywords) {
+      if (kw && userAnswer) {
+        if (kw.includes(userAnswer) || userAnswer.includes(kw)) {
+          isCorrect = true;
+          break;
+        }
       }
     }
   }
   
-  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false });
-  updateProgress(q.cardId, q.orientation, isCorrect);
+  const answerTime = Date.now() - currentExam.questionStartTime;
+  
+  currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false, answerTime });
+  updateProgress(q.cardId, q.orientation, isCorrect, answerTime);
   recordError(q.cardId, q.orientation, isCorrect);
+  if (q.type === 'compare' && !isCorrect) recordConfusePairError(q.cardId, q.orientation);
   
   document.getElementById('quiz-options-area').innerHTML = '';
   showFeedback(isCorrect,
@@ -1174,13 +1564,36 @@ function submitFillAnswer() {
 }
 
 function showFeedback(isCorrect, msg, explanation) {
-  document.getElementById('quiz-feedback-area').innerHTML = `
+  const q = currentExam ? currentExam.questions[currentExam.currentIndex] : null;
+  const idx = currentExam ? currentExam.currentIndex : 0;
+  
+  // 构建解析内容（优先显示画面锚点）
+  let enhancedExplanation = explanation;
+  if (q && q.type !== 'image_anchor') {
+    const anchorList = getCardAnchors(q.cardId, q.orientation);
+    if (anchorList && anchorList.length > 0) {
+      const anchor = anchorList[Math.floor(Math.random() * anchorList.length)];
+      enhancedExplanation = `【画面锚点】「${anchor}」→ ${q.correctAnswer}\n【完整解析】${explanation}`;
+    }
+  }
+  
+  // 闭眼回忆引导：每完成5道题后插入
+  const isMilestone = (idx + 1) > 0 && (idx + 1) % 5 === 0;
+  
+  const feedbackHtml = `
     <div class="quiz-feedback ${isCorrect ? 'correct' : 'wrong'}">
       <div style="font-weight:700;font-size:16px">${msg}</div>
-      <div style="margin-top:8px;opacity:.8">${explanation}</div>
+      <div style="margin-top:8px;opacity:.8">${enhancedExplanation}</div>
     </div>
-    <button class="btn btn-primary quiz-next-btn" onclick="nextQuestion()">下一题</button>
+    ${isMilestone ? `
+      <div style="text-align:center;padding:16px;color:#8a7a60;font-size:13px" id="recall-reminder">
+        💡 闭上眼睛，回忆一下刚才5张牌的画面和核心关键词，然后继续
+      </div>
+    ` : ''}
+    <button class="btn btn-primary quiz-next-btn" id="next-btn" onclick="nextQuestion()">下一题</button>
   `;
+  
+  document.getElementById('quiz-feedback-area').innerHTML = feedbackHtml;
 }
 
 function nextQuestion() {
@@ -1197,6 +1610,7 @@ function finishExam() {
   if (examTimer) clearInterval(examTimer);
   if (questionTimer) clearInterval(questionTimer);
   if (questionTimeoutId) clearTimeout(questionTimeoutId);
+  if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   
   if (!currentExam) return;
   
@@ -1249,6 +1663,7 @@ function finishExam() {
 
 function submitExam() {
   if (!currentExam) return;
+  if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   // 剩余未答题全部算错
   while (currentExam.currentIndex < currentExam.totalCount) {
     const q = currentExam.questions[currentExam.currentIndex];
@@ -1276,7 +1691,8 @@ function renderReviewList() {
     if (!card) continue;
     
     const err = errors[key];
-    const prog = progress[key] || 0;
+    const rawProg = progress[key];
+    const prog = typeof rawProg === 'object' ? (rawProg.progress || 0) : (rawProg || 0);
     
     // 连续答对2次的不显示
     if (err.cc >= 2) continue;
@@ -1327,7 +1743,9 @@ function startReview(fromResult) {
     
     let include = true;
     if (!fromResult && reviewFilter === 'weak') {
-      if ((progress[key] || 0) > 30) include = false;
+      const rawProg = progress[key];
+      const progVal = typeof rawProg === 'object' ? (rawProg.progress || 0) : (rawProg || 0);
+      if (progVal > 30) include = false;
     }
     
     if (include) {
@@ -1405,7 +1823,8 @@ function renderProgress() {
     group.cards.forEach(card => {
       ['upright', 'reversed'].forEach(ori => {
         const key = buildProgressKey(card.id, ori);
-        const prog = progress[key] || 0;
+        const raw = progress[key];
+        const prog = typeof raw === 'object' ? (raw.progress || 0) : (raw || 0);
         const hasError = errors[key] && errors[key].ec > 0;
         
         // 筛选
@@ -1474,6 +1893,7 @@ function showScreen(name) {
     if (examTimer) clearInterval(examTimer);
     if (questionTimer) clearInterval(questionTimer);
     if (questionTimeoutId) clearTimeout(questionTimeoutId);
+    if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
     currentExam = null;
   }
   
@@ -1515,22 +1935,18 @@ async function init() {
   const token = getAuthToken();
   const startBtn = document.getElementById('start-exam-btn');
   
-  // 先立即显示界面（用fallback数据）
-  buildFallbackCards();
-  renderProgress();
-  
   // 生成初始随机题型比例显示
   allocateQuestionTypes(100);
   
-  // 后台异步加载数据库牌义数据
-  loadCardDataFromDB().finally(() => {
-    // 不管加载成功失败，都重新渲染，启用按钮
-    renderProgress();
-    if (startBtn) {
-      startBtn.disabled = false;
-      startBtn.textContent = '开始训练';
-    }
-  });
+  // 加载数据库牌义数据（成功→DB牌义，失败→fallback）
+  await loadCardDataFromDB();
+  
+  // 加载完成后渲染并启用按钮
+  renderProgress();
+  if (startBtn) {
+    startBtn.disabled = false;
+    startBtn.textContent = '开始训练';
+  }
   
   // 后台异步同步服务端数据
   if (token) {
