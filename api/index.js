@@ -410,35 +410,28 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：更新进度 ====================
     if (req.method === 'POST' && path === '/api/training/progress') {
-      const { card_id, orientation, is_correct, interval, ease_factor, due_date } = req.body;
+      const { card_id, orientation, is_correct, interval, ease_factor, due_date, progress, correct_count, error_count } = req.body;
       
       if (!card_id || !orientation) {
         return res.status(400).json({ error: '缺少必要参数' });
       }
       
-      // 读取当前进度
-      const curr = await pool.query(
-        'SELECT progress, correct_count, error_count, interval, ease_factor, due_date FROM user_progress WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
-        [userPayload.userId, card_id, orientation]
-      );
-      
-      const oldProgress = curr.rows[0]?.progress || 0;
-      const oldCorrect = curr.rows[0]?.correct_count || 0;
-      const oldError = curr.rows[0]?.error_count || 0;
-      const oldInterval = curr.rows[0]?.interval || 1;
-      const oldEaseFactor = curr.rows[0]?.ease_factor || 2.5;
-      const oldDueDate = curr.rows[0]?.due_date || new Date();
-      
-      let newProgress;
-      if (is_correct) {
-        newProgress = Math.min(100, oldProgress + 10);
-      } else {
-        newProgress = Math.max(0, oldProgress - 15);
+      // 使用前端传递的progress值（已含答对+10/答错-15），如果没有则用服务端计算
+      let newProgress = progress;
+      if (newProgress === undefined) {
+        const curr = await pool.query(
+          'SELECT progress FROM user_progress WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
+          [userPayload.userId, card_id, orientation]
+        );
+        const oldProgress = curr.rows[0]?.progress || 0;
+        newProgress = is_correct ? Math.min(100, oldProgress + 10) : Math.max(0, oldProgress - 15);
       }
       
-      const newInterval = interval !== undefined ? interval : oldInterval;
-      const newEaseFactor = ease_factor !== undefined ? ease_factor : oldEaseFactor;
-      const newDueDate = due_date !== undefined ? due_date : oldDueDate;
+      const newInterval = interval !== undefined ? interval : 1;
+      const newEaseFactor = ease_factor !== undefined ? ease_factor : 2.5;
+      const newDueDate = due_date !== undefined ? due_date : new Date();
+      const newCorrectCount = correct_count !== undefined ? correct_count : 0;
+      const newErrorCount = error_count !== undefined ? error_count : 0;
       
       await pool.query(
         `INSERT INTO user_progress (user_id, card_id, orientation, progress, correct_count, error_count, last_time, interval, ease_factor, due_date)
@@ -448,12 +441,11 @@ module.exports = async (req, res) => {
            interval=$7, ease_factor=$8, due_date=to_timestamp($9 / 1000)`,
         [userPayload.userId, card_id, orientation,
          newProgress,
-         is_correct ? oldCorrect + 1 : oldCorrect,
-         is_correct ? oldError : oldError + 1,
+         newCorrectCount, newErrorCount,
          newInterval, newEaseFactor, newDueDate]
       );
       
-      return res.json({ progress: newProgress, correct_count: is_correct ? oldCorrect+1 : oldCorrect, error_count: is_correct ? oldError : oldError+1, interval: newInterval, ease_factor: newEaseFactor, due_date: newDueDate });
+      return res.json({ progress: newProgress, correct_count: newCorrectCount, error_count: newErrorCount, interval: newInterval, ease_factor: newEaseFactor, due_date: newDueDate });
     }
     
     // ==================== 训练系统：删除进度 ====================
@@ -473,39 +465,24 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：记录错题 ====================
     if (req.method === 'POST' && path === '/api/training/errors') {
-      const { card_id, orientation, is_correct } = req.body;
+      const { card_id, orientation, is_correct, ec, cc } = req.body;
       
       if (!card_id || !orientation) {
         return res.status(400).json({ error: '缺少必要参数' });
       }
       
-      const curr = await pool.query(
-        'SELECT error_count, continuous_correct FROM user_errors WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
-        [userPayload.userId, card_id, orientation]
-      );
-      
-      const oldErrors = curr.rows[0]?.error_count || 0;
-      const oldContCorrect = curr.rows[0]?.continuous_correct || 0;
-      
-      let newErrors = oldErrors;
-      let newContCorrect = oldContCorrect;
-      
-      if (is_correct) {
-        newContCorrect = oldContCorrect + 1;
-      } else {
-        newErrors = oldErrors + 1;
-        newContCorrect = 0;
-      }
+      const newEc = ec !== undefined ? ec : (is_correct ? 0 : 1);
+      const newCc = cc !== undefined ? cc : (is_correct ? 1 : 0);
       
       await pool.query(
-        `INSERT INTO user_errors (user_id, card_id, orientation, error_count, last_error_time, continuous_correct)
-         VALUES ($1,$2,$3,$4,NOW(),$5)
+        `INSERT INTO user_errors (user_id, card_id, orientation, error_count, continuous_correct, last_error_time)
+         VALUES ($1,$2,$3,$4,$5,NOW())
          ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
-           error_count=$4, last_error_time=NOW(), continuous_correct=$5`,
-        [userPayload.userId, card_id, orientation, newErrors, newContCorrect]
+           error_count=$4, continuous_correct=$5, last_error_time=NOW()`,
+        [userPayload.userId, card_id, orientation, newEc, newCc]
       );
       
-      return res.json({ error_count: newErrors, continuous_correct: newContCorrect });
+      return res.json({ success: true });
     }
     
     // ==================== 训练系统：清除错题 ====================
