@@ -4483,6 +4483,18 @@ function openQuickQuery() {
     listContainer.appendChild(groupDiv);
   });
   
+  // 添加导出和训练按钮（在分组下方）
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'quick-query-actions';
+  const token = localStorage.getItem('taroToken');
+  if (token) {
+    actionsDiv.innerHTML = `
+      <button class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button>
+      <button class="quick-query-export-btn" onclick="window.open('train.html','_blank')" style="margin-top:8px">🧠 牌义记忆训练</button>
+    `;
+  }
+  listContainer.appendChild(actionsDiv);
+  
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -4542,13 +4554,7 @@ function showQuickQueryDetail(cardId) {
         </div>
       </div>
     </div>
-    ${isLoggedIn ? `
-      <div class="quick-query-actions">
-        <button id="exportCardMeaningsBtn" class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button>
-        <button id="openTrainBtn" class="quick-query-export-btn" onclick="window.open('train.html','_blank')" style="margin-top:8px">🧠 牌义记忆训练</button>
-      </div>
-    ` : ''}
-  `;
+    `;
 
   function updateLocalImmediately() {
     if (localSaveTimer) clearTimeout(localSaveTimer);
