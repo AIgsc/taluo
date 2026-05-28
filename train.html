@@ -369,9 +369,16 @@ function saveExamState() {
     timeLimit: currentExam.timeLimit,
     examType: currentExam.examType,
     startTime: currentExam.startTime,
+    pausedTime: currentExam.pausedTime || 0, // 累计暂停时间
+    pauseStart: currentExam.pauseStart, // 暂停开始时间（如果正在暂停）
     createdAt: Date.now()
   };
-  localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
+  } catch (e) {
+    toast('本地存储已满，请清理空间或换设备继续');
+    console.error('LocalStorage overflow:', e);
+  }
 }
 
 // 加载考试状态
@@ -399,12 +406,19 @@ function resumeExam() {
     return;
   }
   
+  // 计算暂停时间
+  let pausedTime = state.pausedTime || 0;
+  if (state.pauseStart) {
+    pausedTime += Date.now() - state.pauseStart;
+  }
+  
   currentExam = {
     questions: state.questions,
     currentIndex: state.currentIndex,
     answers: state.answers,
     timeLimit: state.timeLimit,
     startTime: state.startTime,
+    pausedTime: pausedTime,
     questionStartTime: Date.now(),
     totalCount: state.questions.length,
     examType: state.examType || 'normal'
@@ -414,7 +428,6 @@ function resumeExam() {
   document.getElementById('resume-modal').style.display = 'none';
   
   // 显示考试页面，渲染当前题
-  showScreen('exam');
   renderQuestion();
   startExamTimer();
 }
@@ -1652,7 +1665,9 @@ function startExam() {
     questionStartTime: Date.now(),
     answers: [],
     totalCount: finalQuestions.length,
-    examType: 'normal'
+    examType: 'normal',
+    pausedTime: 0,
+    pauseStart: null
   };
   
   // 立即保存考试状态
@@ -1670,10 +1685,16 @@ function startExam() {
 
 function startExamTimer() {
   if (examTimer) clearInterval(examTimer);
+  // 如果之前有暂停时间，恢复时清除暂停开始标记
+  if (currentExam && currentExam.pauseStart) {
+    currentExam.pauseStart = null;
+  }
   examTimer = setInterval(() => {
     if (!currentExam) return;
-    const elapsed = Math.floor((Date.now() - currentExam.startTime) / 1000);
-    document.getElementById('exam-info').textContent = `已用时 ${elapsed}s`;
+    const totalElapsed = Math.floor((Date.now() - currentExam.startTime) / 1000);
+    const pausedSeconds = Math.floor((currentExam.pausedTime || 0) / 1000);
+    const actualElapsed = totalElapsed - pausedSeconds;
+    document.getElementById('exam-info').textContent = `已用时 ${actualElapsed}s`;
   }, 1000);
 }
 
@@ -2090,7 +2111,10 @@ function finishExam() {
   const correctCount = currentExam.answers.filter(a => a.correct).length;
   const total = currentExam.totalCount;
   const rate = total > 0 ? Math.round(correctCount / total * 100) : 0;
-  const duration = Math.floor((Date.now() - currentExam.startTime) / 1000);
+  // 计算总用时扣除暂停时间
+  const totalDuration = Math.floor((Date.now() - currentExam.startTime) / 1000);
+  const pausedSeconds = Math.floor((currentExam.pausedTime || 0) / 1000);
+  const duration = totalDuration - pausedSeconds;
   
   // 保存考试记录（错题强化不保存）
   if (!currentExam.isReview) {
@@ -2606,10 +2630,37 @@ function showScreen(name) {
     navbar.style.display = 'flex';
   }
   
-  // 切换时清空考试状态
+  // 切换时只清理定时器，不清空 currentExam（保留考试状态）
   if (name !== 'exam' && currentExam && name !== 'result') {
+    // 记录暂停开始时间
+    if (!currentExam.pauseStart) {
+      currentExam.pauseStart = Date.now();
+    }
     clearAllTimers(); // 使用统一的定时器清理函数
-    currentExam = null;
+    // 保留 currentExam，切回 exam 时检查并恢复状态
+  }
+  
+  // 切回 exam 时，检查并恢复考试状态
+  if (name === 'exam') {
+    // 情况1：currentExam 还在（没有刷新），只是切页离开又回来
+    if (currentExam) {
+      // 如果有暂停开始时间，计算暂停时间并累加到 pausedTime
+      if (currentExam.pauseStart) {
+        const pauseDuration = Date.now() - currentExam.pauseStart;
+        currentExam.pausedTime = (currentExam.pausedTime || 0) + pauseDuration;
+        currentExam.pauseStart = null;
+        saveExamState();
+      }
+      // 重新渲染题目和计时器
+      renderQuestion();
+      startExamTimer();
+    } else {
+      // 情况2：currentExam 不在（刷新了），从 localStorage 恢复
+      const savedState = loadExamState();
+      if (savedState) {
+        resumeExam();
+      }
+    }
   }
   
   // 渲染对应内容
