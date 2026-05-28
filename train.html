@@ -784,6 +784,8 @@ function getCardById(id) {
 
 function setTimeLimit(seconds) {
   selectedTimeLimit = seconds;
+  // 保存到 localStorage
+  localStorage.setItem('tarot_time_limit', seconds.toString());
   document.querySelectorAll('#time-options .option-tag').forEach(tag => {
     tag.classList.toggle('selected', parseInt(tag.dataset.time) === seconds);
   });
@@ -2709,6 +2711,15 @@ document.querySelector('#screen-review .progress-filter').addEventListener('clic
 async function init() {
   const token = getAuthToken();
   const startBtn = document.getElementById('start-exam-btn');
+  
+  // 加载保存的时间限制
+  const savedTime = localStorage.getItem('tarot_time_limit');
+  if (savedTime) {
+    const time = parseInt(savedTime);
+    if ([30, 60, 90, 120].includes(time)) {
+      setTimeLimit(time);
+    }
+  }
   
   try {
     // 生成初始随机题型比例显示
