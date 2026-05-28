@@ -1696,7 +1696,7 @@ function renderQuestion() {
         document.getElementById('quiz-options-area').innerHTML = `
           ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
           <div class="quiz-input-wrap">
-            <input type="text" id="fill-answer" placeholder="${q.type === 'recall' ? '输入关键词，用逗号分隔...' : '输入关键词...'}" onkeydown="if(event.key==='Enter')submitFillAnswer()">
+            <input type="text" id="fill-answer" placeholder="${q.type === 'recall' ? '输入关键词，用逗号分隔...' : '输入关键词...'}" onkeydown="if(event.key==='Enter' && !buttonLocks['submitFillAnswer'])submitFillAnswer()">
             <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
           </div>
         `;
@@ -1736,6 +1736,9 @@ function startQuestionTimer() {
 }
 
 function onTimeout() {
+  // 先清理所有定时器
+  clearAllTimers();
+  
   if (!currentExam || !currentExam.questions) return;
   const q = currentExam.questions[currentExam.currentIndex];
   const answerTime = Date.now() - currentExam.questionStartTime;
@@ -1765,8 +1768,8 @@ function answerQuestion(optionIndex) {
     return;
   }
   
-  if (questionTimer) clearInterval(questionTimer);
-  if (questionTimeoutId) clearTimeout(questionTimeoutId);
+  // 清理所有定时器
+  clearAllTimers();
   
   const q = currentExam.questions[currentExam.currentIndex];
   const isCorrect = optionIndex === q.correctIndex;
@@ -1822,8 +1825,8 @@ function submitFillAnswer() {
     return;
   }
   
-  if (questionTimer) clearInterval(questionTimer);
-  if (questionTimeoutId) clearTimeout(questionTimeoutId);
+  // 清理所有定时器
+  clearAllTimers();
   
   const input = document.getElementById('fill-answer');
   const userAnswer = input.value.trim();
