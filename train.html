@@ -2112,6 +2112,9 @@ function renderReviewList() {
   const startBtn = document.getElementById('review-start-btn');
   const countInfo = document.getElementById('review-count-info');
   
+  // 如果元素不存在（不在错题页），提前返回
+  if (!listArea) return;
+  
   let entries = [];
   for (const key in errors) {
     const [cardIdStr, orientation] = key.split('_');
@@ -2134,7 +2137,9 @@ function renderReviewList() {
     }
   }
   
-  countInfo.textContent = entries.length > 0 ? `共 ${entries.length} 个薄弱项` : '';
+  if (countInfo) {
+    countInfo.textContent = entries.length > 0 ? `共 ${entries.length} 个薄弱项` : '';
+  }
   
   if (entries.length === 0) {
     listArea.innerHTML = `
@@ -2142,7 +2147,7 @@ function renderReviewList() {
         <div class="icon">🎉</div>
         <p>暂无薄弱项，继续保持！</p>
       </div>`;
-    startBtn.style.display = 'none';
+    if (startBtn) startBtn.style.display = 'none';
   } else {
     listArea.innerHTML = entries.sort((a, b) => b.err.ec - a.err.ec).map(e => `
       <div class="error-item" style="flex-direction:column;align-items:stretch">
@@ -2152,7 +2157,7 @@ function renderReviewList() {
         </div>
       </div>
     `).join('');
-    startBtn.style.display = 'block';
+    if (startBtn) startBtn.style.display = 'block';
   }
 }
 
@@ -2268,6 +2273,9 @@ function renderProgress() {
   const listArea = document.getElementById('progress-list-area');
   const summary = document.getElementById('progress-summary');
   
+  // 如果元素不存在（不在进度页），提前返回
+  if (!listArea) return;
+  
   // 分组
   const groups = [
     { name: '大阿卡纳', cards: TAROT_CARDS.filter(c => c.id <= 22) },
@@ -2334,7 +2342,9 @@ function renderProgress() {
     }
   });
   
-  summary.textContent = `已掌握 ${masteredSlots}/${totalSlots}`;
+  if (summary) {
+    summary.textContent = `已掌握 ${masteredSlots}/${totalSlots}`;
+  }
   listArea.innerHTML = html || '<div style="text-align:center;padding:20px;color:#8a7a60">当前筛选条件下无数据</div>';
   
   // 进度卡点击弹出详情
@@ -2351,27 +2361,29 @@ function renderProgress() {
   // 更新薄弱 TOP 5
   const weakArea = document.getElementById('weak-top-area');
   const weakList = document.getElementById('weak-top-list');
-  const allEntries = [];
-  groups.forEach(group => {
-    group.cards.forEach(card => {
-      ['upright', 'reversed'].forEach(ori => {
-        const key = buildProgressKey(card.id, ori);
-        const raw = progress[key];
-        const prog = raw?.progress || 0;
-        const err = errors[key];
-        allEntries.push({ card, ori, prog, errCount: err ? err.ec : 0 });
+  if (weakArea && weakList) {
+    const allEntries = [];
+    groups.forEach(group => {
+      group.cards.forEach(card => {
+        ['upright', 'reversed'].forEach(ori => {
+          const key = buildProgressKey(card.id, ori);
+          const raw = progress[key];
+          const prog = raw?.progress || 0;
+          const err = errors[key];
+          allEntries.push({ card, ori, prog, errCount: err ? err.ec : 0 });
+        });
       });
     });
-  });
-  allEntries.sort((a, b) => a.prog - b.prog || b.errCount - a.errCount);
-  const top5 = allEntries.slice(0, 5).filter(e => e.prog < 100);
-  if (top5.length > 0) {
-    weakArea.style.display = 'block';
-    weakList.innerHTML = top5.map(e =>
-      `<span style="cursor:pointer;color:#e0a0a0" onclick="showCardDetail(${e.card.id},'${e.ori}')">${e.card.name}${e.ori==='upright'?'正':'逆'}位(${e.prog}%)</span>`
-    ).join(' → ');
-  } else {
-    weakArea.style.display = 'none';
+    allEntries.sort((a, b) => a.prog - b.prog || b.errCount - a.errCount);
+    const top5 = allEntries.slice(0, 5).filter(e => e.prog < 100);
+    if (top5.length > 0) {
+      weakArea.style.display = 'block';
+      weakList.innerHTML = top5.map(e =>
+        `<span style="cursor:pointer;color:#e0a0a0" onclick="showCardDetail(${e.card.id},'${e.ori}')">${e.card.name}${e.ori==='upright'?'正':'逆'}位(${e.prog}%)</span>`
+      ).join(' → ');
+    } else {
+      weakArea.style.display = 'none';
+    }
   }
   
   // 更新今日待复习
@@ -2382,25 +2394,32 @@ function renderProgress() {
     if (raw?.dueDate && raw.dueDate <= now && (raw.progress || 0) < 100) reviewCount++;
   }
   const reviewArea = document.getElementById('review-today-area');
-  document.getElementById('review-today-count').textContent = reviewCount;
-  reviewArea.style.display = reviewCount > 0 ? 'block' : 'none';
+  const reviewCountEl = document.getElementById('review-today-count');
+  if (reviewArea && reviewCountEl) {
+    reviewCountEl.textContent = reviewCount;
+    reviewArea.style.display = reviewCount > 0 ? 'block' : 'none';
+  }
   
   // 更新统计仪表盘
   // 总答题数 & 平均正确率
   let totalQuestions = 0, totalCorrect = 0;
   exams.forEach(ex => { totalQuestions += ex.total || 0; totalCorrect += ex.score || 0; });
-  document.getElementById('stat-total-q').textContent = totalQuestions;
-  document.getElementById('stat-avg-rate').textContent = totalQuestions > 0 ? Math.round(totalCorrect / totalQuestions * 100) + '%' : '0%';
+  const statTotalQ = document.getElementById('stat-total-q');
+  const statAvgRate = document.getElementById('stat-avg-rate');
+  if (statTotalQ) statTotalQ.textContent = totalQuestions;
+  if (statAvgRate) statAvgRate.textContent = totalQuestions > 0 ? Math.round(totalCorrect / totalQuestions * 100) + '%' : '0%';
   
   // 总学习时长
   let totalSeconds = 0;
   exams.forEach(ex => { totalSeconds += ex.duration || 0; });
   const hours = Math.floor(totalSeconds / 3600);
   const mins = Math.floor((totalSeconds % 3600) / 60);
-  document.getElementById('stat-total-time').textContent = hours > 0 ? `${hours}h${mins}m` : `${mins}m`;
+  const statTotalTime = document.getElementById('stat-total-time');
+  if (statTotalTime) statTotalTime.textContent = hours > 0 ? `${hours}h${mins}m` : `${mins}m`;
   
   // 连续学习天数
-  if (exams.length > 0) {
+  const statStreak = document.getElementById('stat-streak');
+  if (statStreak && exams.length > 0) {
     // 获取去重的日期列表（只保留年月日，忽略时分秒）
     const uniqueDatesSet = new Set();
     exams.forEach(e => {
@@ -2443,7 +2462,7 @@ function renderProgress() {
       }
     }
     
-    document.getElementById('stat-streak').textContent = streak + '天';
+    statStreak.textContent = streak + '天';
   }
 }
 
@@ -2554,38 +2573,53 @@ async function init() {
   const token = getAuthToken();
   const startBtn = document.getElementById('start-exam-btn');
   
-  // 生成初始随机题型比例显示
-  allocateQuestionTypes(100);
+  try {
+    // 生成初始随机题型比例显示
+    allocateQuestionTypes(100);
+    
+    // 加载数据库牌义数据（成功→DB牌义，失败→fallback）
+    await loadCardDataFromDB();
+    
+    // 加载完成后渲染并启用按钮
+    renderProgress();
+    
+    // 首页显示总掌握率
+    const homeMastery = document.getElementById('home-mastery-info');
+    if (homeMastery) {
+      const progress = getProgress();
+      let total = 0, mastered = 0;
+      for (const key in progress) {
+        const raw = progress[key];
+        const prog = raw?.progress || 0;
+        total++;
+        if (prog >= 100) mastered++;
+      }
+      homeMastery.textContent = total > 0 ? `已掌握 ${mastered}/${total} (${Math.round(mastered/total*100)}%)` : '';
+    }
+    
+    // 后台异步同步服务端数据
+    if (token) {
+      loadServerProgress();
+      loadServerErrors();
+      loadServerExams();
+    }
+  } catch (e) {
+    console.error('初始化错误:', e);
+    // 即使出错，也尝试启用按钮
+    try {
+      // 尝试加载fallback数据
+      if (TAROT_CARDS.length === 0) {
+        buildFallbackCards();
+      }
+    } catch (e2) {
+      console.error('加载fallback失败:', e2);
+    }
+  }
   
-  // 加载数据库牌义数据（成功→DB牌义，失败→fallback）
-  await loadCardDataFromDB();
-  
-  // 加载完成后渲染并启用按钮
-  renderProgress();
+  // 无论成功失败，都启用按钮
   if (startBtn) {
     startBtn.disabled = false;
     startBtn.textContent = '开始训练';
-  }
-  
-  // 首页显示总掌握率
-  const homeMastery = document.getElementById('home-mastery-info');
-  if (homeMastery) {
-    const progress = getProgress();
-    let total = 0, mastered = 0;
-    for (const key in progress) {
-      const raw = progress[key];
-      const prog = raw?.progress || 0;
-      total++;
-      if (prog >= 100) mastered++;
-    }
-    homeMastery.textContent = total > 0 ? `已掌握 ${mastered}/${total} (${Math.round(mastered/total*100)}%)` : '';
-  }
-  
-  // 后台异步同步服务端数据
-  if (token) {
-    loadServerProgress();
-    loadServerErrors();
-    loadServerExams();
   }
 }
 
