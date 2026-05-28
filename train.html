@@ -428,6 +428,7 @@ function resumeExam() {
   document.getElementById('resume-modal').style.display = 'none';
   
   // 显示考试页面，渲染当前题
+  showScreen('exam');
   renderQuestion();
   startExamTimer();
 }
