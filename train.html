@@ -333,7 +333,7 @@ const STORAGE_KEY_CONFUSE_ERRORS = 'taro_train_confuse_errors';
 const STORAGE_KEY_EXAM_STATE = 'taro_exam_state';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
-let questionTimeoutId = null, pendingImageTimerId = null, pendingImageCdInterval = null;
+let pendingImageTimerId = null, pendingImageCdInterval = null;
 let selectedTimeLimit = 30; // 默认30秒
 let buttonLocks = {}; // 按钮防抖锁
 
@@ -341,21 +341,8 @@ let buttonLocks = {}; // 按钮防抖锁
 function clearAllTimers() {
   if (examTimer) { clearInterval(examTimer); examTimer = null; }
   if (questionTimer) { clearInterval(questionTimer); questionTimer = null; }
-  if (questionTimeoutId) { clearTimeout(questionTimeoutId); questionTimeoutId = null; }
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
-}
-
-// 按钮防抖：防止重复点击
-function debounceButton(buttonId, callback, delay = 1000) {
-  if (buttonLocks[buttonId]) return; // 如果已锁定，直接返回
-  buttonLocks[buttonId] = true; // 锁定按钮
-  try {
-    callback(); // 执行回调
-  } finally {
-    // 延迟解锁
-    setTimeout(() => { buttonLocks[buttonId] = false; }, delay);
-  }
 }
 
 // ======================== 断点续传 ========================
@@ -1729,6 +1716,9 @@ function renderQuestion() {
   };
   document.getElementById('quiz-type-label').textContent = typeNames[q.type] || '未知题型';
   
+  // 启动总用时时器
+  startExamTimer();
+  
   // 渲染题干
   const tagClass = q.orientation === 'upright' ? 'upright' : 'reversed';
   const tagText = q.orientation === 'upright' ? '正位' : '逆位';
@@ -1816,7 +1806,6 @@ function renderQuestion() {
 
 function startQuestionTimer() {
   if (questionTimer) clearInterval(questionTimer);
-  if (questionTimeoutId) clearTimeout(questionTimeoutId);
   
   // 真正开始答题时才记录开始时间（排除图片观察时间）
   currentExam.questionStartTime = Date.now();
