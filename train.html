@@ -134,7 +134,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .review-empty p{color:#8a7a60;font-size:14px}
 
 /* toast */
-.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s}
 .toast.show{opacity:1}
 </style>
 </head>
@@ -322,6 +322,28 @@ let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
 let questionTimeoutId = null, pendingImageTimerId = null, pendingImageCdInterval = null;
 let selectedTimeLimit = 30; // 默认30秒
+let buttonLocks = {}; // 按钮防抖锁
+
+// 清理所有定时器
+function clearAllTimers() {
+  if (examTimer) { clearInterval(examTimer); examTimer = null; }
+  if (questionTimer) { clearInterval(questionTimer); questionTimer = null; }
+  if (questionTimeoutId) { clearTimeout(questionTimeoutId); questionTimeoutId = null; }
+  if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+}
+
+// 按钮防抖：防止重复点击
+function debounceButton(buttonId, callback, delay = 1000) {
+  if (buttonLocks[buttonId]) return; // 如果已锁定，直接返回
+  buttonLocks[buttonId] = true; // 锁定按钮
+  try {
+    callback(); // 执行回调
+  } finally {
+    // 延迟解锁
+    setTimeout(() => { buttonLocks[buttonId] = false; }, delay);
+  }
+}
 
 // ======================== 78张塔罗牌数据（从DB加载，硬编码兜底） ========================
 // 训练专用硬编码关键词（出题兜底，仅在DB无数据时使用）
@@ -468,7 +490,17 @@ function getCardType(cardId) {
 function updateSM2(cardId, orientation, isCorrect, answerTime) {
   const key = buildProgressKey(cardId, orientation);
   const progress = getProgress();
-  const item = progress[key] || { interval: 1, easeFactor: 2.5, dueDate: Date.now(), progress: 0, correctCount: 0, errorCount: 0 };
+  const existingItem = progress[key];
+  
+  // 确保item的所有字段都是合法值
+  const item = {
+    interval: (existingItem && typeof existingItem.interval === 'number' && !isNaN(existingItem.interval) && existingItem.interval > 0) ? existingItem.interval : 1,
+    easeFactor: (existingItem && typeof existingItem.easeFactor === 'number' && !isNaN(existingItem.easeFactor)) ? Math.max(1.3, Math.min(3.0, existingItem.easeFactor)) : 2.5,
+    dueDate: (existingItem && typeof existingItem.dueDate === 'number' && !isNaN(existingItem.dueDate) && existingItem.dueDate > 0) ? existingItem.dueDate : Date.now(),
+    progress: (existingItem && typeof existingItem.progress === 'number' && !isNaN(existingItem.progress)) ? Math.max(0, Math.min(100, existingItem.progress)) : 0,
+    correctCount: (existingItem && typeof existingItem.correctCount === 'number' && !isNaN(existingItem.correctCount)) ? Math.max(0, existingItem.correctCount) : 0,
+    errorCount: (existingItem && typeof existingItem.errorCount === 'number' && !isNaN(existingItem.errorCount)) ? Math.max(0, existingItem.errorCount) : 0
+  };
   
   // 根据当前题的时间限制动态计算阈值
   const timeLimit = (currentExam && currentExam.timeLimit) ? currentExam.timeLimit : 30;
@@ -478,14 +510,14 @@ function updateSM2(cardId, orientation, isCorrect, answerTime) {
   if (isCorrect) {
     if (answerTime < fastThreshold) {
       // 快速答对：间隔×2.5，难度系数+0.1
-      item.interval = Math.round(item.interval * 2.5);
+      item.interval = Math.max(1, Math.round(item.interval * 2.5));
       item.easeFactor = Math.min(3.0, item.easeFactor + 0.1);
     } else if (answerTime < normalThreshold) {
       // 正常答对：间隔×1.5，难度系数不变
-      item.interval = Math.round(item.interval * 1.5);
+      item.interval = Math.max(1, Math.round(item.interval * 1.5));
     } else {
       // 慢答对：间隔×1.2，难度系数-0.1
-      item.interval = Math.round(item.interval * 1.2);
+      item.interval = Math.max(1, Math.round(item.interval * 1.2));
       item.easeFactor = Math.max(1.3, item.easeFactor - 0.1);
     }
   } else {
@@ -494,8 +526,9 @@ function updateSM2(cardId, orientation, isCorrect, answerTime) {
     item.easeFactor = Math.max(1.3, item.easeFactor - 0.2);
   }
   
-  // 计算下次到期时间
-  item.dueDate = Date.now() + item.interval * 86400000;
+  // 安全计算下次到期时间
+  const safeDueDate = Date.now() + Math.max(0, item.interval) * 86400000;
+  item.dueDate = safeDueDate;
   progress[key] = item;
   saveProgress(progress);
   return item;
@@ -601,18 +634,46 @@ const cardImages = ["",
 
 // 清空所有训练数据
 async function clearAllData() {
-  if (!confirm('确定要清空所有训练数据吗？（进度、错题、考试记录将全部删除）')) return;
-  localStorage.removeItem(STORAGE_KEY_PROGRESS);
-  localStorage.removeItem(STORAGE_KEY_ERRORS);
-  localStorage.removeItem(STORAGE_KEY_EXAMS);
-  localStorage.removeItem(STORAGE_KEY_CONFUSE_ERRORS);
-  localStorage.removeItem('taro_train_inited');
-  await apiCall('DELETE', '/api/training/progress');
-  await apiCall('DELETE', '/api/training/errors');
-  await apiCall('DELETE', '/api/training/exams');
-  toast('数据已清空');
-  renderProgress();
-  renderReviewList();
+  // 使用按钮防抖
+  if (buttonLocks['clearAllData']) return;
+  buttonLocks['clearAllData'] = true;
+  
+  if (!confirm('确定要清空所有训练数据吗？（进度、错题、考试记录将全部删除）')) {
+    buttonLocks['clearAllData'] = false;
+    return;
+  }
+  
+  try {
+    // 清理本地存储
+    const keysToRemove = [
+      STORAGE_KEY_PROGRESS,
+      STORAGE_KEY_ERRORS,
+      STORAGE_KEY_EXAMS,
+      STORAGE_KEY_CONFUSE_ERRORS,
+      'taro_train_inited'
+    ];
+    keysToRemove.forEach(key => {
+      try { localStorage.removeItem(key); } catch(e) { console.warn('删除key失败:', key, e); }
+    });
+    
+    // 清理服务端数据（并行请求）
+    const promises = [
+      apiCall('DELETE', '/api/training/progress'),
+      apiCall('DELETE', '/api/training/errors'),
+      apiCall('DELETE', '/api/training/exams')
+    ];
+    
+    await Promise.all(promises);
+    
+    toast('数据已清空');
+    renderProgress();
+    renderReviewList();
+  } catch(e) {
+    console.error('清空数据失败:', e);
+    toast('清空数据时发生错误，请重试');
+  } finally {
+    setTimeout(() => { buttonLocks['clearAllData'] = false; }, 500);
+  }
 }
 
 function getCardsInGroup(group) {
@@ -624,7 +685,13 @@ function getCardsInGroup(group) {
 }
 
 function getCardById(id) {
-  return TAROT_CARDS.find(c => c.id === id);
+  // 防止TAROT_CARDS为空导致崩溃
+  if (!TAROT_CARDS || !Array.isArray(TAROT_CARDS) || TAROT_CARDS.length === 0) {
+    console.warn('TAROT_CARDS为空或无效');
+    return null;
+  }
+  const card = TAROT_CARDS.find(c => c && c.id === id);
+  return card || null;
 }
 
 function setTimeLimit(seconds) {
@@ -639,25 +706,61 @@ function randomInt(min, max) {
 }
 
 // ======================== 本地存储 ========================
+// 安全的JSON解析函数：解析失败时返回默认值，并尝试修复
+function safeJSONParse(str, defaultValue) {
+  if (!str) return defaultValue;
+  try {
+    const parsed = JSON.parse(str);
+    return parsed !== null && parsed !== undefined ? parsed : defaultValue;
+  } catch(e) {
+    console.warn('JSON解析失败，返回默认值:', e);
+    return defaultValue;
+  }
+}
+
 function getProgress() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_PROGRESS)) || {}; } catch(e) { return {}; }
+  return safeJSONParse(localStorage.getItem(STORAGE_KEY_PROGRESS), {});
 }
-function saveProgress(p) { localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(p)); }
+function saveProgress(p) { 
+  try {
+    localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(p));
+  } catch(e) {
+    console.error('保存进度失败:', e);
+    toast('存储空间不足，进度可能无法保存');
+  }
+}
 function getErrors() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_ERRORS)) || {}; } catch(e) { return {}; }
+  return safeJSONParse(localStorage.getItem(STORAGE_KEY_ERRORS), {});
 }
-function saveErrors(e) { localStorage.setItem(STORAGE_KEY_ERRORS, JSON.stringify(e)); }
+function saveErrors(e) { 
+  try {
+    localStorage.setItem(STORAGE_KEY_ERRORS, JSON.stringify(e));
+  } catch(e) {
+    console.error('保存错题失败:', e);
+  }
+}
 function getExams() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_EXAMS)) || []; } catch(e) { return []; }
+  return safeJSONParse(localStorage.getItem(STORAGE_KEY_EXAMS), []);
 }
-function saveExams(e) { localStorage.setItem(STORAGE_KEY_EXAMS, JSON.stringify(e)); }
+function saveExams(e) { 
+  try {
+    localStorage.setItem(STORAGE_KEY_EXAMS, JSON.stringify(e));
+  } catch(e) {
+    console.error('保存考试记录失败:', e);
+  }
+}
+function getConfuseErrors() {
+  return safeJSONParse(localStorage.getItem(STORAGE_KEY_CONFUSE_ERRORS), {});
+}
+function saveConfuseErrors(e) { 
+  try {
+    localStorage.setItem(STORAGE_KEY_CONFUSE_ERRORS, JSON.stringify(e));
+  } catch(e) {
+    console.error('保存混淆错误失败:', e);
+  }
+}
 
 function buildProgressKey(cardId, orientation) { return `${cardId}_${orientation}`; }
-
-function getConfuseErrors() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY_CONFUSE_ERRORS)) || {}; } catch(e) { return {}; }
-}
-function saveConfuseErrors(e) { localStorage.setItem(STORAGE_KEY_CONFUSE_ERRORS, JSON.stringify(e)); }
 function recordConfusePairError(cardId, orientation) {
   const pairs = getConfuseErrors();
   // 找到cardId属于哪个pair
@@ -702,19 +805,36 @@ function updateProgress(cardId, orientation, isCorrect, answerTime, noSync) {
   return newProgress;
 }
 
-function recordError(cardId, orientation, isCorrect, noSync) {
+function recordError(cardId, orientation, isCorrect, noSync, isTimeout) {
   const e = getErrors();
   const key = buildProgressKey(cardId, orientation);
-  if (!e[key]) e[key] = { ec: 0, cc: 0 };
+  
   if (isCorrect) {
-    e[key].cc++;
+    if (e[key]) {
+      e[key].cc++;
+      // 如果连续答对2次，从错题中删除（已掌握）
+      if (e[key].cc >= 2) {
+        delete e[key];
+        saveErrors(e);
+        if (!noSync) {
+          deleteErrorFromServer(cardId, orientation);
+        }
+        return;
+      }
+      saveErrors(e);
+      if (!noSync) {
+        syncErrorToServer(cardId, orientation, isCorrect, e[key].ec, e[key].cc, e[key].timeout);
+      }
+    }
   } else {
+    if (!e[key]) e[key] = { ec: 0, cc: 0, timeout: false };
     e[key].ec++;
     e[key].cc = 0;
-  }
-  saveErrors(e);
-  if (!noSync) {
-    syncErrorToServer(cardId, orientation, isCorrect, e[key].ec, e[key].cc);
+    e[key].timeout = !!isTimeout;
+    saveErrors(e);
+    if (!noSync) {
+      syncErrorToServer(cardId, orientation, isCorrect, e[key].ec, e[key].cc, e[key].timeout);
+    }
   }
 }
 
@@ -741,8 +861,12 @@ async function syncProgressToServer(cardId, orientation, isCorrect, interval, ea
   await apiCall('POST', '/api/training/progress', { card_id: cardId, orientation, is_correct: isCorrect, interval, ease_factor, due_date: safeDueDate, progress, correct_count, error_count });
 }
 
-async function syncErrorToServer(cardId, orientation, isCorrect, ec, cc) {
-  await apiCall('POST', '/api/training/errors', { card_id: cardId, orientation, is_correct: isCorrect, error_count: ec, continuous_correct: cc });
+async function syncErrorToServer(cardId, orientation, isCorrect, ec, cc, timeout) {
+  await apiCall('POST', '/api/training/errors', { card_id: cardId, orientation, is_correct: isCorrect, error_count: ec, continuous_correct: cc, timeout: !!timeout });
+}
+
+async function deleteErrorFromServer(cardId, orientation) {
+  await apiCall('DELETE', `/api/training/errors/${cardId}/${orientation}`);
 }
 
 async function syncExamToServer(total, score, rate, duration, errorIds) {
@@ -765,16 +889,21 @@ async function loadServerProgress() {
       dueDate: r.due_date ? new Date(r.due_date).getTime() : Date.now()
     };
   });
-  // 合并：保留总答题数（correctCount+errorCount）更多的数据
+  // 合并：只在本地数据更新时间更早时才用服务端数据覆盖
   const local = getProgress();
   for (const key in p) {
     const localItem = local[key];
     const serverItem = p[key];
     const localTotal = (localItem?.correctCount || 0) + (localItem?.errorCount || 0);
     const serverTotal = (serverItem.correctCount || 0) + (serverItem.errorCount || 0);
-    if (!localItem || typeof localItem !== 'object' || serverTotal > localTotal) {
+    // 关键修复：只有服务端数据答题数更多时才覆盖，否则保留本地数据
+    if (!localItem || typeof localItem !== 'object') {
+      local[key] = serverItem;
+    } else if (serverTotal > localTotal) {
+      // 服务端数据更完整，使用服务端数据
       local[key] = serverItem;
     }
+    // 否则保留本地最新数据
   }
   saveProgress(local);
 }
@@ -783,7 +912,13 @@ async function loadServerErrors() {
   const data = await apiCall('GET', '/api/training/errors');
   if (!data || !data.length) return;
   const e = {};
-  data.forEach(r => { e[buildProgressKey(r.card_id, r.orientation)] = { ec: r.error_count, cc: r.continuous_correct }; });
+  data.forEach(r => { 
+    e[buildProgressKey(r.card_id, r.orientation)] = { 
+      ec: r.error_count, 
+      cc: r.continuous_correct,
+      timeout: !!r.timeout 
+    }; 
+  });
   const local = getErrors();
   for (const key in e) {
     if (!local[key] || e[key].ec > local[key].ec) local[key] = e[key];
@@ -795,21 +930,54 @@ async function loadServerExams() {
   const data = await apiCall('GET', '/api/training/exams');
   if (!data || !data.length) return;
   const local = getExams();
-  // 用 total+score+duration 做内容签名去重（同一场考试不会三项完全相同）
-  const serverSig = new Set(data.map(r => `${r.total}_${r.score}_${r.duration}_${r.error_ids}`));
-  const merged = data.map(r => ({
-    time: r.exam_time, total: r.total, score: r.score, rate: Math.round(r.correct_rate),
-    duration: r.duration, errorIds: (r.error_ids || '').split(',').filter(Boolean)
-  }));
-  // 补回本地有但服务端没有的记录（通过内容签名匹配）
-  for (const item of local) {
-    const sig = `${item.total}_${item.score}_${item.duration}_${(item.errorIds || []).join(',')}`;
-    if (!serverSig.has(sig)) {
-      merged.push(item);
-    }
+  
+  // 计算考试记录的唯一签名（包含更多特征）
+  function getExamSignature(item) {
+    const errorStr = (item.errorIds || []).sort().join(',');
+    return `${item.total}_${item.score}_${item.rate}_${item.duration}_${errorStr}`;
   }
+  
+  // 将服务端数据转换为统一格式
+  const serverExams = data.map(r => ({
+    time: r.exam_time,
+    total: r.total,
+    score: r.score,
+    rate: Math.round(r.correct_rate),
+    duration: r.duration,
+    errorIds: (r.error_ids || '').split(',').filter(Boolean)
+  }));
+  
+  // 创建签名集合用于去重
+  const seenSignatures = new Set();
+  const merged = [];
+  
+  // 先添加服务端的记录
+  serverExams.forEach(exam => {
+    const sig = getExamSignature(exam);
+    if (!seenSignatures.has(sig)) {
+      seenSignatures.add(sig);
+      merged.push(exam);
+    }
+  });
+  
+  // 再添加本地独有的记录
+  local.forEach(exam => {
+    const sig = getExamSignature(exam);
+    if (!seenSignatures.has(sig)) {
+      seenSignatures.add(sig);
+      merged.push(exam);
+    }
+  });
+  
   // 按时间降序排列
-  merged.sort((a, b) => new Date(b.time) - new Date(a.time));
+  merged.sort((a, b) => {
+    try {
+      return new Date(b.time) - new Date(a.time);
+    } catch(e) {
+      return 0;
+    }
+  });
+  
   saveExams(merged);
 }
 
@@ -1080,10 +1248,25 @@ function generateSingleChoice(poolItem) {
   const question = `"${card.name}"${isUp ? '正' : '逆'}位核心含义是？`;
   
   // 从其他卡牌中抽3个同状态的干扰项
-  const others = TAROT_CARDS.filter(c => c.id !== card.id && (isUp ? c.uk : c.rk)).map(c => ({
-    text: isUp ? c.uk : c.rk
-  }));
-  const distractors = shuffle([...others]).slice(0, 3).map(d => d.text);
+  const others = TAROT_CARDS.filter(c => c && c.id !== card.id && (isUp ? c.uk : c.rk));
+  let distractors = [];
+  
+  if (others.length > 0) {
+    const shuffled = shuffle([...others]);
+    for (let i = 0; i < Math.min(3, shuffled.length); i++) {
+      const text = isUp ? shuffled[i].uk : shuffled[i].rk;
+      if (text && text !== correctAnswer && !distractors.includes(text)) {
+        distractors.push(text);
+      }
+    }
+  }
+  
+  // 如果干扰项不够，添加一些通用干扰词
+  const fallbackDistractors = ['未知含义', '需进一步确认', '待补充'];
+  while (distractors.length < 3) {
+    const fallback = fallbackDistractors[distractors.length % fallbackDistractors.length];
+    distractors.push(fallback);
+  }
   
   const options = shuffle([correctAnswer, ...distractors]);
   const correctIndex = options.indexOf(correctAnswer);
@@ -1262,9 +1445,14 @@ function generateImageAssociation(poolItem) {
 
 // ======================== 考试流程 ========================
 function startExam() {
+  // 按钮防抖
+  if (buttonLocks['startExam']) return;
+  buttonLocks['startExam'] = true;
+  
   // 检查牌义数据是否已加载
   if (!TAROT_CARDS || TAROT_CARDS.length < 78) {
     toast('数据加载中，请稍后再试');
+    buttonLocks['startExam'] = false;
     return;
   }
   
@@ -1395,6 +1583,11 @@ function startExam() {
   showScreen('exam');
   renderQuestion();
   startExamTimer();
+  
+  // 500ms后解锁按钮
+  setTimeout(() => {
+    buttonLocks['startExam'] = false;
+  }, 500);
 }
 
 function startExamTimer() {
@@ -1407,7 +1600,7 @@ function startExamTimer() {
 }
 
 function renderQuestion() {
-  if (!currentExam || currentExam.currentIndex >= currentExam.totalCount) {
+  if (!currentExam || !currentExam.questions || currentExam.currentIndex >= currentExam.totalCount) {
     finishExam();
     return;
   }
@@ -1422,9 +1615,6 @@ function renderQuestion() {
     finishExam();
     return;
   }
-  
-  // 记录这道题的开始时间
-  currentExam.questionStartTime = Date.now();
   
   const idx = currentExam.currentIndex + 1;
   const total = currentExam.totalCount;
@@ -1442,7 +1632,7 @@ function renderQuestion() {
   const tagText = q.orientation === 'upright' ? '正位' : '逆位';
   
   // 逆位图片旋转180度
-  const imgRotation = q.orientation === 'reversed' ? 'transform:rotate(180deg)' : '';
+  const imgRotation = q.orientation === 'reversed' ? 'transform:rotate(180deg);transform-origin:center' : '';
   
   // 先显示图片（放大到60%屏幕宽度），5秒后显示题目
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
@@ -1526,6 +1716,9 @@ function startQuestionTimer() {
   if (questionTimer) clearInterval(questionTimer);
   if (questionTimeoutId) clearTimeout(questionTimeoutId);
   
+  // 真正开始答题时才记录开始时间（排除图片观察时间）
+  currentExam.questionStartTime = Date.now();
+  
   const timerEl = document.getElementById('quiz-timer');
   let remaining = currentExam.timeLimit;
   timerEl.textContent = remaining + 's';
@@ -1543,15 +1736,35 @@ function startQuestionTimer() {
 }
 
 function onTimeout() {
+  if (!currentExam || !currentExam.questions) return;
   const q = currentExam.questions[currentExam.currentIndex];
   const answerTime = Date.now() - currentExam.questionStartTime;
   currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true, answerTime });
   updateProgress(q.cardId, q.orientation, false, answerTime);
-  recordError(q.cardId, q.orientation, false);
+  recordError(q.cardId, q.orientation, false, undefined, true);
+  
+  // 禁用所有选项按钮，防止超时后继续答题
+  const options = document.querySelectorAll('.quiz-option');
+  options.forEach(opt => opt.classList.add('disabled'));
+  
   showFeedback(false, '时间到！', q.explanation);
+  
+  // 500ms后解锁按钮
+  setTimeout(() => {
+    buttonLocks['answerQuestion'] = false;
+  }, 500);
 }
 
 function answerQuestion(optionIndex) {
+  // 按钮防抖
+  if (buttonLocks['answerQuestion']) return;
+  buttonLocks['answerQuestion'] = true;
+  
+  if (!currentExam || !currentExam.questions) {
+    buttonLocks['answerQuestion'] = false;
+    return;
+  }
+  
   if (questionTimer) clearInterval(questionTimer);
   if (questionTimeoutId) clearTimeout(questionTimeoutId);
   
@@ -1574,9 +1787,41 @@ function answerQuestion(optionIndex) {
   });
   
   showFeedback(isCorrect, isCorrect ? '回答正确！' : '回答错误', q.explanation);
+  
+  // 500ms后解锁按钮（给反馈展示留出时间）
+  setTimeout(() => {
+    buttonLocks['answerQuestion'] = false;
+  }, 500);
+}
+
+// 标准化字符串：全角转半角、转小写、去空格
+function normalizeString(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)) // 全角转半角
+    .replace(/\s+/g, '') // 去所有空格
+    .trim();
+}
+
+// 模糊匹配两个字符串
+function fuzzyMatch(str1, str2) {
+  const a = normalizeString(str1);
+  const b = normalizeString(str2);
+  if (!a || !b) return false;
+  return a.includes(b) || b.includes(a);
 }
 
 function submitFillAnswer() {
+  // 按钮防抖
+  if (buttonLocks['submitFillAnswer']) return;
+  buttonLocks['submitFillAnswer'] = true;
+  
+  if (!currentExam || !currentExam.questions) {
+    buttonLocks['submitFillAnswer'] = false;
+    return;
+  }
+  
   if (questionTimer) clearInterval(questionTimer);
   if (questionTimeoutId) clearTimeout(questionTimeoutId);
   
@@ -1591,22 +1836,30 @@ function submitFillAnswer() {
     const correctKeywords = q.keywords || [q.correctAnswer];
     // 拆分用户输入的关键词
     const userKeywords = userAnswer.split(/[，,、；;\|\/\\\s]+/).filter(k => k.trim());
-    let matchCount = 0;
     
-    correctKeywords.forEach(kw => {
-      if (userKeywords.some(uk => (uk && kw && (uk.includes(kw) || kw.includes(uk))))) {
-        matchCount++;
-      }
-    });
-    
-    // 匹配度≥80%算对
-    isCorrect = (matchCount / correctKeywords.length) >= 0.8;
+    // 如果用户输入为空，直接算错
+    if (userKeywords.length === 0) {
+      isCorrect = false;
+    } else {
+      let matchCount = 0;
+      
+      correctKeywords.forEach(kw => {
+        if (userKeywords.some(uk => fuzzyMatch(uk, kw))) {
+          matchCount++;
+        }
+      });
+      
+      // 匹配度≥80%算对
+      isCorrect = (matchCount / correctKeywords.length) >= 0.8;
+    }
   } else {
     // 填空题判分：包含任意一个关键词就算对
     const keywords = q.keywords || [q.correctAnswer];
-    for (const kw of keywords) {
-      if (kw && userAnswer) {
-        if (kw.includes(userAnswer) || userAnswer.includes(kw)) {
+    
+    // 如果用户输入为空，直接算错
+    if (userAnswer) {
+      for (const kw of keywords) {
+        if (kw && fuzzyMatch(userAnswer, kw)) {
           isCorrect = true;
           break;
         }
@@ -1626,6 +1879,11 @@ function submitFillAnswer() {
     isCorrect ? '回答正确！' : `回答错误，正确答案是：${q.correctAnswer}`,
     q.explanation
   );
+  
+  // 500ms后解锁按钮
+  setTimeout(() => {
+    buttonLocks['submitFillAnswer'] = false;
+  }, 500);
 }
 
 function showFeedback(isCorrect, msg, explanation) {
@@ -1699,11 +1957,16 @@ function showFeedback(isCorrect, msg, explanation) {
   
   document.getElementById('quiz-feedback-area').innerHTML = feedbackHtml;
   
-  // 预加载下一题的卡牌图片
-  if (currentExam && currentExam.currentIndex + 1 < currentExam.totalCount) {
+  // 预加载下一题的卡牌图片（安全检查）
+  if (currentExam && 
+      currentExam.currentIndex + 1 < currentExam.totalCount &&
+      currentExam.questions && 
+      currentExam.questions[currentExam.currentIndex + 1]) {
     const nextQ = currentExam.questions[currentExam.currentIndex + 1];
-    const img = new Image();
-    img.src = cardImages[nextQ.cardId];
+    if (nextQ && nextQ.cardId !== undefined && cardImages[nextQ.cardId]) {
+      const img = new Image();
+      img.src = cardImages[nextQ.cardId];
+    }
   }
   
   // 自动滚动到反馈区域，方便点击下一题
@@ -1714,21 +1977,30 @@ function showFeedback(isCorrect, msg, explanation) {
 }
 
 function nextQuestion() {
-  if (!currentExam) return;
+  // 按钮防抖
+  if (buttonLocks['nextQuestion']) return;
+  buttonLocks['nextQuestion'] = true;
+  
+  if (!currentExam) {
+    buttonLocks['nextQuestion'] = false;
+    return;
+  }
+  
   currentExam.currentIndex++;
   if (currentExam.currentIndex >= currentExam.totalCount) {
     finishExam();
   } else {
     renderQuestion();
   }
+  
+  // 500ms后解锁按钮
+  setTimeout(() => {
+    buttonLocks['nextQuestion'] = false;
+  }, 500);
 }
 
 function finishExam() {
-  if (examTimer) clearInterval(examTimer);
-  if (questionTimer) clearInterval(questionTimer);
-  if (questionTimeoutId) clearTimeout(questionTimeoutId);
-  if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
-  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+  clearAllTimers(); // 清理所有定时器
   
   if (!currentExam) return;
   
@@ -1783,16 +2055,29 @@ function finishExam() {
 }
 
 function submitExam() {
-  if (!currentExam) return;
-  if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
-  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+  // 按钮防抖
+  if (buttonLocks['submitExam']) return;
+  
+  // 检查是否在图片观察期间（不允许交卷）
+  if (pendingImageTimerId || pendingImageCdInterval) {
+    toast('请先完成当前题目再交卷！');
+    return;
+  }
+  
+  buttonLocks['submitExam'] = true;
+  
+  if (!currentExam) {
+    buttonLocks['submitExam'] = false;
+    return;
+  }
+  
   const updatedKeys = new Set();
   while (currentExam.currentIndex < currentExam.totalCount) {
     const q = currentExam.questions[currentExam.currentIndex];
     const answerTime = 0; // 未答题标记为完全不会
     currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true, answerTime });
     updateProgress(q.cardId, q.orientation, false, answerTime, true);
-    recordError(q.cardId, q.orientation, false, true);
+    recordError(q.cardId, q.orientation, false, true, true);
     updatedKeys.add(buildProgressKey(q.cardId, q.orientation));
     currentExam.currentIndex++;
   }
@@ -1808,10 +2093,15 @@ function submitExam() {
     const e = errors[key];
     if (e) {
       const [cardId, orientation] = key.split('_');
-      syncErrorToServer(Number(cardId), orientation, false, e.ec, e.cc);
+      syncErrorToServer(Number(cardId), orientation, false, e.ec, e.cc, e.timeout);
     }
   }
   finishExam();
+  
+  // 500ms后解锁按钮
+  setTimeout(() => {
+    buttonLocks['submitExam'] = false;
+  }, 500);
 }
 
 // ======================== 错题强化 ========================
@@ -1858,7 +2148,7 @@ function renderReviewList() {
       <div class="error-item" style="flex-direction:column;align-items:stretch">
         <div style="display:flex;justify-content:space-between">
           <span><span class="err-card">${e.card.name}</span> ${e.orientation === 'upright' ? '正位' : '逆位'}</span>
-          <span style="color:#8a7a60;font-size:12px">错${e.err.ec}次 | 进度${e.prog}%</span>
+          <span style="color:#8a7a60;font-size:12px">错${e.err.ec}次 | 进度${e.prog}%${e.err.timeout ? ' | ⏱️超时' : ''}</span>
         </div>
       </div>
     `).join('');
@@ -1867,6 +2157,10 @@ function renderReviewList() {
 }
 
 function startReview(fromResult) {
+  // 按钮防抖
+  if (buttonLocks['startReview']) return;
+  buttonLocks['startReview'] = true;
+  
   const errors = getErrors();
   const progress = getProgress();
   
@@ -1959,6 +2253,11 @@ function startReview(fromResult) {
   showScreen('exam');
   renderQuestion();
   startExamTimer();
+  
+  // 500ms后解锁按钮
+  setTimeout(() => {
+    buttonLocks['startReview'] = false;
+  }, 500);
 }
 
 // ======================== 进度展示 ========================
@@ -1989,6 +2288,7 @@ function renderProgress() {
         const raw = progress[key];
         const prog = raw?.progress || 0;
         const hasError = errors[key] && errors[key].ec > 0;
+        const isTimeout = errors[key] && errors[key].timeout;
         const isMastered = prog >= 100;
         
         // 筛选
@@ -1999,7 +2299,7 @@ function renderProgress() {
         if (progressFilter === 'mastered' && !isMastered) show = false;
         
         if (show) {
-          groupCards.push({ card, ori, prog, hasError, isMastered });
+          groupCards.push({ card, ori, prog, hasError, isMastered, isTimeout });
         }
         
         totalSlots++;
@@ -2020,6 +2320,7 @@ function renderProgress() {
                 <span class="pc-name">${gc.card.name}</span>
                 <span class="pc-ori ${gc.ori === 'upright' ? 'up' : 'rev'}">${gc.ori === 'upright' ? '正' : '逆'}</span>
                 ${gc.hasError ? '<span style="color:#e08080;font-size:10px;margin-left:4px">有错题</span>' : ''}
+                ${isTimeout ? '<span style="color:#e0a060;font-size:10px;margin-left:4px">⏱️超时</span>' : ''}
                 ${isDue ? '<span style="color:#e0a040;font-size:10px;margin-left:4px">⏰到期</span>' : ''}
               </div>
               <span style="font-size:13px;color:#8a7a60">${gc.prog}%</span>
@@ -2100,25 +2401,48 @@ function renderProgress() {
   
   // 连续学习天数
   if (exams.length > 0) {
-    const dates = exams.map(e => {
+    // 获取去重的日期列表（只保留年月日，忽略时分秒）
+    const uniqueDatesSet = new Set();
+    exams.forEach(e => {
       const d = new Date(e.time);
-      return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+      const dateKey = d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+      uniqueDatesSet.add(dateKey);
     });
-    const uniqueDates = [...new Set(dates)].sort().reverse();
-    let streak = 1;
+    const uniqueDates = Array.from(uniqueDatesSet).sort().reverse();
+    let streak = 0;
+    
+    // 计算今天和昨天的日期字符串
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
-    if (uniqueDates[0] === todayStr || uniqueDates[0] === `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()-1}`) {
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const getDateStr = (d) => d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    const todayStr = getDateStr(today);
+    const yesterdayStr = getDateStr(yesterday);
+    
+    // 检查最近一次学习是否是今天或昨天
+    if (uniqueDates.length > 0 && (uniqueDates[0] === todayStr || uniqueDates[0] === yesterdayStr)) {
+      streak = 1;
+      // 检查连续学习的天数
       for (let i = 1; i < uniqueDates.length; i++) {
-        const prev = new Date(uniqueDates[i-1]);
-        const curr = new Date(uniqueDates[i]);
-        const diff = (prev - curr) / 86400000;
-        if (diff <= 1.5) streak++;
-        else break;
+        // 创建前一天和当前天的Date对象（都设为0点，避免时差影响）
+        const prevDate = new Date(uniqueDates[i-1]);
+        prevDate.setHours(0, 0, 0, 0);
+        const currDate = new Date(uniqueDates[i]);
+        currDate.setHours(0, 0, 0, 0);
+        
+        // 计算日期差（精确到天）
+        const diffTime = prevDate - currDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          streak++;
+        } else {
+          break;
+        }
       }
-    } else {
-      streak = 0;
     }
+    
     document.getElementById('stat-streak').textContent = streak + '天';
   }
 }
@@ -2180,11 +2504,7 @@ function showScreen(name) {
   
   // 切换时清空考试状态
   if (name !== 'exam' && currentExam && name !== 'result') {
-    if (examTimer) clearInterval(examTimer);
-    if (questionTimer) clearInterval(questionTimer);
-    if (questionTimeoutId) clearTimeout(questionTimeoutId);
-    if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
-    if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+    clearAllTimers(); // 使用统一的定时器清理函数
     currentExam = null;
   }
   
@@ -2218,6 +2538,14 @@ document.querySelector('#screen-progress .progress-filter').addEventListener('cl
   const tag = e.target.closest('.filter-tag');
   if (!tag) return;
   document.querySelectorAll('#screen-progress .filter-tag').forEach(t => t.classList.remove('active'));
+  tag.classList.add('active');
+});
+
+// 错题筛选标签点击
+document.querySelector('#screen-review .progress-filter').addEventListener('click', e => {
+  const tag = e.target.closest('.filter-tag');
+  if (!tag) return;
+  document.querySelectorAll('#screen-review .filter-tag').forEach(t => t.classList.remove('active'));
   tag.classList.add('active');
 });
 
