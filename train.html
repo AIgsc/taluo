@@ -143,6 +143,18 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- 恢复考试提示弹窗 -->
+<div id="resume-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;z-index:1000;padding:20px">
+  <div style="background:#16213e;border-radius:16px;padding:24px;max-width:360px;width:100%;border:1px solid #3a3a5a">
+    <h3 style="font-size:18px;color:#d4b87a;margin-bottom:8px;text-align:center">继续上次的考试？</h3>
+    <p style="font-size:14px;color:#8a7a60;text-align:center;margin-bottom:24px">上次您还有未完成的题目，是否继续？</p>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline btn-sm" onclick="clearExamState();document.getElementById('resume-modal').style.display='none'">重新开始</button>
+      <button class="btn btn-primary btn-sm" onclick="resumeExam()">继续考试</button>
+    </div>
+  </div>
+</div>
+
 <!-- 底部导航（仅在主屏显示） -->
 <nav class="navbar" id="navbar">
   <button onclick="showScreen('setup')" id="nav-setup"><span class="nav-icon">📝</span>训练</button>
@@ -318,6 +330,7 @@ const STORAGE_KEY_PROGRESS = 'taro_train_progress';
 const STORAGE_KEY_ERRORS = 'taro_train_errors';
 const STORAGE_KEY_EXAMS = 'taro_train_exams';
 const STORAGE_KEY_CONFUSE_ERRORS = 'taro_train_confuse_errors';
+const STORAGE_KEY_EXAM_STATE = 'taro_exam_state';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
 let questionTimeoutId = null, pendingImageTimerId = null, pendingImageCdInterval = null;
@@ -343,6 +356,67 @@ function debounceButton(buttonId, callback, delay = 1000) {
     // 延迟解锁
     setTimeout(() => { buttonLocks[buttonId] = false; }, delay);
   }
+}
+
+// ======================== 断点续传 ========================
+// 保存考试状态
+function saveExamState() {
+  if (!currentExam) return;
+  const state = {
+    questions: currentExam.questions,
+    currentIndex: currentExam.currentIndex,
+    answers: currentExam.answers,
+    timeLimit: currentExam.timeLimit,
+    examType: currentExam.examType,
+    startTime: currentExam.startTime,
+    createdAt: Date.now()
+  };
+  localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
+}
+
+// 加载考试状态
+function loadExamState() {
+  const raw = localStorage.getItem(STORAGE_KEY_EXAM_STATE);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (e) {
+    clearExamState();
+    return null;
+  }
+}
+
+// 清除考试状态
+function clearExamState() {
+  localStorage.removeItem(STORAGE_KEY_EXAM_STATE);
+}
+
+// 恢复考试
+function resumeExam() {
+  const state = loadExamState();
+  if (!state) {
+    document.getElementById('resume-modal').style.display = 'none';
+    return;
+  }
+  
+  currentExam = {
+    questions: state.questions,
+    currentIndex: state.currentIndex,
+    answers: state.answers,
+    timeLimit: state.timeLimit,
+    startTime: state.startTime,
+    questionStartTime: Date.now(),
+    totalCount: state.questions.length,
+    examType: state.examType || 'normal'
+  };
+  
+  // 隐藏弹窗
+  document.getElementById('resume-modal').style.display = 'none';
+  
+  // 显示考试页面，渲染当前题
+  showScreen('exam');
+  renderQuestion();
+  startExamTimer();
 }
 
 // ======================== 78张塔罗牌数据（从DB加载，硬编码兜底） ========================
@@ -1577,8 +1651,12 @@ function startExam() {
     startTime: Date.now(),
     questionStartTime: Date.now(),
     answers: [],
-    totalCount: finalQuestions.length
+    totalCount: finalQuestions.length,
+    examType: 'normal'
   };
+  
+  // 立即保存考试状态
+  saveExamState();
   
   showScreen('exam');
   renderQuestion();
@@ -1925,8 +2003,7 @@ function showFeedback(isCorrect, msg, explanation) {
     if (q.type === 'compare') {
       cleanExplanation = cleanExplanation.replace(/\n/g, '<br>');
     } else if (q.type === 'image_anchor') {
-      const card = getCardById(q.cardId);
-      if (card) cleanExplanation = isUp ? card.ud : card.rd;
+      // 画面锚点题：保持原有explanation（包含画面锚点→核心含义的训练信息），不替换
     } else {
       const patterns = [
         `${q.cardName}${orientText}核心关键词`,
@@ -1990,6 +2067,9 @@ function nextQuestion() {
   }
   
   currentExam.currentIndex++;
+  // 保存考试状态
+  saveExamState();
+  
   if (currentExam.currentIndex >= currentExam.totalCount) {
     finishExam();
   } else {
@@ -2053,6 +2133,8 @@ function finishExam() {
     }).join('');
   }
   
+  // 清除考试状态
+  clearExamState();
   currentExam = null;
   showScreen('result');
 }
@@ -2623,6 +2705,12 @@ async function init() {
   if (startBtn) {
     startBtn.disabled = false;
     startBtn.textContent = '开始训练';
+  }
+  
+  // 检查是否有未完成的考试
+  const examState = loadExamState();
+  if (examState) {
+    document.getElementById('resume-modal').style.display = 'flex';
   }
 }
 
