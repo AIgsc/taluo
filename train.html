@@ -2122,7 +2122,16 @@ function renderQuestion() {
             <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
           </div>
         `;
-        document.getElementById('fill-answer').focus();
+        const fillInput = document.getElementById('fill-answer');
+        // 修复：iOS设备键盘遮挡确认按钮 - 输入框获得焦点时自动滚动
+        fillInput.addEventListener('focus', () => {
+          setTimeout(() => {
+            if (window.innerHeight < 500) {
+              window.scrollTo(0, document.body.scrollHeight);
+            }
+          }, 300);
+        });
+        fillInput.focus();
       } else {
         document.getElementById('quiz-options-area').innerHTML = q.options.map((opt, i) => `
           <button class="quiz-option" data-index="${i}" onclick="answerQuestion(${i})">${opt}</button>
@@ -2240,6 +2249,11 @@ function submitFillAnswer() {
   // 按钮防抖
   if (buttonLocks['submitFillAnswer']) return;
   buttonLocks['submitFillAnswer'] = true;
+  
+  // 修复：iOS设备键盘遮挡确认按钮
+  if (window.innerHeight < 500) {
+    window.scrollTo(0, document.body.scrollHeight);
+  }
   
   if (!currentExam || !currentExam.questions) {
     buttonLocks['submitFillAnswer'] = false;
