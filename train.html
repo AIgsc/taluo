@@ -577,8 +577,8 @@ const DEDUCTION_DATA = {
   
   // 具体每张牌的推导含义
   cardDeductions: {
-    // 权杖
-    51: { stage: 1, upright: '主动出击', reversed: '冲动开始、没有准备' },
+    // 权杖（火=行动）
+    51: { stage: 1, upright: '主动出击', reversed: '冲动开始、没有准备 / 缺乏行动力、兴趣消退' },
     52: { stage: 2, upright: '观望', reversed: '犹豫、不敢做决定' },
     53: { stage: 3, upright: '出发', reversed: '延迟、行动受阻' },
     54: { stage: 4, upright: '庆祝稳定', reversed: '不稳定、庆祝太早' },
@@ -588,15 +588,15 @@ const DEDUCTION_DATA = {
     58: { stage: 8, upright: '快速推进', reversed: '急躁、进度失控' },
     59: { stage: 9, upright: '防御防备', reversed: '过度防御、不信任' },
     60: { stage: 10, upright: '负重完成', reversed: '负担太重、无法完成' },
-    61: { court: 'page', upright: '感兴趣、尝试新行动', reversed: '缺乏行动力、说说而已' },
+    61: { court: 'page', upright: '感兴趣、尝试新行动', reversed: '三分钟热度、半途而废、虎头蛇尾' },
     62: { court: 'knight', upright: '积极追求、主动出击', reversed: '冲动、不顾后果' },
     63: { court: 'queen', upright: '有主见、负责任、直接', reversed: '霸道、控制欲强' },
-    64: { court: 'king', upright: '专一、负责、说到做到（霸道主导）', reversed: '不负责任、说一套做一套' },
+    64: { court: 'king', upright: '专一、负责、说到做到（霸道主导）', reversed: '霸道专制、脾气暴躁、刚愎自用' },
     
-    // 圣杯
+    // 圣杯（水=沟通）
     65: { stage: 1, upright: '好感喜欢', reversed: '感情不稳定、缺乏感觉' },
     66: { stage: 2, upright: '平等合作', reversed: '沟通不畅、不平等' },
-    67: { stage: 3, upright: '社交欢庆', reversed: '社交场合不开心、孤独' },
+    67: { stage: 3, upright: '社交欢庆', reversed: '社交场合不开心、孤独 / 第三方干扰、朋友挑拨' },
     68: { stage: 4, upright: '冷淡漠视', reversed: '重新点燃希望' },
     69: { stage: 5, upright: '失落悲伤', reversed: '走出悲伤、慢慢恢复' },
     70: { stage: 6, upright: '主动关爱', reversed: '自私、只考虑自己' },
@@ -607,14 +607,14 @@ const DEDUCTION_DATA = {
     75: { court: 'page', upright: '主动示意好感、聊天愉快', reversed: '敏感、容易受伤' },
     76: { court: 'knight', upright: '在意表现、提供情绪价值', reversed: '情绪化、喜怒无常' },
     77: { court: 'queen', upright: '对感情要求高、内心不满意但不说', reversed: '缺乏安全感、不信任' },
-    78: { court: 'king', upright: '浪漫、情商高、完美恋人', reversed: '花心、不真诚' },
+    78: { court: 'king', upright: '浪漫、情商高、完美恋人', reversed: '情感泛滥、不负责任、光说不做' },
     
-    // 星币
+    // 星币（土=物质/规划）
     37: { stage: 1, upright: '有规划', reversed: '缺乏规划、浪费机会' },
     38: { stage: 2, upright: '权衡比较', reversed: '失衡、选择困难' },
     39: { stage: 3, upright: '学习讨论', reversed: '学习进度慢、合作不畅' },
     40: { stage: 4, upright: '保守稳定', reversed: '不稳定、财务紧张' },
-    41: { stage: 5, upright: '进展慢', reversed: '财务危机、物质匮乏' },
+    41: { stage: 5, upright: '进展慢', reversed: '走出困境、财务好转、进展加快' },
     42: { stage: 6, upright: '付出平衡', reversed: '不公平、付出与回报不对等' },
     43: { stage: 7, upright: '思考犹豫', reversed: '焦虑、对未来没信心' },
     44: { stage: 8, upright: '专注忙碌', reversed: '分心、缺乏热情' },
@@ -622,23 +622,23 @@ const DEDUCTION_DATA = {
     46: { stage: 10, upright: '共同努力', reversed: '财务损失、家庭不和谐' },
     47: { court: 'page', upright: '有初步规划、慢慢发展', reversed: '缺乏动力、不切实际' },
     48: { court: 'knight', upright: '稳定专一、考虑现实', reversed: '固执、缺乏灵活性' },
-    49: { court: 'queen', upright: '踏实认真、愿意付出（但不主动表达）', reversed: '自私、占有欲强' },
+    49: { court: 'queen', upright: '踏实认真、愿意付出（但不主动表达）', reversed: '吝啬、斤斤计较、物质至上' },
     50: { court: 'king', upright: '顾家负责、兑现承诺、靠谱结婚对象', reversed: '死板、缺乏浪漫' },
     
-    // 宝剑
+    // 宝剑（风=思想）
     23: { stage: 1, upright: '想法一致', reversed: '混乱、想法不清' },
     24: { stage: 2, upright: '纠结两难', reversed: '做出选择、不再纠结' },
-    25: { stage: 3, upright: '扎心痛苦', reversed: '走出痛苦、慢慢恢复' },
+    25: { stage: 3, upright: '扎心痛苦', reversed: '走出痛苦、慢慢恢复 / 逃避痛苦、沉溺内耗' },
     26: { stage: 4, upright: '停滞复盘', reversed: '恢复、重新开始' },
     27: { stage: 5, upright: '争执争吵', reversed: '避免冲突、逃避问题' },
-    28: { stage: 6, upright: '缓慢进展', reversed: '进展停滞、计划失败' },
+    28: { stage: 6, upright: '缓慢进展', reversed: '进展停滞、计划失败 / 关系破裂、被迫分离' },
     29: { stage: 7, upright: '隐藏侥幸', reversed: '坦白、不再隐瞒' },
     30: { stage: 8, upright: '束缚被困', reversed: '解脱、恢复自由' },
-    31: { stage: 9, upright: '焦虑多想', reversed: '从焦虑中恢复、慢慢平静' },
+    31: { stage: 9, upright: '焦虑多想', reversed: '从焦虑中恢复、慢慢平静 / 过度焦虑、失眠多梦' },
     32: { stage: 10, upright: '结束', reversed: '缓慢结束、无法真正解脱' },
-    33: { court: 'page', upright: '思维飘散、四处张望、不坚定', reversed: '逃避现实、不愿面对' },
+    33: { court: 'page', upright: '思维飘散、四处张望、不坚定', reversed: '思维混乱、谣言、信息错误、注意力涣散' },
     34: { court: 'knight', upright: '方向明确、主动推进', reversed: '急躁、言语伤人' },
-    35: { court: 'queen', upright: '有标准、说话直接（理性但忽视感受）', reversed: '刻薄、残忍、恶意中伤' },
+    35: { court: 'queen', upright: '有标准、说话直接（理性但忽视感受）', reversed: '说话刻薄、言语伤人、吹毛求疵' },
     36: { court: 'king', upright: '责任担当、说到做到（智慧决断）', reversed: '滥用权力、冷酷无情' }
   }
 };
