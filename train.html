@@ -3185,11 +3185,12 @@ document.querySelector('#screen-review .progress-filter').addEventListener('clic
 
 // ======================== 初始化 ========================
 async function init() {
-  // 先尝试启用按钮，防止任何错误导致按钮无法点击
   const startBtn = document.getElementById('start-exam-btn');
+  
+  // 一开始显示加载中状态
   if (startBtn) {
-    startBtn.disabled = false;
-    startBtn.textContent = '开始训练';
+    startBtn.disabled = true;
+    startBtn.textContent = '加载中...';
   }
   
   try {
