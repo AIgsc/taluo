@@ -578,68 +578,68 @@ const DEDUCTION_DATA = {
   // 具体每张牌的推导含义
   cardDeductions: {
     // 权杖
-    51: { stage: 1, meaning: '主动出击' },
-    52: { stage: 2, meaning: '观望' },
-    53: { stage: 3, meaning: '出发' },
-    54: { stage: 4, meaning: '庆祝稳定' },
-    55: { stage: 5, meaning: '争执打架' },
-    56: { stage: 6, meaning: '胜利统率' },
-    57: { stage: 7, meaning: '克服阻力' },
-    58: { stage: 8, meaning: '快速推进' },
-    59: { stage: 9, meaning: '防御防备' },
-    60: { stage: 10, meaning: '负重完成' },
-    61: { court: 'page', meaning: '感兴趣、尝试新行动' },
-    62: { court: 'knight', meaning: '积极追求、主动出击' },
-    63: { court: 'queen', meaning: '有主见、负责任、直接' },
-    64: { court: 'king', meaning: '专一、负责、说到做到（霸道主导）' },
+    51: { stage: 1, upright: '主动出击', reversed: '冲动开始、没有准备' },
+    52: { stage: 2, upright: '观望', reversed: '犹豫、不敢做决定' },
+    53: { stage: 3, upright: '出发', reversed: '延迟、行动受阻' },
+    54: { stage: 4, upright: '庆祝稳定', reversed: '不稳定、庆祝太早' },
+    55: { stage: 5, upright: '争执打架', reversed: '避免冲突、内心斗争' },
+    56: { stage: 6, upright: '胜利统率', reversed: '失败、领导力不足' },
+    57: { stage: 7, upright: '克服阻力', reversed: '放弃、感到疲惫' },
+    58: { stage: 8, upright: '快速推进', reversed: '急躁、进度失控' },
+    59: { stage: 9, upright: '防御防备', reversed: '过度防御、不信任' },
+    60: { stage: 10, upright: '负重完成', reversed: '负担太重、无法完成' },
+    61: { court: 'page', upright: '感兴趣、尝试新行动', reversed: '缺乏行动力、说说而已' },
+    62: { court: 'knight', upright: '积极追求、主动出击', reversed: '冲动、不顾后果' },
+    63: { court: 'queen', upright: '有主见、负责任、直接', reversed: '霸道、控制欲强' },
+    64: { court: 'king', upright: '专一、负责、说到做到（霸道主导）', reversed: '不负责任、说一套做一套' },
     
     // 圣杯
-    65: { stage: 1, meaning: '好感喜欢' },
-    66: { stage: 2, meaning: '平等合作' },
-    67: { stage: 3, meaning: '社交欢庆' },
-    68: { stage: 4, meaning: '冷淡漠视' },
-    69: { stage: 5, meaning: '失落悲伤' },
-    70: { stage: 6, meaning: '主动关爱' },
-    71: { stage: 7, meaning: '幻想画饼' },
-    72: { stage: 8, meaning: '离开' },
-    73: { stage: 9, meaning: '得意孤独' },
-    74: { stage: 10, meaning: '圆满和睦' },
-    75: { court: 'page', meaning: '主动示意好感、聊天愉快' },
-    76: { court: 'knight', meaning: '在意表现、提供情绪价值' },
-    77: { court: 'queen', meaning: '对感情要求高、内心不满意但不说' },
-    78: { court: 'king', meaning: '浪漫、情商高、完美恋人' },
+    65: { stage: 1, upright: '好感喜欢', reversed: '感情不稳定、缺乏感觉' },
+    66: { stage: 2, upright: '平等合作', reversed: '沟通不畅、不平等' },
+    67: { stage: 3, upright: '社交欢庆', reversed: '社交场合不开心、孤独' },
+    68: { stage: 4, upright: '冷淡漠视', reversed: '重新点燃希望' },
+    69: { stage: 5, upright: '失落悲伤', reversed: '走出悲伤、慢慢恢复' },
+    70: { stage: 6, upright: '主动关爱', reversed: '自私、只考虑自己' },
+    71: { stage: 7, upright: '幻想画饼', reversed: '面对现实、不再幻想' },
+    72: { stage: 8, upright: '离开', reversed: '犹豫是否离开、暂时留下' },
+    73: { stage: 9, upright: '得意孤独', reversed: '不满、不知足' },
+    74: { stage: 10, upright: '圆满和睦', reversed: '家庭不和谐、感情破裂' },
+    75: { court: 'page', upright: '主动示意好感、聊天愉快', reversed: '敏感、容易受伤' },
+    76: { court: 'knight', upright: '在意表现、提供情绪价值', reversed: '情绪化、喜怒无常' },
+    77: { court: 'queen', upright: '对感情要求高、内心不满意但不说', reversed: '缺乏安全感、不信任' },
+    78: { court: 'king', upright: '浪漫、情商高、完美恋人', reversed: '花心、不真诚' },
     
     // 星币
-    37: { stage: 1, meaning: '有规划' },
-    38: { stage: 2, meaning: '权衡比较' },
-    39: { stage: 3, meaning: '学习讨论' },
-    40: { stage: 4, meaning: '保守稳定' },
-    41: { stage: 5, meaning: '进展慢' },
-    42: { stage: 6, meaning: '付出平衡' },
-    43: { stage: 7, meaning: '思考犹豫' },
-    44: { stage: 8, meaning: '专注忙碌' },
-    45: { stage: 9, meaning: '享乐忽视' },
-    46: { stage: 10, meaning: '共同努力' },
-    47: { court: 'page', meaning: '有初步规划、慢慢发展' },
-    48: { court: 'knight', meaning: '稳定专一、考虑现实' },
-    49: { court: 'queen', meaning: '踏实认真、愿意付出（但不主动表达）' },
-    50: { court: 'king', meaning: '顾家负责、兑现承诺、靠谱结婚对象' },
+    37: { stage: 1, upright: '有规划', reversed: '缺乏规划、浪费机会' },
+    38: { stage: 2, upright: '权衡比较', reversed: '失衡、选择困难' },
+    39: { stage: 3, upright: '学习讨论', reversed: '学习进度慢、合作不畅' },
+    40: { stage: 4, upright: '保守稳定', reversed: '不稳定、财务紧张' },
+    41: { stage: 5, upright: '进展慢', reversed: '财务危机、物质匮乏' },
+    42: { stage: 6, upright: '付出平衡', reversed: '不公平、付出与回报不对等' },
+    43: { stage: 7, upright: '思考犹豫', reversed: '焦虑、对未来没信心' },
+    44: { stage: 8, upright: '专注忙碌', reversed: '分心、缺乏热情' },
+    45: { stage: 9, upright: '享乐忽视', reversed: '财务问题、挥霍无度' },
+    46: { stage: 10, upright: '共同努力', reversed: '财务损失、家庭不和谐' },
+    47: { court: 'page', upright: '有初步规划、慢慢发展', reversed: '缺乏动力、不切实际' },
+    48: { court: 'knight', upright: '稳定专一、考虑现实', reversed: '固执、缺乏灵活性' },
+    49: { court: 'queen', upright: '踏实认真、愿意付出（但不主动表达）', reversed: '自私、占有欲强' },
+    50: { court: 'king', upright: '顾家负责、兑现承诺、靠谱结婚对象', reversed: '死板、缺乏浪漫' },
     
     // 宝剑
-    23: { stage: 1, meaning: '想法一致' },
-    24: { stage: 2, meaning: '纠结两难' },
-    25: { stage: 3, meaning: '扎心痛苦' },
-    26: { stage: 4, meaning: '停滞复盘' },
-    27: { stage: 5, meaning: '争执争吵' },
-    28: { stage: 6, meaning: '缓慢进展' },
-    29: { stage: 7, meaning: '隐藏侥幸' },
-    30: { stage: 8, meaning: '束缚被困' },
-    31: { stage: 9, meaning: '焦虑多想' },
-    32: { stage: 10, meaning: '结束' },
-    33: { court: 'page', meaning: '思维飘散、四处张望、不坚定' },
-    34: { court: 'knight', meaning: '方向明确、主动推进' },
-    35: { court: 'queen', meaning: '有标准、说话直接（理性但忽视感受）' },
-    36: { court: 'king', meaning: '责任担当、说到做到（智慧决断）' }
+    23: { stage: 1, upright: '想法一致', reversed: '混乱、想法不清' },
+    24: { stage: 2, upright: '纠结两难', reversed: '做出选择、不再纠结' },
+    25: { stage: 3, upright: '扎心痛苦', reversed: '走出痛苦、慢慢恢复' },
+    26: { stage: 4, upright: '停滞复盘', reversed: '恢复、重新开始' },
+    27: { stage: 5, upright: '争执争吵', reversed: '避免冲突、逃避问题' },
+    28: { stage: 6, upright: '缓慢进展', reversed: '进展停滞、计划失败' },
+    29: { stage: 7, upright: '隐藏侥幸', reversed: '坦白、不再隐瞒' },
+    30: { stage: 8, upright: '束缚被困', reversed: '解脱、恢复自由' },
+    31: { stage: 9, upright: '焦虑多想', reversed: '从焦虑中恢复、慢慢平静' },
+    32: { stage: 10, upright: '结束', reversed: '缓慢结束、无法真正解脱' },
+    33: { court: 'page', upright: '思维飘散、四处张望、不坚定', reversed: '逃避现实、不愿面对' },
+    34: { court: 'knight', upright: '方向明确、主动推进', reversed: '急躁、言语伤人' },
+    35: { court: 'queen', upright: '有标准、说话直接（理性但忽视感受）', reversed: '刻薄、残忍、恶意中伤' },
+    36: { court: 'king', upright: '责任担当、说到做到（智慧决断）', reversed: '滥用权力、冷酷无情' }
   }
 };
 
@@ -1450,17 +1450,63 @@ function generateDeductionQuestion(poolItem) {
   
   const suit = DEDUCTION_DATA.suits[suitKey];
   
-  // 构建简化题目说明（题干只保留核心推导公式）
-  let questionText = '';
-  let derivationText = ''; // 保存推导过程，用于反馈
+  // 获取画面锚点（根据当前题目的方向）
+  const anchors = getCardAnchors(poolItem.cardId, poolItem.orientation) || [];
+  const anchorSample = anchors.length > 0 ? anchors[0] : '';
+  
+  // 构建题干：真正需要推导的格式
+  const questionText = `🔍 推导训练<br>请观察这张牌的画面，推导它的核心含义：`;
+  
+  // 构建反馈内容：正确的顺序（推导步骤→答案→故事）
+  let feedbackContent = '';
   if (deduction.stage) {
+    // 数字牌推导
     const stage = DEDUCTION_DATA.stages[deduction.stage];
-    questionText = `${suit.name}牌组（${suit.element}=${suit.elementName}）·${stage.name}阶段<br>请选择这张牌的核心含义：`;
-    derivationText = `📊 推导过程：<br>牌组：${suit.name}（${suit.element}=${suit.elementName}）<br>阶段：${deduction.stage}-${stage.name}<br><strong>公式：${suit.elementName} + ${stage.name} = ${deduction.meaning}</strong>`;
+    feedbackContent = 
+      `<div class="fb-section"><div class="fb-section-label">第一步：识别元素</div>` +
+      `<div class="fb-detail">` +
+      (anchorSample ? `画面：${anchorSample}<br>` : '') +
+      `→ ${suit.name}牌组<br>` +
+      `→ ${suit.element}元素 = ${suit.elementName}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">第二步：判断阶段</div>` +
+      `<div class="fb-detail">数字：${deduction.stage}<br>` +
+      `→ ${stage.name}阶段<br>` +
+      `→ ${stage.desc}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">第三步：推导含义</div>` +
+      `<div style="padding:10px 14px;border-radius:8px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;font-weight:600">` +
+      `${suit.element}元素（${suit.elementName}） + ${stage.name}阶段（${deduction.stage}） = ${isUp ? deduction.upright : deduction.reversed}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">故事线</div>` +
+      `<div class="fb-detail">${suit.story}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">核心答案</div>` +
+      `<div class="fb-detail"><strong>${isUp ? '正位' : '逆位'}：${correctAnswer}</strong></div></div>`;
   } else if (deduction.court) {
+    // 宫廷牌推导
     const court = DEDUCTION_DATA.court[deduction.court];
-    questionText = `${suit.name}牌组（${suit.element}=${suit.elementName}）·${court.name}（${court.level}级）<br>请选择这张牌的核心含义：`;
-    derivationText = `📊 推导过程：<br>牌组：${suit.name}（${suit.element}=${suit.elementName}）<br>宫廷牌：${court.name}（${court.level}级）<br><strong>公式：${suit.elementName} + ${court.name} = ${deduction.meaning}</strong>`;
+    feedbackContent = 
+      `<div class="fb-section"><div class="fb-section-label">第一步：识别元素</div>` +
+      `<div class="fb-detail">` +
+      (anchorSample ? `画面：${anchorSample}<br>` : '') +
+      `→ ${suit.name}牌组<br>` +
+      `→ ${suit.element}元素 = ${suit.elementName}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">第二步：判断身份</div>` +
+      `<div class="fb-detail">宫廷牌：${court.name}<br>` +
+      `→ ${court.level}级能量<br>` +
+      `→ ${court.desc}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">第三步：推导含义</div>` +
+      `<div style="padding:10px 14px;border-radius:8px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;font-weight:600">` +
+      `${suit.element}元素（${suit.elementName}） + ${court.name}（${court.level}级） = ${isUp ? deduction.upright : deduction.reversed}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">故事线</div>` +
+      `<div class="fb-detail">${suit.story}</div></div>` +
+      
+      `<div class="fb-section"><div class="fb-section-label">核心答案</div>` +
+      `<div class="fb-detail"><strong>${isUp ? '正位' : '逆位'}：${correctAnswer}</strong></div></div>`;
   } else {
     return null;
   }
@@ -1569,8 +1615,6 @@ function generateDeductionQuestion(poolItem) {
   
   const options = shuffle([correctAnswer, ...wrongCards.slice(0, 3)]);
   
-  const fullExplanation = `${derivationText}<br><br>📖 完整故事：${suit.story}<br><br>💡 核心关键词：${correctAnswer}`;
-  
   return {
     type: 'deduction',
     question: questionText,
@@ -1583,7 +1627,7 @@ function generateDeductionQuestion(poolItem) {
     options,
     correctIndex: options.indexOf(correctAnswer),
     correctAnswer,
-    explanation: fullExplanation // 反馈中包含完整推导过程和故事
+    explanation: feedbackContent // 反馈中包含完整推导过程和故事
   };
 }
 
@@ -2273,47 +2317,60 @@ function showFeedback(isCorrect, msg, explanation) {
   // 构建多行排版反馈
   let bodyHtml = '';
   if (q) {
-    const isUp = q.orientation === 'upright';
-    const orientText = isUp ? '正位' : '逆位';
-    const orientClass = isUp ? 'up' : 'rev';
-    
-    // 第1行：卡牌名称 + 正/逆位标签
-    bodyHtml += `<div class="fb-identity">${q.cardName}<span class="fb-orient ${orientClass}">${orientText}</span></div>`;
-    // 核心牌义标签（始终取 card.uk/card.rk，不受题型 correctAnswer 影响）
-    const fbCard = getCardById(q.cardId);
-    if (fbCard) {
-      const coreMeaning = isUp ? fbCard.uk : fbCard.rk;
-      const kwList = coreMeaning.split(/[，,、；;]/).filter(k => k.trim());
-      bodyHtml += `<div class="fb-answer">${kwList.map(k => `<span class="fb-tag">${k.trim()}</span>`).join('')}</div>`;
-    }
-    
-    // 第2行：画面锚点标签
-    const anchorList = getCardAnchors(q.cardId, q.orientation);
-    let anchorWords;
-    if (q.type === 'image_anchor' && q.selectedAnchors) {
-      anchorWords = q.selectedAnchors;
+    // 推导题：使用专门的反馈格式
+    if (q.type === 'deduction') {
+      const isUp = q.orientation === 'upright';
+      const orientText = isUp ? '正位' : '逆位';
+      const orientClass = isUp ? 'up' : 'rev';
+      
+      // 第1行：卡牌名称 + 正/逆位标签
+      bodyHtml += `<div class="fb-identity">${q.cardName}<span class="fb-orient ${orientClass}">${orientText}</span></div>`;
+      // 直接使用推导题的完整 explanation（已经是 HTML 格式）
+      bodyHtml += explanation;
     } else {
-      anchorWords = shuffle([...anchorList]).slice(0, Math.min(3, anchorList.length));
-    }
-    bodyHtml += `<div class="fb-section"><div class="fb-section-label">画面锚点</div><div class="fb-tags">${anchorWords.map(w => `<span class="fb-tag">${w}</span>`).join('')}</div></div>`;
-    
-    // 第3行：完整解析
-    let cleanExplanation = explanation;
-    if (q.type === 'image_anchor') {
-      // 画面锚点题：保持原有explanation（包含画面锚点→核心含义的训练信息），不替换
-    } else {
-      const patterns = [
-        `${q.cardName}${orientText}核心关键词`,
-        `${q.cardName}${orientText}代表`
-      ];
-      for (const p of patterns) {
-        if (cleanExplanation.startsWith(p)) {
-          cleanExplanation = cleanExplanation.substring(p.length).replace(/^[：:]/, '').trim();
-          break;
+      // 其他题型：保持原有的反馈格式
+      const isUp = q.orientation === 'upright';
+      const orientText = isUp ? '正位' : '逆位';
+      const orientClass = isUp ? 'up' : 'rev';
+      
+      // 第1行：卡牌名称 + 正/逆位标签
+      bodyHtml += `<div class="fb-identity">${q.cardName}<span class="fb-orient ${orientClass}">${orientText}</span></div>`;
+      // 核心牌义标签（始终取 card.uk/card.rk，不受题型 correctAnswer 影响）
+      const fbCard = getCardById(q.cardId);
+      if (fbCard) {
+        const coreMeaning = isUp ? fbCard.uk : fbCard.rk;
+        const kwList = coreMeaning.split(/[，,、；;]/).filter(k => k.trim());
+        bodyHtml += `<div class="fb-answer">${kwList.map(k => `<span class="fb-tag">${k.trim()}</span>`).join('')}</div>`;
+      }
+      
+      // 第2行：画面锚点标签
+      const anchorList = getCardAnchors(q.cardId, q.orientation);
+      let anchorWords;
+      if (q.type === 'image_anchor' && q.selectedAnchors) {
+        anchorWords = q.selectedAnchors;
+      } else {
+        anchorWords = shuffle([...anchorList]).slice(0, Math.min(3, anchorList.length));
+      }
+      bodyHtml += `<div class="fb-section"><div class="fb-section-label">画面锚点</div><div class="fb-tags">${anchorWords.map(w => `<span class="fb-tag">${w}</span>`).join('')}</div></div>`;
+      
+      // 第3行：完整解析
+      let cleanExplanation = explanation;
+      if (q.type === 'image_anchor') {
+        // 画面锚点题：保持原有explanation（包含画面锚点→核心含义的训练信息），不替换
+      } else {
+        const patterns = [
+          `${q.cardName}${orientText}核心关键词`,
+          `${q.cardName}${orientText}代表`
+        ];
+        for (const p of patterns) {
+          if (cleanExplanation.startsWith(p)) {
+            cleanExplanation = cleanExplanation.substring(p.length).replace(/^[：:]/, '').trim();
+            break;
+          }
         }
       }
+      bodyHtml += `<div class="fb-section"><div class="fb-section-label">完整解析</div><div class="fb-detail">${cleanExplanation}</div></div>`;
     }
-    bodyHtml += `<div class="fb-section"><div class="fb-section-label">完整解析</div><div class="fb-detail">${cleanExplanation}</div></div>`;
   }
   
   // 闭眼回忆引导：每完成5道题后插入
