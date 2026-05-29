@@ -535,6 +535,114 @@ const CONFUSE_PAIRS = [
   [6, 46]     // 教皇 ↔ 星币十
 ];
 
+// ==================== 推导题数据结构
+const DEDUCTION_DATA = {
+  // 四个牌组
+  suits: {
+    wands: { name: '权杖', element: '火', elementName: '行动', story: '🔥 权杖（火=行动）<br>1-2 主动约相亲，果断做选择<br>3-4 频繁见面推进，行动稳住关系<br>5-6 争吵动手（火气大），调整相处方式<br>7-8 冷静反思，全力行动解决矛盾<br>9-10 怕错过，用力抱紧——关系达成' },
+    cups: { name: '圣杯', element: '水', elementName: '沟通', story: '💧🍸 圣杯（水=沟通）<br>1-2 开始聊相亲，选谁聊得来<br>3-4 每天分享发展，甜言蜜语稳定<br>5-6 吵架冷战（沟通冲突），主动开口调整<br>7-8 深夜反思，用心沟通化解<br>9-10 怕失去你，说开心里话——关系圆满' },
+    pentacles: { name: '星币', element: '土', elementName: '规划', story: '⭐️ 星币（土=规划）<br>1-2 开始规划相亲，筛选条件<br>3-4 按计划约会发展，稳定见家长<br>5-6 现实问题冲突（钱/房子），调整预算<br>7-8 反思未来，全力攒钱解决<br>9-10 怕错过好对象，一起存够首付——达成结婚规划' },
+    swords: { name: '宝剑', element: '风', elementName: '想法', story: '⚔️ 宝剑（风=想法）<br>1-2 开始想相亲，犹豫选谁<br>3-4 想法推进关系，理智稳定评估<br>5-6 观念吵架（想法冲突），调整心态<br>7-8 反复反思，理性分析解决矛盾<br>9-10 怕错过对的人，想通——认定关系' }
+  },
+  
+  // 十个阶段
+  stages: {
+    1: { name: '开始', desc: '开始阶段，新的起点' },
+    2: { name: '选择', desc: '选择阶段，做决定' },
+    3: { name: '发展', desc: '发展阶段，向前推进' },
+    4: { name: '稳定', desc: '稳定阶段，保持现状' },
+    5: { name: '冲突', desc: '冲突阶段，出现矛盾' },
+    6: { name: '调整', desc: '调整阶段，解决问题' },
+    7: { name: '反思', desc: '反思阶段，思考总结' },
+    8: { name: '力量', desc: '力量阶段，积蓄能量' },
+    9: { name: '缺憾', desc: '缺憾阶段，有所不足' },
+    10: { name: '完成', desc: '完成阶段，达成目标' }
+  },
+  
+  // 宫廷牌级别
+  court: {
+    page: { name: '侍从', level: 1, desc: '学习/探索，初级，还在学，好奇心，不成熟' },
+    knight: { name: '骑士', level: 3, desc: '行动/冲刺，中级，主动推进，有冲劲但可能不稳' },
+    queen: { name: '女王', level: 5, desc: '掌控/内在，高级偏内，有掌控力，成熟但偏感性/细腻' },
+    king: { name: '国王', level: 10, desc: '掌控/外在，高级偏外，有掌控力，成熟但偏理性/权威' }
+  },
+  
+  // 牌组→卡牌ID映射（小阿卡纳）
+  suitCards: {
+    wands: [51,52,53,54,55,56,57,58,59,60,61,62,63,64],    // 权杖1-10 + 侍从骑士女王国王
+    cups: [65,66,67,68,69,70,71,72,73,74,75,76,77,78],     // 圣杯1-10 + 侍从骑士女王国王
+    pentacles: [37,38,39,40,41,42,43,44,45,46,47,48,49,50], // 星币1-10 + 侍从骑士女王国王
+    swords: [23,24,25,26,27,28,29,30,31,32,33,34,35,36]     // 宝剑1-10 + 侍从骑士女王国王
+  },
+  
+  // 具体每张牌的推导含义
+  cardDeductions: {
+    // 权杖
+    51: { stage: 1, meaning: '主动出击' },
+    52: { stage: 2, meaning: '观望' },
+    53: { stage: 3, meaning: '出发' },
+    54: { stage: 4, meaning: '庆祝稳定' },
+    55: { stage: 5, meaning: '争执打架' },
+    56: { stage: 6, meaning: '胜利统率' },
+    57: { stage: 7, meaning: '克服阻力' },
+    58: { stage: 8, meaning: '快速推进' },
+    59: { stage: 9, meaning: '防御防备' },
+    60: { stage: 10, meaning: '负重完成' },
+    61: { court: 'page', meaning: '感兴趣、尝试新行动' },
+    62: { court: 'knight', meaning: '积极追求、主动出击' },
+    63: { court: 'queen', meaning: '有主见、负责任、直接' },
+    64: { court: 'king', meaning: '专一、负责、说到做到（霸道主导）' },
+    
+    // 圣杯
+    65: { stage: 1, meaning: '好感喜欢' },
+    66: { stage: 2, meaning: '平等合作' },
+    67: { stage: 3, meaning: '社交欢庆' },
+    68: { stage: 4, meaning: '冷淡漠视' },
+    69: { stage: 5, meaning: '失落悲伤' },
+    70: { stage: 6, meaning: '主动关爱' },
+    71: { stage: 7, meaning: '幻想画饼' },
+    72: { stage: 8, meaning: '离开' },
+    73: { stage: 9, meaning: '得意孤独' },
+    74: { stage: 10, meaning: '圆满和睦' },
+    75: { court: 'page', meaning: '主动示意好感、聊天愉快' },
+    76: { court: 'knight', meaning: '在意表现、提供情绪价值' },
+    77: { court: 'queen', meaning: '对感情要求高、内心不满意但不说' },
+    78: { court: 'king', meaning: '浪漫、情商高、完美恋人' },
+    
+    // 星币
+    37: { stage: 1, meaning: '有规划' },
+    38: { stage: 2, meaning: '权衡比较' },
+    39: { stage: 3, meaning: '学习讨论' },
+    40: { stage: 4, meaning: '保守稳定' },
+    41: { stage: 5, meaning: '进展慢' },
+    42: { stage: 6, meaning: '付出平衡' },
+    43: { stage: 7, meaning: '思考犹豫' },
+    44: { stage: 8, meaning: '专注忙碌' },
+    45: { stage: 9, meaning: '享乐忽视' },
+    46: { stage: 10, meaning: '共同努力' },
+    47: { court: 'page', meaning: '有初步规划、慢慢发展' },
+    48: { court: 'knight', meaning: '稳定专一、考虑现实' },
+    49: { court: 'queen', meaning: '踏实认真、愿意付出（但不主动表达）' },
+    50: { court: 'king', meaning: '顾家负责、兑现承诺、靠谱结婚对象' },
+    
+    // 宝剑
+    23: { stage: 1, meaning: '想法一致' },
+    24: { stage: 2, meaning: '纠结两难' },
+    25: { stage: 3, meaning: '扎心痛苦' },
+    26: { stage: 4, meaning: '停滞复盘' },
+    27: { stage: 5, meaning: '争执争吵' },
+    28: { stage: 6, meaning: '缓慢进展' },
+    29: { stage: 7, meaning: '隐藏侥幸' },
+    30: { stage: 8, meaning: '束缚被困' },
+    31: { stage: 9, meaning: '焦虑多想' },
+    32: { stage: 10, meaning: '结束' },
+    33: { court: 'page', meaning: '思维飘散、四处张望、不坚定' },
+    34: { court: 'knight', meaning: '方向明确、主动推进' },
+    35: { court: 'queen', meaning: '有标准、说话直接（理性但忽视感受）' },
+    36: { court: 'king', meaning: '责任担当、说到做到（智慧决断）' }
+  }
+};
+
 function getCardAnchors(cardId, orientation) {
   const card = getCardById(cardId);
   if (!card || !card.pattern) return null;
@@ -1176,15 +1284,16 @@ function getDynamicTypeForCard(cardId) {
   return types[types.length - 1];
 }
 
-// 题型配比：固定对比10% + 画面锚点10% + 80%动态分配
+// 题型配比：固定对比10% + 推导10% + 画面锚点10% + 70%动态分配
 function allocateQuestionTypes(count) {
   let remaining = count;
   const alloc = {};
   
   // 固定特殊题型
   alloc.compare = 10;
+  alloc.deduction = 10;
   alloc.image_anchor = 10;
-  remaining -= 20;
+  remaining -= 30;
   
   // 逆位逻辑约占5%
   alloc.reversed = Math.max(3, Math.floor(remaining * 0.05));
@@ -1208,7 +1317,8 @@ function allocateQuestionTypes(count) {
   const names = {
     single: '单选', truefalse: '判断', fillblank: '填空', 
     reversed: '逆位逻辑', reverse: '倒序记忆', image: '图片联想',
-    compare: '对比(10%)', recall: '看牌说词', image_anchor: '画面锚点(10%)'
+    compare: '对比(10%)', recall: '看牌说词', image_anchor: '画面锚点(10%)',
+    deduction: '推导(10%)'
   };
   const ratioText = Object.keys(names).map(t => `${names[t]}${Math.round(alloc[t]/count*100)}%`).join(' / ');
   const el = document.getElementById('type-ratio-info');
@@ -1252,7 +1362,7 @@ function generateCompareQuestion(poolItem) {
     options,
     correctIndex: options.indexOf(correctAnswer),
     correctAnswer,
-    explanation: `✅ 正确：${targetCard.name} = ${correctAnswer}\n❌ 易混淆：${confuseCard.name} = ${confuseAnswer}`
+    explanation: `✅ 正确：${targetCard.name} = ${correctAnswer}<br>❌ 易混淆：${confuseCard.name} = ${confuseAnswer}`
   };
 }
 
@@ -1312,6 +1422,168 @@ function generateImageAnchorQuestion(poolItem) {
     correctIndex: options.indexOf(correctAnswer),
     correctAnswer,
     explanation: `画面锚点「${anchorsText}」→ 核心含义：${correctAnswer}`
+  };
+}
+
+// 生成推导题
+function generateDeductionQuestion(poolItem) {
+  const card = getCardById(poolItem.cardId);
+  if (!card || !card.uk || !card.rk) return null;
+  
+  // 只处理小阿卡纳牌（23-78），大阿卡纳不做推导题
+  if (poolItem.cardId < 23) return null;
+  
+  const deduction = DEDUCTION_DATA.cardDeductions[poolItem.cardId];
+  if (!deduction) return null;
+  
+  const isUp = poolItem.orientation === 'upright';
+  const correctAnswer = isUp ? card.uk : card.rk;
+  
+  // 确定牌组
+  let suitKey = null;
+  if (poolItem.cardId >= 51 && poolItem.cardId <= 64) suitKey = 'wands';
+  else if (poolItem.cardId >= 65 && poolItem.cardId <= 78) suitKey = 'cups';
+  else if (poolItem.cardId >= 37 && poolItem.cardId <= 50) suitKey = 'pentacles';
+  else if (poolItem.cardId >= 23 && poolItem.cardId <= 36) suitKey = 'swords';
+  
+  if (!suitKey) return null;
+  
+  const suit = DEDUCTION_DATA.suits[suitKey];
+  
+  // 构建简化题目说明（题干只保留核心推导公式）
+  let questionText = '';
+  let derivationText = ''; // 保存推导过程，用于反馈
+  if (deduction.stage) {
+    const stage = DEDUCTION_DATA.stages[deduction.stage];
+    questionText = `${suit.name}牌组（${suit.element}=${suit.elementName}）·${stage.name}阶段<br>请选择这张牌的核心含义：`;
+    derivationText = `📊 推导过程：<br>牌组：${suit.name}（${suit.element}=${suit.elementName}）<br>阶段：${deduction.stage}-${stage.name}<br><strong>公式：${suit.elementName} + ${stage.name} = ${deduction.meaning}</strong>`;
+  } else if (deduction.court) {
+    const court = DEDUCTION_DATA.court[deduction.court];
+    questionText = `${suit.name}牌组（${suit.element}=${suit.elementName}）·${court.name}（${court.level}级）<br>请选择这张牌的核心含义：`;
+    derivationText = `📊 推导过程：<br>牌组：${suit.name}（${suit.element}=${suit.elementName}）<br>宫廷牌：${court.name}（${court.level}级）<br><strong>公式：${suit.elementName} + ${court.name} = ${deduction.meaning}</strong>`;
+  } else {
+    return null;
+  }
+  
+  // 优化干扰项生成：优先选择同阶段不同元素或同元素不同阶段的牌
+  const wrongCards = [];
+  
+  if (deduction.stage) {
+    // 数字牌：优先寻找同阶段不同牌组的干扰项
+    const sameStageDifferentSuit = [];
+    Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
+      if (sk !== suitKey) {
+        const cards = DEDUCTION_DATA.suitCards[sk].filter(id => {
+          const d = DEDUCTION_DATA.cardDeductions[id];
+          return d && d.stage === deduction.stage;
+        });
+        sameStageDifferentSuit.push(...cards);
+      }
+    });
+    shuffle(sameStageDifferentSuit).slice(0, 2).forEach(id => {
+      const c = getCardById(id);
+      if (c) {
+        const ans = isUp ? c.uk : c.rk;
+        if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+          wrongCards.push(ans);
+        }
+      }
+    });
+    
+    // 其次寻找同牌组不同阶段的干扰项
+    if (wrongCards.length < 2) {
+      const sameSuitDifferentStage = DEDUCTION_DATA.suitCards[suitKey].filter(id => {
+        const d = DEDUCTION_DATA.cardDeductions[id];
+        return d && d.stage && d.stage !== deduction.stage;
+      });
+      shuffle(sameSuitDifferentStage).slice(0, 2).forEach(id => {
+        const c = getCardById(id);
+        if (c) {
+          const ans = isUp ? c.uk : c.rk;
+          if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+            wrongCards.push(ans);
+          }
+        }
+      });
+    }
+  } else if (deduction.court) {
+    // 宫廷牌：优先寻找同级别不同牌组的干扰项
+    const sameCourtDifferentSuit = [];
+    Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
+      if (sk !== suitKey) {
+        const cards = DEDUCTION_DATA.suitCards[sk].filter(id => {
+          const d = DEDUCTION_DATA.cardDeductions[id];
+          return d && d.court === deduction.court;
+        });
+        sameCourtDifferentSuit.push(...cards);
+      }
+    });
+    shuffle(sameCourtDifferentSuit).slice(0, 2).forEach(id => {
+      const c = getCardById(id);
+      if (c) {
+        const ans = isUp ? c.uk : c.rk;
+        if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+          wrongCards.push(ans);
+        }
+      }
+    });
+    
+    // 其次寻找同牌组不同级别的干扰项
+    if (wrongCards.length < 2) {
+      const sameSuitDifferentCourt = DEDUCTION_DATA.suitCards[suitKey].filter(id => {
+        const d = DEDUCTION_DATA.cardDeductions[id];
+        return d && d.court && d.court !== deduction.court;
+      });
+      shuffle(sameSuitDifferentCourt).slice(0, 2).forEach(id => {
+        const c = getCardById(id);
+        if (c) {
+          const ans = isUp ? c.uk : c.rk;
+          if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+            wrongCards.push(ans);
+          }
+        }
+      });
+    }
+  }
+  
+  // 最后用其他牌组随机补充
+  while (wrongCards.length < 3) {
+    const otherSuitCards = [];
+    Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
+      if (sk !== suitKey) {
+        otherSuitCards.push(...DEDUCTION_DATA.suitCards[sk]);
+      }
+    });
+    const randomId = shuffle(otherSuitCards)[0];
+    if (randomId) {
+      const c = getCardById(randomId);
+      if (c) {
+        const ans = isUp ? c.uk : c.rk;
+        if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+          wrongCards.push(ans);
+        }
+      }
+    }
+    if (wrongCards.length >= 3) break;
+  }
+  
+  const options = shuffle([correctAnswer, ...wrongCards.slice(0, 3)]);
+  
+  const fullExplanation = `${derivationText}<br><br>📖 完整故事：${suit.story}<br><br>💡 核心关键词：${correctAnswer}`;
+  
+  return {
+    type: 'deduction',
+    question: questionText,
+    cardName: card.name,
+    cardId: card.id,
+    orientation: poolItem.orientation,
+    suit: suitKey,
+    deduction,
+    showImageOnly: true, // 只显示图片，不显示牌名
+    options,
+    correctIndex: options.indexOf(correctAnswer),
+    correctAnswer,
+    explanation: fullExplanation // 反馈中包含完整推导过程和故事
   };
 }
 
@@ -1567,7 +1839,20 @@ function startExam() {
   });
   remaining = remaining.filter(item => !compareUsed.has(`${item.cardId}_${item.orientation}`));
   
-  // 2. 再挑10张做画面锚点题（需要有锚点数据的卡牌）
+  // 2. 再挑10张做推导题（只从小阿卡纳牌中选择）
+  const deductionCandidates = remaining.filter(item => 
+    item.cardId >= 23 && DEDUCTION_DATA.cardDeductions[item.cardId]
+  );
+  const deductionUsed = new Set();
+  const deductionItems = shuffle(deductionCandidates).slice(0, 10);
+  deductionItems.forEach(item => {
+    deductionUsed.add(`${item.cardId}_${item.orientation}`);
+    const q = generateDeductionQuestion(item);
+    if (q) questions.push(q);
+  });
+  remaining = remaining.filter(item => !deductionUsed.has(`${item.cardId}_${item.orientation}`));
+  
+  // 3. 再挑10张做画面锚点题（需要有锚点数据的卡牌）
   const anchorCandidates = remaining.filter(item => {
     const list = getCardAnchors(item.cardId, item.orientation);
     return list && list.length > 0;
@@ -1581,7 +1866,7 @@ function startExam() {
   });
   remaining = remaining.filter(item => !anchorUsed.has(`${item.cardId}_${item.orientation}`));
   
-  // 3. 逆位逻辑题（约5题，只从剩余的逆位项中生成）
+  // 4. 逆位逻辑题（约5题，只从剩余的逆位项中生成）
   const revCandidates = remaining.filter(i => i.orientation === 'reversed');
   const revCount = Math.min(Math.max(3, Math.floor(count * 0.05)), revCandidates.length);
   const revUsed = new Set();
@@ -1592,7 +1877,7 @@ function startExam() {
   });
   remaining = remaining.filter(item => !revUsed.has(`${item.cardId}_${item.orientation}`));
   
-  // 4. 剩余题目按动态题型配比生成（每张牌根据进度决定题型）
+  // 5. 剩余题目按动态题型配比生成（每张牌根据进度决定题型）
   remaining.forEach((item, index) => {
     if (questions.length >= count) return;
     // 每5题插入一个倒序记忆或图片联想
@@ -1614,7 +1899,7 @@ function startExam() {
     if (q) questions.push(q);
   });
   
-  // 5. 如果还不够，用单选题补
+  // 6. 如果还不够，用单选题补
   const usedKeys = new Set(questions.map(q => `${q.cardId}_${q.orientation}`));
   for (const item of selectedItems) {
     if (questions.length >= count) break;
@@ -1712,7 +1997,8 @@ function renderQuestion() {
   const typeNames = {
     single: '单选题', truefalse: '判断题', fillblank: '填空题', 
     reversed: '逆位逻辑题', reverse: '倒序记忆', image: '图片联想',
-    compare: '相似牌对比', recall: '看牌说词', image_anchor: '画面锚点'
+    compare: '相似牌对比', recall: '看牌说词', image_anchor: '画面锚点',
+    deduction: '推导题'
   };
   document.getElementById('quiz-type-label').textContent = typeNames[q.type] || '未知题型';
   
@@ -1768,7 +2054,7 @@ function renderQuestion() {
       
       // 现在显示完整题目
       let qHtml = '';
-      const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor');
+      const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor' || q.type === 'deduction');
       if (isImageOnly) {
         qHtml = `
           <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
@@ -2013,9 +2299,7 @@ function showFeedback(isCorrect, msg, explanation) {
     
     // 第3行：完整解析
     let cleanExplanation = explanation;
-    if (q.type === 'compare') {
-      cleanExplanation = cleanExplanation.replace(/\n/g, '<br>');
-    } else if (q.type === 'image_anchor') {
+    if (q.type === 'image_anchor') {
       // 画面锚点题：保持原有explanation（包含画面锚点→核心含义的训练信息），不替换
     } else {
       const patterns = [
@@ -2300,12 +2584,21 @@ function startReview(fromResult) {
   // 按错误次数排序，优先推高频错题
   pool.sort((a, b) => b.err.ec - a.err.ec);
   
-  // 生成题目（按动态题型配比）
+  // 生成题目（小阿卡纳卡牌优先用推导题）
   const questions = pool.map(p => {
-    const type = getDynamicTypeForCard(p.cardId);
     const isUp = p.orientation === 'upright';
     const correctAnswer = isUp ? p.card.uk : p.card.rk;
     
+    // 如果是小阿卡纳卡牌，先尝试生成推导题
+    if (p.cardId >= 23 && DEDUCTION_DATA.cardDeductions[p.cardId]) {
+      const deductionQ = generateDeductionQuestion({ cardId: p.cardId, orientation: p.orientation });
+      if (deductionQ) {
+        return deductionQ;
+      }
+    }
+    
+    // 如果不能生成推导题，用动态题型
+    const type = getDynamicTypeForCard(p.cardId);
     if (type === 'truefalse') {
       const trueDesc = isUp ? p.card.ud : p.card.rd;
       const fakeOthers = TAROT_CARDS.filter(c => c.id !== p.cardId && (isUp ? c.ud : c.rd));
