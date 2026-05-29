@@ -577,6 +577,31 @@ const DEDUCTION_DATA = {
   
   // 具体每张牌的推导含义
   cardDeductions: {
+    // ===== 大阿卡纳（0-21）=====
+    1: { stage: 1, element: 'fire', elementName: '行动', upright: '有资源', reversed: '没资源、沟通受阻有隐瞒' },
+    2: { stage: 2, element: 'water', elementName: '沟通', upright: '静观其变', reversed: '情绪化、识人不清' },
+    3: { stage: 3, element: 'earth', elementName: '规划', upright: '踏实认真', reversed: '不踏实、无规划自私' },
+    4: { stage: 4, element: 'fire', elementName: '行动', upright: '靠谱坚定', reversed: '不靠谱、大男子主义' },
+    5: { stage: 5, element: 'earth', elementName: '规划', upright: '有人听从', reversed: '无人听从、第三方干扰' },
+    6: { stage: 6, element: 'air', elementName: '想法', upright: '平衡稳定', reversed: '失衡、三方关系' },
+    7: { stage: 7, element: 'water', elementName: '沟通', upright: '可控', reversed: '失控、失去主动权' },
+    8: { stage: 8, element: 'fire', elementName: '行动', upright: '温柔控制', reversed: '难控制、无能力' },
+    9: { stage: 9, element: 'earth', elementName: '规划', upright: '迷茫', reversed: '更迷茫、极度迷茫' },
+    10: { stage: 10, element: 'water', elementName: '沟通', upright: '运势变动', reversed: '运势低迷、受外界影响' },
+    11: { stage: 1, element: 'air', elementName: '想法', level: 'high', upright: '平衡规则', reversed: '失衡、关系不对等' },
+    12: { stage: 2, element: 'water', elementName: '沟通', level: 'high', upright: '精神共鸣', reversed: '精神压力大、相处不适' },
+    13: { stage: 3, element: 'earth', elementName: '规划', level: 'high', upright: '结束新生', reversed: '未结束、反复纠缠' },
+    14: { stage: 4, element: 'fire', elementName: '行动', level: 'high', upright: '平衡自律', reversed: '沟通阻碍、沟通不畅' },
+    15: { stage: 5, element: 'earth', elementName: '规划', level: 'high', upright: '长期欲望', reversed: '短期欲望、短暂纠葛' },
+    16: { stage: 6, element: 'fire', elementName: '行动', level: 'high', upright: '突发变故', reversed: '已知变故、问题暴露' },
+    17: { stage: 7, element: 'air', elementName: '想法', level: 'high', upright: '有期望', reversed: '没期望、消极无信心' },
+    18: { stage: 8, element: 'water', elementName: '沟通', level: 'high', upright: '隐藏看不清', reversed: '看清真相、发现问题' },
+    19: { stage: 9, element: 'fire', elementName: '行动', level: 'high', upright: '积极阳光', reversed: '不明朗、有第三方' },
+    20: { stage: 10, element: 'water', elementName: '沟通', level: 'high', upright: '抉择', reversed: '问题反复、自欺欺人' },
+    21: { stage: 'complete', element: 'all', elementName: '四元素', upright: '克服阻碍', reversed: '难克服、环境阻碍大' },
+    0: { stage: 'origin', element: 'air', elementName: '想法', upright: '新开始', reversed: '不听建议、开始不顺利' },
+    
+    // ===== 小阿卡纳（23-78）=====
     // 权杖（火=行动）
     51: { stage: 1, upright: '主动出击', reversed: '冲动开始、没有准备 / 缺乏行动力、兴趣消退' },
     52: { stage: 2, upright: '观望', reversed: '犹豫、不敢做决定' },
@@ -1425,30 +1450,16 @@ function generateImageAnchorQuestion(poolItem) {
   };
 }
 
-// 生成推导题
+// 生成推导题（支持大阿卡纳和小阿卡纳）
 function generateDeductionQuestion(poolItem) {
   const card = getCardById(poolItem.cardId);
   if (!card || !card.uk || !card.rk) return null;
-  
-  // 只处理小阿卡纳牌（23-78），大阿卡纳不做推导题
-  if (poolItem.cardId < 23) return null;
   
   const deduction = DEDUCTION_DATA.cardDeductions[poolItem.cardId];
   if (!deduction) return null;
   
   const isUp = poolItem.orientation === 'upright';
   const correctAnswer = isUp ? card.uk : card.rk;
-  
-  // 确定牌组
-  let suitKey = null;
-  if (poolItem.cardId >= 51 && poolItem.cardId <= 64) suitKey = 'wands';
-  else if (poolItem.cardId >= 65 && poolItem.cardId <= 78) suitKey = 'cups';
-  else if (poolItem.cardId >= 37 && poolItem.cardId <= 50) suitKey = 'pentacles';
-  else if (poolItem.cardId >= 23 && poolItem.cardId <= 36) suitKey = 'swords';
-  
-  if (!suitKey) return null;
-  
-  const suit = DEDUCTION_DATA.suits[suitKey];
   
   // 获取画面锚点（根据当前题目的方向）
   const anchors = getCardAnchors(poolItem.cardId, poolItem.orientation) || [];
@@ -1457,76 +1468,115 @@ function generateDeductionQuestion(poolItem) {
   // 构建题干：真正需要推导的格式
   const questionText = `🔍 推导训练<br>请观察这张牌的画面，推导它的核心含义：`;
   
-  // 构建反馈内容：正确的顺序（推导步骤→答案→故事）
+  // 构建反馈内容
   let feedbackContent = '';
-  if (deduction.stage) {
-    // 数字牌推导
-    const stage = DEDUCTION_DATA.stages[deduction.stage];
+  const isMajor = poolItem.cardId <= 22;
+  
+  if (isMajor) {
+    // 大阿卡纳推导逻辑
+    const levelText = deduction.level === 'high' ? '高阶' : '基础';
+    const stageText = deduction.stage === 'origin' ? '原点' : 
+                      deduction.stage === 'complete' ? '圆满' : 
+                      DEDUCTION_DATA.stages[deduction.stage].name;
+    
     feedbackContent = 
       `<div class="fb-section"><div class="fb-section-label">第一步：识别元素</div>` +
       `<div class="fb-detail">` +
       (anchorSample ? `画面：${anchorSample}<br>` : '') +
-      `→ ${suit.name}牌组<br>` +
-      `→ ${suit.element}元素 = ${suit.elementName}</div></div>` +
+      `→ 主导元素：${deduction.elementName}<br>` +
+      `→ ${deduction.element === 'fire' ? '🔥 行动意志' : 
+          deduction.element === 'water' ? '💧 情感沟通' : 
+          deduction.element === 'earth' ? '⭐ 物质规划' : 
+          deduction.element === 'air' ? '⚔ 思维想法' : '🌍 四元素综合'}</div></div>` +
       
       `<div class="fb-section"><div class="fb-section-label">第二步：判断阶段</div>` +
-      `<div class="fb-detail">数字：${deduction.stage}<br>` +
-      `→ ${stage.name}阶段<br>` +
-      `→ ${stage.desc}</div></div>` +
+      `<div class="fb-detail">编号：${poolItem.cardId}<br>` +
+      `→ ${levelText}阶段<br>` +
+      `→ ${stageText}${deduction.stage !== 'origin' && deduction.stage !== 'complete' ? `（${deduction.stage}）` : ''}</div></div>` +
       
       `<div class="fb-section"><div class="fb-section-label">第三步：推导含义</div>` +
       `<div style="padding:10px 14px;border-radius:8px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;font-weight:600">` +
-      `${suit.element}元素（${suit.elementName}） + ${stage.name}阶段（${deduction.stage}） = ${isUp ? deduction.upright : deduction.reversed}</div></div>` +
+      `${deduction.elementName}元素 + ${levelText}${stageText}阶段 = ${isUp ? deduction.upright : deduction.reversed}</div></div>` +
       
-      `<div class="fb-section"><div class="fb-section-label">故事线</div>` +
-      `<div class="fb-detail">${suit.story}</div></div>` +
-      
-      `<div class="fb-section"><div class="fb-section-label">核心答案</div>` +
-      `<div class="fb-detail"><strong>${isUp ? '正位' : '逆位'}：${correctAnswer}</strong></div></div>`;
-  } else if (deduction.court) {
-    // 宫廷牌推导
-    const court = DEDUCTION_DATA.court[deduction.court];
-    feedbackContent = 
-      `<div class="fb-section"><div class="fb-section-label">第一步：识别元素</div>` +
-      `<div class="fb-detail">` +
-      (anchorSample ? `画面：${anchorSample}<br>` : '') +
-      `→ ${suit.name}牌组<br>` +
-      `→ ${suit.element}元素 = ${suit.elementName}</div></div>` +
-      
-      `<div class="fb-section"><div class="fb-section-label">第二步：判断身份</div>` +
-      `<div class="fb-detail">宫廷牌：${court.name}<br>` +
-      `→ ${court.level}级能量<br>` +
-      `→ ${court.desc}</div></div>` +
-      
-      `<div class="fb-section"><div class="fb-section-label">第三步：推导含义</div>` +
-      `<div style="padding:10px 14px;border-radius:8px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;font-weight:600">` +
-      `${suit.element}元素（${suit.elementName}） + ${court.name}（${court.level}级） = ${isUp ? deduction.upright : deduction.reversed}</div></div>` +
-      
-      `<div class="fb-section"><div class="fb-section-label">故事线</div>` +
-      `<div class="fb-detail">${suit.story}</div></div>` +
+      `<div class="fb-section"><div class="fb-section-label">愚人之旅故事线</div>` +
+      `<div class="fb-detail">${getFoolJourneyStory(poolItem.cardId)}</div></div>` +
       
       `<div class="fb-section"><div class="fb-section-label">核心答案</div>` +
       `<div class="fb-detail"><strong>${isUp ? '正位' : '逆位'}：${correctAnswer}</strong></div></div>`;
   } else {
-    return null;
+    // 小阿卡纳推导逻辑
+    let suitKey = null;
+    if (poolItem.cardId >= 51 && poolItem.cardId <= 64) suitKey = 'wands';
+    else if (poolItem.cardId >= 65 && poolItem.cardId <= 78) suitKey = 'cups';
+    else if (poolItem.cardId >= 37 && poolItem.cardId <= 50) suitKey = 'pentacles';
+    else if (poolItem.cardId >= 23 && poolItem.cardId <= 36) suitKey = 'swords';
+    
+    if (!suitKey) return null;
+    
+    const suit = DEDUCTION_DATA.suits[suitKey];
+    
+    if (deduction.stage) {
+      // 数字牌推导
+      const stage = DEDUCTION_DATA.stages[deduction.stage];
+      feedbackContent = 
+        `<div class="fb-section"><div class="fb-section-label">第一步：识别元素</div>` +
+        `<div class="fb-detail">` +
+        (anchorSample ? `画面：${anchorSample}<br>` : '') +
+        `→ ${suit.name}牌组<br>` +
+        `→ ${suit.element}元素 = ${suit.elementName}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">第二步：判断阶段</div>` +
+        `<div class="fb-detail">数字：${deduction.stage}<br>` +
+        `→ ${stage.name}阶段<br>` +
+        `→ ${stage.desc}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">第三步：推导含义</div>` +
+        `<div style="padding:10px 14px;border-radius:8px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;font-weight:600">` +
+        `${suit.element}元素（${suit.elementName}） + ${stage.name}阶段（${deduction.stage}） = ${isUp ? deduction.upright : deduction.reversed}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">故事线</div>` +
+        `<div class="fb-detail">${suit.story}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">核心答案</div>` +
+        `<div class="fb-detail"><strong>${isUp ? '正位' : '逆位'}：${correctAnswer}</strong></div></div>`;
+    } else if (deduction.court) {
+      // 宫廷牌推导
+      const court = DEDUCTION_DATA.court[deduction.court];
+      feedbackContent = 
+        `<div class="fb-section"><div class="fb-section-label">第一步：识别元素</div>` +
+        `<div class="fb-detail">` +
+        (anchorSample ? `画面：${anchorSample}<br>` : '') +
+        `→ ${suit.name}牌组<br>` +
+        `→ ${suit.element}元素 = ${suit.elementName}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">第二步：判断身份</div>` +
+        `<div class="fb-detail">宫廷牌：${court.name}<br>` +
+        `→ ${court.level}级能量<br>` +
+        `→ ${court.desc}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">第三步：推导含义</div>` +
+        `<div style="padding:10px 14px;border-radius:8px;background:rgba(212,184,122,.1);border:1px solid rgba(212,184,122,.2);color:#d4b87a;font-weight:600">` +
+        `${suit.element}元素（${suit.elementName}） + ${court.name}（${court.level}级） = ${isUp ? deduction.upright : deduction.reversed}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">故事线</div>` +
+        `<div class="fb-detail">${suit.story}</div></div>` +
+        
+        `<div class="fb-section"><div class="fb-section-label">核心答案</div>` +
+        `<div class="fb-detail"><strong>${isUp ? '正位' : '逆位'}：${correctAnswer}</strong></div></div>`;
+    } else {
+      return null;
+    }
   }
   
-  // 优化干扰项生成：优先选择同阶段不同元素或同元素不同阶段的牌
+  // 干扰项生成逻辑
   const wrongCards = [];
   
-  if (deduction.stage) {
-    // 数字牌：优先寻找同阶段不同牌组的干扰项
-    const sameStageDifferentSuit = [];
-    Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
-      if (sk !== suitKey) {
-        const cards = DEDUCTION_DATA.suitCards[sk].filter(id => {
-          const d = DEDUCTION_DATA.cardDeductions[id];
-          return d && d.stage === deduction.stage;
-        });
-        sameStageDifferentSuit.push(...cards);
-      }
-    });
-    shuffle(sameStageDifferentSuit).slice(0, 2).forEach(id => {
+  if (isMajor) {
+    // 大阿卡纳干扰项：同阶段不同元素
+    const sameStage = Object.entries(DEDUCTION_DATA.cardDeductions)
+      .filter(([id, d]) => parseInt(id) <= 22 && d.stage === deduction.stage && parseInt(id) !== poolItem.cardId)
+      .map(([id]) => parseInt(id));
+    shuffle(sameStage).slice(0, 2).forEach(id => {
       const c = getCardById(id);
       if (c) {
         const ans = isUp ? c.uk : c.rk;
@@ -1535,14 +1585,26 @@ function generateDeductionQuestion(poolItem) {
         }
       }
     });
+  } else {
+    // 小阿卡纳干扰项逻辑
+    let suitKey = null;
+    if (poolItem.cardId >= 51 && poolItem.cardId <= 64) suitKey = 'wands';
+    else if (poolItem.cardId >= 65 && poolItem.cardId <= 78) suitKey = 'cups';
+    else if (poolItem.cardId >= 37 && poolItem.cardId <= 50) suitKey = 'pentacles';
+    else if (poolItem.cardId >= 23 && poolItem.cardId <= 36) suitKey = 'swords';
     
-    // 其次寻找同牌组不同阶段的干扰项
-    if (wrongCards.length < 2) {
-      const sameSuitDifferentStage = DEDUCTION_DATA.suitCards[suitKey].filter(id => {
-        const d = DEDUCTION_DATA.cardDeductions[id];
-        return d && d.stage && d.stage !== deduction.stage;
+    if (deduction.stage) {
+      const sameStageDifferentSuit = [];
+      Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
+        if (sk !== suitKey) {
+          const cards = DEDUCTION_DATA.suitCards[sk].filter(id => {
+            const d = DEDUCTION_DATA.cardDeductions[id];
+            return d && d.stage === deduction.stage;
+          });
+          sameStageDifferentSuit.push(...cards);
+        }
       });
-      shuffle(sameSuitDifferentStage).slice(0, 2).forEach(id => {
+      shuffle(sameStageDifferentSuit).slice(0, 2).forEach(id => {
         const c = getCardById(id);
         if (c) {
           const ans = isUp ? c.uk : c.rk;
@@ -1551,36 +1613,34 @@ function generateDeductionQuestion(poolItem) {
           }
         }
       });
-    }
-  } else if (deduction.court) {
-    // 宫廷牌：优先寻找同级别不同牌组的干扰项
-    const sameCourtDifferentSuit = [];
-    Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
-      if (sk !== suitKey) {
-        const cards = DEDUCTION_DATA.suitCards[sk].filter(id => {
+      
+      if (wrongCards.length < 2) {
+        const sameSuitDifferentStage = DEDUCTION_DATA.suitCards[suitKey].filter(id => {
           const d = DEDUCTION_DATA.cardDeductions[id];
-          return d && d.court === deduction.court;
+          return d && d.stage && d.stage !== deduction.stage;
         });
-        sameCourtDifferentSuit.push(...cards);
+        shuffle(sameSuitDifferentStage).slice(0, 2).forEach(id => {
+          const c = getCardById(id);
+          if (c) {
+            const ans = isUp ? c.uk : c.rk;
+            if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+              wrongCards.push(ans);
+            }
+          }
+        });
       }
-    });
-    shuffle(sameCourtDifferentSuit).slice(0, 2).forEach(id => {
-      const c = getCardById(id);
-      if (c) {
-        const ans = isUp ? c.uk : c.rk;
-        if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
-          wrongCards.push(ans);
+    } else if (deduction.court) {
+      const sameCourtDifferentSuit = [];
+      Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
+        if (sk !== suitKey) {
+          const cards = DEDUCTION_DATA.suitCards[sk].filter(id => {
+            const d = DEDUCTION_DATA.cardDeductions[id];
+            return d && d.court === deduction.court;
+          });
+          sameCourtDifferentSuit.push(...cards);
         }
-      }
-    });
-    
-    // 其次寻找同牌组不同级别的干扰项
-    if (wrongCards.length < 2) {
-      const sameSuitDifferentCourt = DEDUCTION_DATA.suitCards[suitKey].filter(id => {
-        const d = DEDUCTION_DATA.cardDeductions[id];
-        return d && d.court && d.court !== deduction.court;
       });
-      shuffle(sameSuitDifferentCourt).slice(0, 2).forEach(id => {
+      shuffle(sameCourtDifferentSuit).slice(0, 2).forEach(id => {
         const c = getCardById(id);
         if (c) {
           const ans = isUp ? c.uk : c.rk;
@@ -1589,25 +1649,34 @@ function generateDeductionQuestion(poolItem) {
           }
         }
       });
+      
+      if (wrongCards.length < 2) {
+        const sameSuitDifferentCourt = DEDUCTION_DATA.suitCards[suitKey].filter(id => {
+          const d = DEDUCTION_DATA.cardDeductions[id];
+          return d && d.court && d.court !== deduction.court;
+        });
+        shuffle(sameSuitDifferentCourt).slice(0, 2).forEach(id => {
+          const c = getCardById(id);
+          if (c) {
+            const ans = isUp ? c.uk : c.rk;
+            if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+              wrongCards.push(ans);
+            }
+          }
+        });
+      }
     }
   }
   
-  // 最后用其他牌组随机补充
+  // 补充干扰项
   while (wrongCards.length < 3) {
-    const otherSuitCards = [];
-    Object.keys(DEDUCTION_DATA.suitCards).forEach(sk => {
-      if (sk !== suitKey) {
-        otherSuitCards.push(...DEDUCTION_DATA.suitCards[sk]);
-      }
-    });
-    const randomId = shuffle(otherSuitCards)[0];
-    if (randomId) {
-      const c = getCardById(randomId);
-      if (c) {
-        const ans = isUp ? c.uk : c.rk;
-        if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
-          wrongCards.push(ans);
-        }
+    const others = TAROT_NAMES.filter(c => c.id !== poolItem.cardId && (isUp ? getCardById(c.id).uk : getCardById(c.id).rk));
+    const randomId = shuffle(others)[0].id;
+    const c = getCardById(randomId);
+    if (c) {
+      const ans = isUp ? c.uk : c.rk;
+      if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+        wrongCards.push(ans);
       }
     }
     if (wrongCards.length >= 3) break;
@@ -1621,14 +1690,43 @@ function generateDeductionQuestion(poolItem) {
     cardName: card.name,
     cardId: card.id,
     orientation: poolItem.orientation,
-    suit: suitKey,
+    isMajor,
     deduction,
-    showImageOnly: true, // 只显示图片，不显示牌名
+    showImageOnly: true,
     options,
     correctIndex: options.indexOf(correctAnswer),
     correctAnswer,
-    explanation: feedbackContent // 反馈中包含完整推导过程和故事
+    explanation: feedbackContent
   };
+}
+
+// 愚人之旅故事线
+function getFoolJourneyStory(cardId) {
+  const stories = {
+    0: "愚人背着行囊，带着白玫瑰和小狗，毫无畏惧地走向悬崖，开启了人生的第一次旅程",
+    1: "魔术师站在四元素之间，举起魔杖，将内在的想法转化为外在的行动",
+    2: "女祭司坐在双柱之间，手持卷轴，守护着隐藏的知识和直觉的智慧",
+    3: "女皇坐在丰收的麦田里，怀抱婴儿，享受着生命的富足与创造的喜悦",
+    4: "皇帝坐在石制王座上，手持权杖和宝剑，建立秩序，掌控着物质世界",
+    5: "教皇站在教堂前，向信徒传授传统的智慧和精神的信仰",
+    6: "恋人站在天使面前，面临着爱情与选择的考验，需要做出内心的决定",
+    7: "战车驾驭着黑白双狮，勇往直前，克服重重困难，向着目标前进",
+    8: "力量用温柔的手抚摸着狮子的头，用内在的勇气驯服了野性的本能",
+    9: "隐者提着灯笼，独自走在雪山上，在孤独中寻找真理和内心的光明",
+    10: "命运之轮缓缓转动，带来了人生的起伏与变化，一切都在自然流转",
+    11: "正义手持天平与宝剑，蒙着双眼，公正地评判着世间的善恶与是非",
+    12: "倒吊人被绑在树上，头朝下脚朝上，用牺牲和换角度思考获得了新的智慧",
+    13: "死神骑着白马而来，带走了旧的生命，为新的开始清出了空间",
+    14: "节制天使将水在两个圣杯之间倒来倒去，找到了行动与情感的完美平衡",
+    15: "恶魔用锁链束缚着男女，利用欲望和物质诱惑，让人陷入自我囚禁",
+    16: "高塔被闪电击中，人们从塔顶坠落，旧的结构崩塌，带来了毁灭性的觉醒",
+    17: "星星在夜空中闪耀，女子向大地倒水，带来了希望、信念和心灵的治愈",
+    18: "月亮高悬在天空，狗和狼在嚎叫，龙虾从水中爬出，隐藏着恐惧和未知的危险",
+    19: "太阳照耀着大地，骑马的孩子手持旗帜，带来了纯粹的快乐和生命的活力",
+    20: "天使吹响了号角，死者从坟墓中复活，迎来了最终的审判和灵魂的觉醒",
+    21: "世界女子在花环中跳舞，四角的神兽守护着她，完成了人生的旅程，获得了圆满"
+  };
+  return stories[cardId] || "这是愚人之旅中的一个重要节点";
 }
 
 // 生成单选题
@@ -1883,17 +1981,31 @@ function startExam() {
   });
   remaining = remaining.filter(item => !compareUsed.has(`${item.cardId}_${item.orientation}`));
   
-  // 2. 再挑10张做推导题（只从小阿卡纳牌中选择）
+  // 2. 再挑10张做推导题（大阿卡纳4张 + 小阿卡纳6张）
   const deductionCandidates = remaining.filter(item => 
-    item.cardId >= 23 && DEDUCTION_DATA.cardDeductions[item.cardId]
+    DEDUCTION_DATA.cardDeductions[item.cardId]
   );
+  // 分离大阿卡纳和小阿卡纳
+  const majorDeduction = deductionCandidates.filter(i => i.cardId <= 22);
+  const minorDeduction = deductionCandidates.filter(i => i.cardId >= 23);
   const deductionUsed = new Set();
-  const deductionItems = shuffle(deductionCandidates).slice(0, 10);
-  deductionItems.forEach(item => {
+  
+  // 优先选大阿卡纳（4张）
+  const majorItems = shuffle(majorDeduction).slice(0, 4);
+  majorItems.forEach(item => {
     deductionUsed.add(`${item.cardId}_${item.orientation}`);
     const q = generateDeductionQuestion(item);
     if (q) questions.push(q);
   });
+  
+  // 再选小阿卡纳（6张）
+  const minorItems = shuffle(minorDeduction).slice(0, 6);
+  minorItems.forEach(item => {
+    deductionUsed.add(`${item.cardId}_${item.orientation}`);
+    const q = generateDeductionQuestion(item);
+    if (q) questions.push(q);
+  });
+  
   remaining = remaining.filter(item => !deductionUsed.has(`${item.cardId}_${item.orientation}`));
   
   // 3. 再挑10张做画面锚点题（需要有锚点数据的卡牌）
@@ -2660,8 +2772,8 @@ function startReview(fromResult) {
     const isUp = p.orientation === 'upright';
     const correctAnswer = isUp ? p.card.uk : p.card.rk;
     
-    // 如果是小阿卡纳卡牌，先尝试生成推导题
-    if (p.cardId >= 23 && DEDUCTION_DATA.cardDeductions[p.cardId]) {
+    // 如果有推导题数据，优先尝试生成推导题（支持大阿卡纳和小阿卡纳）
+    if (DEDUCTION_DATA.cardDeductions[p.cardId]) {
       const deductionQ = generateDeductionQuestion({ cardId: p.cardId, orientation: p.orientation });
       if (deductionQ) {
         return deductionQ;
