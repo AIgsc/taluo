@@ -1940,98 +1940,99 @@ function startExam() {
   if (buttonLocks['startExam']) return;
   buttonLocks['startExam'] = true;
   
-  // 检查牌义数据是否已加载
-  if (!TAROT_CARDS || TAROT_CARDS.length < 78) {
-    toast('数据加载中，请稍后再试');
-    buttonLocks['startExam'] = false;
-    return;
-  }
-  
-  // 固定参数：100题、全部78张牌、正位+逆位、薄弱优先
-  const count = 100;
-  const timeLimit = selectedTimeLimit;
-  const pool = buildQuestionPool('all', 'both', 'weak');
-  const selectedItems = weightedRandomSelect(pool, 'weak', count);
-  // 首页显示题型比例（实际出题由动态配比算法按卡牌进度实时决定）
-  allocateQuestionTypes(count);
-  
-  // 按题型配比生成题
-  const questions = [];
-  let remaining = [...selectedItems];
-  
-  // 1. 先挑出适合做对比题的牌对（属于CONFUSE_PAIRS的卡牌）
-  const compareCandidates = remaining.filter(item => 
-    CONFUSE_PAIRS.some(p => p.includes(item.cardId))
-  );
-  // 按混淆错误率排序（优先高频错误牌对）
-  const confuseErrors = getConfuseErrors();
-  const sortedCompare = shuffle(compareCandidates).sort((a, b) => {
-    const pairA = CONFUSE_PAIRS.find(p => p.includes(a.cardId));
-    const pairB = CONFUSE_PAIRS.find(p => p.includes(b.cardId));
-    const errA = pairA ? (confuseErrors[pairA.sort((x,y)=>x-y).join('_')] || 0) : 0;
-    const errB = pairB ? (confuseErrors[pairB.sort((x,y)=>x-y).join('_')] || 0) : 0;
-    return errB - errA; // 错误多的优先
-  });
-  const compareUsed = new Set();
-  const compareItems = sortedCompare.slice(0, 10);
-  compareItems.forEach(item => {
-    compareUsed.add(`${item.cardId}_${item.orientation}`);
-    const q = generateCompareQuestion(item);
-    if (q) questions.push(q);
-  });
-  remaining = remaining.filter(item => !compareUsed.has(`${item.cardId}_${item.orientation}`));
-  
-  // 2. 再挑10张做推导题（大阿卡纳4张 + 小阿卡纳6张）
-  const deductionCandidates = remaining.filter(item => 
-    DEDUCTION_DATA.cardDeductions[item.cardId]
-  );
-  // 分离大阿卡纳和小阿卡纳
-  const majorDeduction = deductionCandidates.filter(i => i.cardId <= 22);
-  const minorDeduction = deductionCandidates.filter(i => i.cardId >= 23);
-  const deductionUsed = new Set();
-  
-  // 优先选大阿卡纳（4张）
-  const majorItems = shuffle(majorDeduction).slice(0, 4);
-  majorItems.forEach(item => {
-    deductionUsed.add(`${item.cardId}_${item.orientation}`);
-    const q = generateDeductionQuestion(item);
-    if (q) questions.push(q);
-  });
-  
-  // 再选小阿卡纳（6张）
-  const minorItems = shuffle(minorDeduction).slice(0, 6);
-  minorItems.forEach(item => {
-    deductionUsed.add(`${item.cardId}_${item.orientation}`);
-    const q = generateDeductionQuestion(item);
-    if (q) questions.push(q);
-  });
-  
-  remaining = remaining.filter(item => !deductionUsed.has(`${item.cardId}_${item.orientation}`));
-  
-  // 3. 再挑10张做画面锚点题（需要有锚点数据的卡牌）
-  const anchorCandidates = remaining.filter(item => {
-    const list = getCardAnchors(item.cardId, item.orientation);
-    return list && list.length > 0;
-  });
-  const anchorUsed = new Set();
-  const anchorItems = shuffle(anchorCandidates).slice(0, 10);
-  anchorItems.forEach(item => {
-    anchorUsed.add(`${item.cardId}_${item.orientation}`);
-    const q = generateImageAnchorQuestion(item);
-    if (q) questions.push(q);
-  });
-  remaining = remaining.filter(item => !anchorUsed.has(`${item.cardId}_${item.orientation}`));
-  
-  // 4. 逆位逻辑题（约5题，只从剩余的逆位项中生成）
-  const revCandidates = remaining.filter(i => i.orientation === 'reversed');
-  const revCount = Math.min(Math.max(3, Math.floor(count * 0.05)), revCandidates.length);
-  const revUsed = new Set();
-  shuffle(revCandidates).slice(0, revCount).forEach(item => {
-    revUsed.add(`${item.cardId}_${item.orientation}`);
-    const q = generateReversedLogic(item);
-    if (q) questions.push(q);
-  });
-  remaining = remaining.filter(item => !revUsed.has(`${item.cardId}_${item.orientation}`));
+  try {
+    // 检查牌义数据是否已加载
+    if (!TAROT_CARDS || TAROT_CARDS.length < 78) {
+      toast('数据加载中，请稍后再试');
+      buttonLocks['startExam'] = false;
+      return;
+    }
+    
+    // 固定参数：100题、全部78张牌、正位+逆位、薄弱优先
+    const count = 100;
+    const timeLimit = selectedTimeLimit;
+    const pool = buildQuestionPool('all', 'both', 'weak');
+    const selectedItems = weightedRandomSelect(pool, 'weak', count);
+    // 首页显示题型比例（实际出题由动态配比算法按卡牌进度实时决定）
+    allocateQuestionTypes(count);
+    
+    // 按题型配比生成题
+    const questions = [];
+    let remaining = [...selectedItems];
+    
+    // 1. 先挑出适合做对比题的牌对（属于CONFUSE_PAIRS的卡牌）
+    const compareCandidates = remaining.filter(item => 
+      CONFUSE_PAIRS.some(p => p.includes(item.cardId))
+    );
+    // 按混淆错误率排序（优先高频错误牌对）
+    const confuseErrors = getConfuseErrors();
+    const sortedCompare = shuffle(compareCandidates).sort((a, b) => {
+      const pairA = CONFUSE_PAIRS.find(p => p.includes(a.cardId));
+      const pairB = CONFUSE_PAIRS.find(p => p.includes(b.cardId));
+      const errA = pairA ? (confuseErrors[pairA.sort((x,y)=>x-y).join('_')] || 0) : 0;
+      const errB = pairB ? (confuseErrors[pairB.sort((x,y)=>x-y).join('_')] || 0) : 0;
+      return errB - errA; // 错误多的优先
+    });
+    const compareUsed = new Set();
+    const compareItems = sortedCompare.slice(0, 10);
+    compareItems.forEach(item => {
+      compareUsed.add(`${item.cardId}_${item.orientation}`);
+      const q = generateCompareQuestion(item);
+      if (q) questions.push(q);
+    });
+    remaining = remaining.filter(item => !compareUsed.has(`${item.cardId}_${item.orientation}`));
+    
+    // 2. 再挑10张做推导题（大阿卡纳4张 + 小阿卡纳6张）
+    const deductionCandidates = remaining.filter(item => 
+      DEDUCTION_DATA.cardDeductions[item.cardId]
+    );
+    // 分离大阿卡纳和小阿卡纳
+    const majorDeduction = deductionCandidates.filter(i => i.cardId <= 22);
+    const minorDeduction = deductionCandidates.filter(i => i.cardId >= 23);
+    const deductionUsed = new Set();
+    
+    // 优先选大阿卡纳（4张）
+    const majorItems = shuffle(majorDeduction).slice(0, 4);
+    majorItems.forEach(item => {
+      deductionUsed.add(`${item.cardId}_${item.orientation}`);
+      const q = generateDeductionQuestion(item);
+      if (q) questions.push(q);
+    });
+    
+    // 再选小阿卡纳（6张）
+    const minorItems = shuffle(minorDeduction).slice(0, 6);
+    minorItems.forEach(item => {
+      deductionUsed.add(`${item.cardId}_${item.orientation}`);
+      const q = generateDeductionQuestion(item);
+      if (q) questions.push(q);
+    });
+    
+    remaining = remaining.filter(item => !deductionUsed.has(`${item.cardId}_${item.orientation}`));
+    
+    // 3. 再挑10张做画面锚点题（需要有锚点数据的卡牌）
+    const anchorCandidates = remaining.filter(item => {
+      const list = getCardAnchors(item.cardId, item.orientation);
+      return list && list.length > 0;
+    });
+    const anchorUsed = new Set();
+    const anchorItems = shuffle(anchorCandidates).slice(0, 10);
+    anchorItems.forEach(item => {
+      anchorUsed.add(`${item.cardId}_${item.orientation}`);
+      const q = generateImageAnchorQuestion(item);
+      if (q) questions.push(q);
+    });
+    remaining = remaining.filter(item => !anchorUsed.has(`${item.cardId}_${item.orientation}`));
+    
+    // 4. 逆位逻辑题（约5题，只从剩余的逆位项中生成）
+    const revCandidates = remaining.filter(i => i.orientation === 'reversed');
+    const revCount = Math.min(Math.max(3, Math.floor(count * 0.05)), revCandidates.length);
+    const revUsed = new Set();
+    shuffle(revCandidates).slice(0, revCount).forEach(item => {
+      revUsed.add(`${item.cardId}_${item.orientation}`);
+      const q = generateReversedLogic(item);
+      if (q) questions.push(q);
+    });
+    remaining = remaining.filter(item => !revUsed.has(`${item.cardId}_${item.orientation}`));
   
   // 5. 剩余题目按动态题型配比生成（每张牌根据进度决定题型）
   remaining.forEach((item, index) => {
@@ -2101,17 +2102,23 @@ function startExam() {
     pauseStart: null
   };
   
-  // 立即保存考试状态
-  saveExamState();
-  
-  showScreen('exam');
-  renderQuestion();
-  startExamTimer();
-  
-  // 500ms后解锁按钮
-  setTimeout(() => {
+    // 立即保存考试状态
+    saveExamState();
+    
+    showScreen('exam');
+    renderQuestion();
+    startExamTimer();
+    
+    // 500ms后解锁按钮
+    setTimeout(() => {
+      buttonLocks['startExam'] = false;
+    }, 500);
+  } catch (e) {
+    console.error('开始考试出错:', e);
+    toast('开始考试失败，请刷新页面重试');
+    // 错误时立即解锁按钮
     buttonLocks['startExam'] = false;
-  }, 500);
+  }
 }
 
 function startExamTimer() {
@@ -3174,19 +3181,25 @@ document.querySelector('#screen-review .progress-filter').addEventListener('clic
 
 // ======================== 初始化 ========================
 async function init() {
-  const token = getAuthToken();
+  // 先尝试启用按钮，防止任何错误导致按钮无法点击
   const startBtn = document.getElementById('start-exam-btn');
-  
-  // 加载保存的时间限制
-  const savedTime = localStorage.getItem('tarot_time_limit');
-  if (savedTime) {
-    const time = parseInt(savedTime);
-    if ([30, 60, 90, 120].includes(time)) {
-      setTimeLimit(time);
-    }
+  if (startBtn) {
+    startBtn.disabled = false;
+    startBtn.textContent = '开始训练';
   }
   
   try {
+    const token = getAuthToken();
+    
+    // 加载保存的时间限制
+    const savedTime = localStorage.getItem('tarot_time_limit');
+    if (savedTime) {
+      const time = parseInt(savedTime);
+      if ([30, 60, 90, 120].includes(time)) {
+        setTimeLimit(time);
+      }
+    }
+    
     // 生成初始随机题型比例显示
     allocateQuestionTypes(100);
     
