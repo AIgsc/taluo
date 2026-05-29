@@ -528,7 +528,7 @@ const CONFUSE_PAIRS = [
   [1, 51],    // 愚人 ↔ 权杖一
   [3, 77],    // 女祭司 ↔ 圣杯女王
   [32, 14],   // 宝剑十 ↔ 死神
-  [18, 20],    // 星星 ↔ 太阳
+  [18, 19],    // 星星 ↔ 月亮
   [15, 66],   // 节制 ↔ 圣杯二
   [47, 61],   // 星币侍从 ↔ 权杖侍从
   [34, 62],   // 宝剑骑士 ↔ 权杖骑士
@@ -539,10 +539,10 @@ const CONFUSE_PAIRS = [
 const DEDUCTION_DATA = {
   // 四个牌组
   suits: {
-    wands: { name: '权杖', element: '火', elementName: '行动', story: '🔥 权杖（火=行动）<br>1-2 主动约相亲，果断做选择<br>3-4 频繁见面推进，行动稳住关系<br>5-6 争吵动手（火气大），调整相处方式<br>7-8 冷静反思，全力行动解决矛盾<br>9-10 怕错过，用力抱紧——关系达成' },
-    cups: { name: '圣杯', element: '水', elementName: '沟通', story: '💧🍸 圣杯（水=沟通）<br>1-2 开始聊相亲，选谁聊得来<br>3-4 每天分享发展，甜言蜜语稳定<br>5-6 吵架冷战（沟通冲突），主动开口调整<br>7-8 深夜反思，用心沟通化解<br>9-10 怕失去你，说开心里话——关系圆满' },
-    pentacles: { name: '星币', element: '土', elementName: '规划', story: '⭐️ 星币（土=规划）<br>1-2 开始规划相亲，筛选条件<br>3-4 按计划约会发展，稳定见家长<br>5-6 现实问题冲突（钱/房子），调整预算<br>7-8 反思未来，全力攒钱解决<br>9-10 怕错过好对象，一起存够首付——达成结婚规划' },
-    swords: { name: '宝剑', element: '风', elementName: '想法', story: '⚔️ 宝剑（风=想法）<br>1-2 开始想相亲，犹豫选谁<br>3-4 想法推进关系，理智稳定评估<br>5-6 观念吵架（想法冲突），调整心态<br>7-8 反复反思，理性分析解决矛盾<br>9-10 怕错过对的人，想通——认定关系' }
+    wands: { name: '权杖', element: '火', elementName: '行动', story: '🔥 权杖（火=行动）<br>1-2 主动邀约相亲，果断做出选择<br>3-4 频繁见面推进，用行动稳住关系<br>5-6 争执产生矛盾，及时调整相处模式<br>7-8 冷静反思，全力行动化解问题<br>9-10 怕错过彼此，用心维系，修成正果' },
+    cups: { name: '圣杯', element: '水', elementName: '沟通', story: '💧🍸 圣杯（水=沟通）<br>1-2 相亲开启聊天，挑选相处合拍的人<br>3-4 日常分享升温，言语互动稳固感情<br>5-6 沟通出现矛盾、陷入冷战，主动破冰调整<br>7-8 静下心反思，用心交流解开隔阂<br>9-10 怕失去对方，敞开心扉，感情圆满' },
+    pentacles: { name: '星币', element: '土', elementName: '规划', story: '⭐️ 星币（土=规划）<br>1-2 着手规划相亲，按条件筛选人选<br>3-4 依照计划约会发展，稳步走到见家长<br>5-6 因现实问题起分歧，重新规划收支与安排<br>7-8 思索未来走向，踏实努力解决难题<br>9-10 不愿错过良缘，共同打拼，敲定婚嫁规划' },
+    swords: { name: '宝剑', element: '风', elementName: '想法', story: '⚔️ 宝剑（风=想法）<br>1-2 萌生相亲想法，纠结该选择谁<br>3-4 梳理思绪推进关系，理性评估稳住状态<br>5-6 观念不合引发争执，及时调整心态<br>7-8 反复思索复盘，理性分析化解矛盾<br>9-10 怕错过良缘，彻底想通，认定彼此' }
   },
   
   // 十个阶段
@@ -555,7 +555,7 @@ const DEDUCTION_DATA = {
     6: { name: '调整', desc: '调整阶段，解决问题' },
     7: { name: '反思', desc: '反思阶段，思考总结' },
     8: { name: '力量', desc: '力量阶段，积蓄能量' },
-    9: { name: '缺憾', desc: '缺憾阶段，有所不足' },
+    9: { name: '遗憾', desc: '遗憾阶段，有所不足' },
     10: { name: '完成', desc: '完成阶段，达成目标' }
   },
   
@@ -578,7 +578,7 @@ const DEDUCTION_DATA = {
   // 具体每张牌的推导含义
   cardDeductions: {
     // ===== 大阿卡纳（1-22）=====
-    1: { stage: 'origin', element: 'air', elementName: '想法', upright: '新开始', reversed: '不听建议、开始不顺利' },
+    1: { stage: 'origin', element: 'all', elementName: '四元素', upright: '新开始', reversed: '不听建议、开始不顺利' },
     2: { stage: 1, element: 'fire', elementName: '行动', upright: '有资源', reversed: '没资源、沟通受阻有隐瞒' },
     3: { stage: 2, element: 'water', elementName: '沟通', upright: '静观其变', reversed: '情绪化、识人不清' },
     4: { stage: 3, element: 'earth', elementName: '规划', upright: '踏实认真', reversed: '不踏实、无规划自私' },
@@ -599,72 +599,72 @@ const DEDUCTION_DATA = {
     19: { stage: 8, element: 'water', elementName: '沟通', level: 'high', upright: '隐藏看不清', reversed: '看清真相、发现问题' },
     20: { stage: 9, element: 'fire', elementName: '行动', level: 'high', upright: '积极阳光', reversed: '不明朗、有第三方' },
     21: { stage: 10, element: 'water', elementName: '沟通', level: 'high', upright: '抉择', reversed: '问题反复、自欺欺人' },
-    22: { stage: 'complete', element: 'all', elementName: '四元素', upright: '圆满完成', reversed: '未完成、拖延停滞' },
+    22: { stage: 'complete', element: 'all', elementName: '四元素', upright: '克服大环境问题', reversed: '很难克服' },
     
     // ===== 小阿卡纳（23-78）=====
     // 权杖（火=行动）
-    51: { stage: 1, upright: '主动出击', reversed: '冲动开始、没有准备 / 缺乏行动力、兴趣消退' },
-    52: { stage: 2, upright: '观望', reversed: '犹豫、不敢做决定' },
-    53: { stage: 3, upright: '出发', reversed: '延迟、行动受阻' },
-    54: { stage: 4, upright: '庆祝稳定', reversed: '不稳定、庆祝太早' },
-    55: { stage: 5, upright: '争执打架', reversed: '避免冲突、内心斗争' },
-    56: { stage: 6, upright: '胜利统率', reversed: '失败、领导力不足' },
-    57: { stage: 7, upright: '克服阻力', reversed: '放弃、感到疲惫' },
-    58: { stage: 8, upright: '快速推进', reversed: '急躁、进度失控' },
-    59: { stage: 9, upright: '防御防备', reversed: '过度防御、不信任' },
-    60: { stage: 10, upright: '负重完成', reversed: '负担太重、无法完成' },
-    61: { court: 'page', upright: '感兴趣、尝试新行动', reversed: '三分钟热度、半途而废、虎头蛇尾' },
-    62: { court: 'knight', upright: '积极追求、主动出击', reversed: '冲动、不顾后果' },
-    63: { court: 'queen', upright: '有主见、负责任、直接', reversed: '霸道、控制欲强' },
-    64: { court: 'king', upright: '专一、负责、说到做到（霸道主导）', reversed: '霸道专制、脾气暴躁、刚愎自用' },
+    51: { stage: 1, upright: '主动去做，开启新行动', reversed: '不主动出击，没兴趣放下了' },
+    52: { stage: 2, upright: '先观望，不急着出手', reversed: '迟迟不决、错过时机 / 盲目行动、不加思考' },
+    53: { stage: 3, upright: '迈步出发，主动推进', reversed: '行动受阻、进展缓慢 / 冲得太快、后劲不足' },
+    54: { stage: 4, upright: '局势稳定，值得庆祝', reversed: '庆祝过早、乐极生悲 / 局势不稳、难以为继' },
+    55: { stage: 5, upright: '行动分歧，发生争执冲突', reversed: '避免冲突、息事宁人 / 冲突升级、彻底决裂' },
+    56: { stage: 6, upright: '调整节奏后取胜，重掌局面', reversed: '调整失败、重掌失败 / 成功太早、难以守住' },
+    57: { stage: 7, upright: '迎难而上，咬牙克服阻碍', reversed: '放弃退缩、不敢面对 / 冲得太猛、元气大伤' },
+    58: { stage: 8, upright: '飞速推进，节奏停不下来', reversed: '速度过快、失控翻车 / 速度太慢、停滞不前' },
+    59: { stage: 9, upright: '谨慎防守，规避再次受挫', reversed: '过度防御、闭关自守 / 放松警惕、再次受挫' },
+    60: { stage: 10, upright: '负重坚持，最终完成目标', reversed: '不堪重负、放弃目标 / 完成质量差、结果糟糕' },
+    61: { court: 'page', upright: '心生好奇，愿意尝试新行动', reversed: '三分钟热度、虎头蛇尾 / 完全没兴趣、不愿尝试' },
+    62: { court: 'knight', upright: '积极追逐，主动出击', reversed: '冲动莽撞、不计后果 / 不够积极、被动等待' },
+    63: { court: 'queen', upright: '有主见、负责任、行事直率', reversed: '霸道专制、控制欲强 / 没主见、不负责任' },
+    64: { court: 'king', upright: '专一负责，行事果断、言出必行', reversed: '言而无信、不负责任 / 刚愎自用、独断专行' },
     
     // 圣杯（水=沟通）
-    65: { stage: 1, upright: '好感喜欢', reversed: '感情不稳定、缺乏感觉' },
-    66: { stage: 2, upright: '平等合作', reversed: '沟通不畅、不平等' },
-    67: { stage: 3, upright: '社交欢庆', reversed: '社交场合不开心、孤独 / 第三方干扰、朋友挑拨' },
-    68: { stage: 4, upright: '冷淡漠视', reversed: '重新点燃希望' },
-    69: { stage: 5, upright: '失落悲伤', reversed: '走出悲伤、慢慢恢复' },
-    70: { stage: 6, upright: '主动关爱', reversed: '自私、只考虑自己' },
-    71: { stage: 7, upright: '幻想画饼', reversed: '面对现实、不再幻想' },
-    72: { stage: 8, upright: '离开', reversed: '犹豫是否离开、暂时留下' },
-    73: { stage: 9, upright: '得意孤独', reversed: '不满、不知足' },
-    74: { stage: 10, upright: '圆满和睦', reversed: '家庭不和谐、感情破裂' },
-    75: { court: 'page', upright: '主动示意好感、聊天愉快', reversed: '敏感、容易受伤' },
-    76: { court: 'knight', upright: '在意表现、提供情绪价值', reversed: '情绪化、喜怒无常' },
-    77: { court: 'queen', upright: '对感情要求高、内心不满意但不说', reversed: '缺乏安全感、不信任' },
-    78: { court: 'king', upright: '浪漫、情商高、完美恋人', reversed: '情感泛滥、不负责任、光说不做' },
+    65: { stage: 1, upright: '萌生好感，相处融洽投缘', reversed: '感情冷淡、缺乏感觉 / 好感过度、热情过剩' },
+    66: { stage: 2, upright: '双向平等，相处合作愉快', reversed: '沟通不畅、关系失衡 / 一方讨好、不平等' },
+    67: { stage: 3, upright: '欢聚热闹，社交氛围轻松', reversed: '社交失败、孤独失落 / 过度社交、精力耗尽' },
+    68: { stage: 4, upright: '心态冷淡，对现状提不起兴致', reversed: '重新燃起希望、热情回来 / 更加冷淡、心死' },
+    69: { stage: 5, upright: '内心失落，情绪难过伤感', reversed: '走出悲伤、情绪好转 / 悲伤加剧、痛苦升级' },
+    70: { stage: 6, upright: '主动关怀，温柔给予温暖', reversed: '自私冷漠、只关心自己 / 过度付出、感到委屈' },
+    71: { stage: 7, upright: '空想幻想，不切实际、画大饼', reversed: '回归现实、停止幻想 / 幻想破灭、彻底失望' },
+    72: { stage: 8, upright: '攒够失望，主动抽身离开', reversed: '犹豫不决、难以离开 / 离开太急、后悔莫及' },
+    73: { stage: 9, upright: '表面自得圆满，内心孤独缺憾', reversed: '感到满足、内心充实 / 不满加剧、难以自欺' },
+    74: { stage: 10, upright: '情感和睦，关系圆满幸福', reversed: '关系破裂、家庭不睦 / 表面和谐、内在矛盾' },
+    75: { court: 'page', upright: '主动示好，聊得开心', reversed: '敏感脆弱、容易受伤 / 示好过度、惹人厌烦' },
+    76: { court: 'knight', upright: '在意对方，会哄人，给情绪价值', reversed: '情绪化、喜怒无常 / 不在意对方、冷漠敷衍' },
+    77: { court: 'queen', upright: '对感情要求高、内心不满意但不说', reversed: '情绪失控、歇斯底里 / 毫无要求、过度纵容' },
+    78: { court: 'king', upright: '浪漫体贴，完美情人', reversed: '花心滥情、不负责任 / 不懂浪漫、过于理性' },
     
-    // 星币（土=物质/规划）
-    37: { stage: 1, upright: '有规划', reversed: '缺乏规划、浪费机会' },
-    38: { stage: 2, upright: '权衡比较', reversed: '失衡、选择困难' },
-    39: { stage: 3, upright: '学习讨论', reversed: '学习进度慢、合作不畅' },
-    40: { stage: 4, upright: '保守稳定', reversed: '不稳定、财务紧张' },
-    41: { stage: 5, upright: '进展慢', reversed: '走出困境、财务好转、进展加快' },
-    42: { stage: 6, upright: '付出平衡', reversed: '不公平、付出与回报不对等' },
-    43: { stage: 7, upright: '思考犹豫', reversed: '焦虑、对未来没信心' },
-    44: { stage: 8, upright: '专注忙碌', reversed: '分心、缺乏热情' },
-    45: { stage: 9, upright: '享乐忽视', reversed: '财务问题、挥霍无度' },
-    46: { stage: 10, upright: '共同努力', reversed: '财务损失、家庭不和谐' },
-    47: { court: 'page', upright: '有初步规划、慢慢发展', reversed: '缺乏动力、不切实际' },
-    48: { court: 'knight', upright: '稳定专一、考虑现实', reversed: '固执、缺乏灵活性' },
-    49: { court: 'queen', upright: '踏实认真、愿意付出（但不主动表达）', reversed: '吝啬、斤斤计较、物质至上' },
-    50: { court: 'king', upright: '顾家负责、兑现承诺、靠谱结婚对象', reversed: '死板、缺乏浪漫' },
+    // 星币（土=规划）
+    37: { stage: 1, upright: '确立现实目标，开启全新规划', reversed: '目标模糊、规划混乱、错失良机' },
+    38: { stage: 2, upright: '权衡利弊，对比取舍、考量得失', reversed: '失衡混乱、决策错误、难以下手' },
+    39: { stage: 3, upright: '交流探讨，协作学习、推进落地', reversed: '合作失败、学习停滞、难以落地' },
+    40: { stage: 4, upright: '固守现状，谨慎保守、不愿改变', reversed: '财务不稳、状态动荡、被迫改变' },
+    41: { stage: 5, upright: '现实受阻，事情进展缓慢卡顿', reversed: '走出困境、逐步好转 / 阻碍更大、彻底停滞' },
+    42: { stage: 6, upright: '平衡付出与收获，维持状态稳定', reversed: '付出不均、失去平衡、利益冲突' },
+    43: { stage: 7, upright: '犹豫观望，纠结投入是否值得', reversed: '果断投入、不再纠结 / 彻底放弃、不再观望' },
+    44: { stage: 8, upright: '踏实专注，埋头深耕、认真做事', reversed: '分心偷懒、半途而废 / 过度辛苦、难以承受' },
+    45: { stage: 9, upright: '安于享乐，忽视长远、忽略他人', reversed: '挥霍过度、财务危机 / 开始反思、重视长远' },
+    46: { stage: 10, upright: '同心协力，生活安稳、家业红火', reversed: '家业衰败、离心离德 / 稳定过头、缺乏活力' },
+    47: { court: 'page', upright: '有初步想法，慢慢来', reversed: '想法不切实际、缺乏行动力 / 放弃规划、听天由命' },
+    48: { court: 'knight', upright: '稳重专一，考虑实际', reversed: '固执死板、不懂变通 / 不够稳重、浮躁冒进' },
+    49: { court: 'queen', upright: '踏实肯干，但不主动说', reversed: '吝啬小气、斤斤计较 / 过度付出、不懂表达' },
+    50: { court: 'king', upright: '顾家靠谱，说到做到', reversed: '不守承诺、不负责任 / 过于死板、缺乏情趣' },
     
-    // 宝剑（风=思想）
-    23: { stage: 1, upright: '想法一致', reversed: '混乱、想法不清' },
-    24: { stage: 2, upright: '纠结两难', reversed: '做出选择、不再纠结' },
-    25: { stage: 3, upright: '扎心痛苦', reversed: '走出痛苦、慢慢恢复 / 逃避痛苦、沉溺内耗' },
-    26: { stage: 4, upright: '停滞复盘', reversed: '恢复、重新开始' },
-    27: { stage: 5, upright: '争执争吵', reversed: '避免冲突、逃避问题' },
-    28: { stage: 6, upright: '缓慢进展', reversed: '进展停滞、计划失败 / 关系破裂、被迫分离' },
-    29: { stage: 7, upright: '隐藏侥幸', reversed: '坦白、不再隐瞒' },
-    30: { stage: 8, upright: '束缚被困', reversed: '解脱、恢复自由' },
-    31: { stage: 9, upright: '焦虑多想', reversed: '从焦虑中恢复、慢慢平静 / 过度焦虑、失眠多梦' },
-    32: { stage: 10, upright: '结束', reversed: '缓慢结束、无法真正解脱' },
-    33: { court: 'page', upright: '思维飘散、四处张望、不坚定', reversed: '思维混乱、谣言、信息错误、注意力涣散' },
-    34: { court: 'knight', upright: '方向明确、主动推进', reversed: '急躁、言语伤人' },
-    35: { court: 'queen', upright: '有标准、说话直接（理性但忽视感受）', reversed: '说话刻薄、言语伤人、吹毛求疵' },
-    36: { court: 'king', upright: '责任担当、说到做到（智慧决断）', reversed: '滥用权力、冷酷无情' }
+    // 宝剑（风=想法）
+    23: { stage: 1, upright: '思路清晰，想法统一、达成共识', reversed: '想法不一致' },
+    24: { stage: 2, upright: '思绪纠结，左右为难、难以抉择', reversed: '决策仓促、选错方向、纠结逃避' },
+    25: { stage: 3, upright: '心生刺痛，思绪内耗、倍感难受', reversed: '走出伤痛、停止内耗 / 痛苦加剧、内耗升级' },
+    26: { stage: 4, upright: '暂停思绪，静心沉淀、冷静休整', reversed: '打破平静、无法休息、焦虑不安' },
+    27: { stage: 5, upright: '观念不合，产生分歧、言语争执', reversed: '避免冲突、忍让妥协 / 争执升级、决裂分离' },
+    28: { stage: 6, upright: '逐步调整心态，慢慢向好发展', reversed: '调整失败、心态恶化 / 快速调整、进展不顺' },
+    29: { stage: 7, upright: '心存侥幸，投机取巧、暗藏心思', reversed: '坦诚面对、不再投机 / 被发现、谎言揭穿' },
+    30: { stage: 8, upright: '思维受限，自我束缚、难以挣脱', reversed: '打破束缚、重获自由 / 束缚更紧、更难行动' },
+    31: { stage: 9, upright: '思虑过重，胡思乱想、焦虑内耗', reversed: '放下焦虑、心态平静 / 焦虑加剧、精神崩溃' },
+    32: { stage: 10, upright: '负面状态落幕，彻底结束、清零重启', reversed: '无法结束、反复纠缠 / 结束太快、措手不及' },
+    33: { court: 'page', upright: '心不定，到处张望', reversed: '思绪混乱、心浮气躁 / 心死了、不再关心' },
+    34: { court: 'knight', upright: '目标明确，主动推进', reversed: '目标混乱、行动受阻 / 冲动冒进、不顾后果' },
+    35: { court: 'queen', upright: '有原则，说话直，不给面子', reversed: '失去原则、阿谀奉承 / 刻薄无情、伤人太深' },
+    36: { court: 'king', upright: '有担当，说到做到，理性决断', reversed: '逃避责任、言而无信 / 独断专行、滥用权威' }
   }
 };
 
@@ -1670,14 +1670,18 @@ function generateDeductionQuestion(poolItem) {
   
   // 补充干扰项
   while (wrongCards.length < 3) {
-    const others = TAROT_NAMES.filter(c => c.id !== poolItem.cardId && (isUp ? getCardById(c.id).uk : getCardById(c.id).rk));
-    const randomId = shuffle(others)[0].id;
-    const c = getCardById(randomId);
-    if (c) {
-      const ans = isUp ? c.uk : c.rk;
-      if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
-        wrongCards.push(ans);
+    const others = TAROT_CARDS.filter(c => c && c.id !== poolItem.cardId && (isUp ? c.uk : c.rk));
+    if (others.length > 0) {
+      const randomCard = shuffle(others)[0];
+      const c = randomCard;
+      if (c) {
+        const ans = isUp ? c.uk : c.rk;
+        if (ans && ans !== correctAnswer && !wrongCards.includes(ans)) {
+          wrongCards.push(ans);
+        }
       }
+    } else {
+      break;
     }
     if (wrongCards.length >= 3) break;
   }
