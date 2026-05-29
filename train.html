@@ -3011,12 +3011,16 @@ async function init() {
     if (homeMastery) {
       const progress = getProgress();
       let total = 0, mastered = 0;
-      for (const key in progress) {
-        const raw = progress[key];
-        const prog = raw?.progress || 0;
-        total++;
-        if (prog >= 100) mastered++;
-      }
+      // 遍历所有卡牌的正逆位，而不是只遍历progress里的键
+      TAROT_CARDS.forEach(card => {
+        ['upright', 'reversed'].forEach(ori => {
+          total++;
+          const key = buildProgressKey(card.id, ori);
+          const raw = progress[key];
+          const prog = raw?.progress || 0;
+          if (prog >= 100) mastered++;
+        });
+      });
       homeMastery.textContent = total > 0 ? `已掌握 ${mastered}/${total} (${Math.round(mastered/total*100)}%)` : '';
     }
     
