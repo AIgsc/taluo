@@ -4485,8 +4485,8 @@ function openQuickQuery() {
   const token = localStorage.getItem('taroToken');
   if (token) {
     actionsDiv.innerHTML = `
-      <button class="quick-query-export-btn" onclick="exportAllCardMeanings()">📥 导出全部牌义</button>
-      <button class="quick-query-export-btn" onclick="window.open('train.html','_blank')" style="margin-top:8px">🧠 牌义记忆训练</button>
+      <button class="quick-query-export-btn" onclick="exportAllCardMeanings()">导出全部牌义</button>
+      <button class="quick-query-export-btn" onclick="window.open('train.html','_blank')" style="margin-top:8px">牌义记忆训练</button>
     `;
   }
   listContainer.appendChild(actionsDiv);
