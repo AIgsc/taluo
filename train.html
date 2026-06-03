@@ -344,7 +344,7 @@ function clearAllTimers() {
   if (examTimer) { clearInterval(examTimer); examTimer = null; }
   if (questionTimer) { clearInterval(questionTimer); questionTimer = null; }
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
-  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+  if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
 }
 
 // ======================== 断点续传 ========================
@@ -2258,7 +2258,7 @@ function renderQuestion() {
   
   // 先显示图片（放大到60%屏幕宽度），等图片加载完成后开始5秒倒计时
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
-  if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+  if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
   
   const imgSize = 'width:60vw;max-width:300px';
   const imgSizeSmall = 'width:60vw;max-width:120px';
@@ -2290,24 +2290,23 @@ function renderQuestion() {
       const statusEl = document.getElementById('img-status');
       if (statusEl) statusEl.innerHTML = '🔍 仔细观察画面 <span id="image-countdown">5</span>s';
       
-      // 把倒计时值存在 DOM 元素上，避免闭包变量被干扰
-      const cdEl = document.getElementById('image-countdown');
-      if (cdEl) cdEl.dataset.remaining = '5';
-      
-      pendingImageCdInterval = setInterval(() => {
-        const el = document.getElementById('image-countdown');
-        if (!el) return;
-        let val = parseInt(el.dataset.remaining || '5');
-        val--;
-        const displayVal = Math.max(0, val);
-        el.textContent = displayVal;
-        el.dataset.remaining = String(val);
-        if (val <= 0) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
-      }, 1000);
+      // 基于时间戳计算剩余秒数，链式 setTimeout 防止 interval 堆叠
+      const expireTime = Date.now() + 5000;
+      const tick = () => {
+        const remaining = Math.max(0, Math.ceil((expireTime - Date.now()) / 1000));
+        const cdEl = document.getElementById('image-countdown');
+        if (cdEl) cdEl.textContent = remaining;
+        if (remaining > 0) {
+          pendingImageCdInterval = setTimeout(tick, 200); // 200ms 检查一次，保证显示及时更新
+        } else {
+          pendingImageCdInterval = null;
+        }
+      };
+      pendingImageCdInterval = setTimeout(tick, 200);
       
       pendingImageTimerId = setTimeout(() => {
         pendingImageTimerId = null;
-        if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+        if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
         
         // 现在显示完整题目
         let qHtml = '';
