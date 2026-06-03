@@ -528,6 +528,7 @@ async function resumeExam() {
             };
             // 更新本地缓存
             localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
+            toast('考试状态已同步');
           }
         }
       }
@@ -1023,7 +1024,7 @@ async function syncExamToServer(total, score, rate, duration, errorIds) {
 
 async function loadServerProgress() {
   const data = await apiCall('GET', '/api/training/progress');
-  if (!data || !data.length) return;
+  if (!data || !data.length) return false;
   const p = {};
   data.forEach(r => { 
     p[buildProgressKey(r.card_id, r.orientation)] = {
@@ -1037,6 +1038,7 @@ async function loadServerProgress() {
   });
   // 合并：只在本地数据更新时间更早时才用服务端数据覆盖
   const local = getProgress();
+  let updated = false;
   for (const key in p) {
     const localItem = local[key];
     const serverItem = p[key];
@@ -1045,18 +1047,23 @@ async function loadServerProgress() {
     // 关键修复：只有服务端数据答题数更多时才覆盖，否则保留本地数据
     if (!localItem || typeof localItem !== 'object') {
       local[key] = serverItem;
+      updated = true;
     } else if (serverTotal > localTotal) {
       // 服务端数据更完整，使用服务端数据
       local[key] = serverItem;
+      updated = true;
     }
     // 否则保留本地最新数据
   }
-  saveProgress(local);
+  if (updated) {
+    saveProgress(local);
+  }
+  return updated;
 }
 
 async function loadServerErrors() {
   const data = await apiCall('GET', '/api/training/errors');
-  if (!data || !data.length) return;
+  if (!data || !data.length) return false;
   const e = {};
   data.forEach(r => { 
     e[buildProgressKey(r.card_id, r.orientation)] = { 
@@ -1066,15 +1073,22 @@ async function loadServerErrors() {
     }; 
   });
   const local = getErrors();
+  let updated = false;
   for (const key in e) {
-    if (!local[key] || e[key].ec > local[key].ec) local[key] = e[key];
+    if (!local[key] || e[key].ec > (local[key]?.ec || 0)) {
+      local[key] = e[key];
+      updated = true;
+    }
   }
-  saveErrors(local);
+  if (updated) {
+    saveErrors(local);
+  }
+  return updated;
 }
 
 async function loadServerExams() {
   const data = await apiCall('GET', '/api/training/exams');
-  if (!data || !data.length) return;
+  if (!data || !data.length) return false;
   const local = getExams();
   
   // 计算考试记录的唯一签名（包含更多特征）
@@ -1096,6 +1110,7 @@ async function loadServerExams() {
   // 创建签名集合用于去重
   const seenSignatures = new Set();
   const merged = [];
+  let updated = (serverExams.length > 0);
   
   // 先添加服务端的记录
   serverExams.forEach(exam => {
@@ -1125,6 +1140,7 @@ async function loadServerExams() {
   });
   
   saveExams(merged);
+  return updated;
 }
 
 function getAuthToken() {
@@ -3329,11 +3345,17 @@ async function init() {
       homeMastery.textContent = total > 0 ? `已掌握 ${mastered}/${total} (${Math.round(mastered/total*100)}%)` : '';
     }
     
-    // 后台异步同步服务端数据
+    // 同步服务端数据并给出提示
     if (token) {
-      loadServerProgress();
-      loadServerErrors();
-      loadServerExams();
+      const [pUpdated, eUpdated, xUpdated] = await Promise.all([
+        loadServerProgress(),
+        loadServerErrors(),
+        loadServerExams()
+      ]);
+      if (pUpdated || eUpdated || xUpdated) {
+        renderProgress();
+        toast('数据同步完成');
+      }
     }
   } catch (e) {
     console.error('初始化错误:', e);
