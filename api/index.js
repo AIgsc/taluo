@@ -141,6 +141,15 @@ module.exports = async (req, res) => {
       )
     `);
     
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_exam_states (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL UNIQUE,
+        exam_state TEXT DEFAULT '{}',
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    
     // ==================== 健康检查 ====================
     if (req.method === 'GET' && path === '/api/health') {
       return res.json({ status: 'ok', timestamp: Date.now(), version: 'V2-20260511-neon-userid' });
@@ -493,8 +502,22 @@ module.exports = async (req, res) => {
     }
     
     // ==================== 训练系统：清除错题 ====================
-    if (req.method === 'DELETE' && path === '/api/training/errors') {
-      const { card_id, orientation } = req.body;
+    if (req.method === 'DELETE' && (path === '/api/training/errors' || path.startsWith('/api/training/errors/'))) {
+      // 尝试从 URL 参数获取（兼容前端的 /api/training/errors/cardId/orientation）
+      let card_id, orientation;
+      if (path.startsWith('/api/training/errors/')) {
+        const parts = path.split('/');
+        if (parts.length >= 6) {
+          card_id = Number(parts[4]);
+          orientation = parts[5];
+        }
+      }
+      // 如果 URL 没有参数，从 body 获取
+      if (!card_id || !orientation) {
+        card_id = req.body?.card_id;
+        orientation = req.body?.orientation;
+      }
+      
       if (card_id && orientation) {
         await pool.query(
           'DELETE FROM user_errors WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
@@ -531,6 +554,62 @@ module.exports = async (req, res) => {
     // ==================== 训练系统：删除考试记录 ====================
     if (req.method === 'DELETE' && path === '/api/training/exams') {
       await pool.query('DELETE FROM user_exams WHERE user_id = $1', [userPayload.userId]);
+      return res.json({ success: true });
+    }
+    
+    // ==================== 训练系统：获取考试状态 ====================
+    if (req.method === 'GET' && path === '/api/training/exam-state') {
+      const result = await pool.query(
+        'SELECT exam_state, EXTRACT(EPOCH FROM updated_at)::bigint * 1000 as updated_at FROM user_exam_states WHERE user_id = $1',
+        [userPayload.userId]
+      );
+      if (result.rows.length > 0) {
+        const row = result.rows[0];
+        return res.json({
+          exam_state: row.exam_state,
+          updated_at: row.updated_at ? Number(row.updated_at) : 0
+        });
+      } else {
+        return res.json({ exam_state: '{}', updated_at: 0 });
+      }
+    }
+    
+    // ==================== 训练系统：保存考试状态 ====================
+    if (req.method === 'POST' && path === '/api/training/exam-state') {
+      const { exam_state } = req.body;
+      
+      const existing = await pool.query(
+        'SELECT id FROM user_exam_states WHERE user_id = $1',
+        [userPayload.userId]
+      );
+      
+      if (existing.rows.length > 0) {
+        await pool.query(
+          'UPDATE user_exam_states SET exam_state = $1, updated_at = NOW() WHERE user_id = $2',
+          [exam_state || '{}', userPayload.userId]
+        );
+      } else {
+        await pool.query(
+          'INSERT INTO user_exam_states (user_id, exam_state, updated_at) VALUES ($1, $2, NOW())',
+          [userPayload.userId, exam_state || '{}']
+        );
+      }
+      
+      // 返回服务器生成的 updated_at 时间戳
+      const result = await pool.query(
+        'SELECT EXTRACT(EPOCH FROM updated_at)::bigint * 1000 as updated_at FROM user_exam_states WHERE user_id = $1',
+        [userPayload.userId]
+      );
+      
+      return res.json({ 
+        success: true, 
+        updated_at: result.rows[0]?.updated_at ? Number(result.rows[0].updated_at) : Date.now() 
+      });
+    }
+    
+    // ==================== 训练系统：清除考试状态 ====================
+    if (req.method === 'DELETE' && path === '/api/training/exam-state') {
+      await pool.query('DELETE FROM user_exam_states WHERE user_id = $1', [userPayload.userId]);
       return res.json({ success: true });
     }
     
