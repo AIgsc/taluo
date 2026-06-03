@@ -2107,8 +2107,8 @@ function pauseExamFromVisibility() {
   // 清理所有定时器
   clearAllTimers();
   
-  // 保存考试状态到 localStorage（切出浏览器时只保存本地）
-  saveExamState();
+  // 保存考试状态：切出浏览器时，同步到服务器！
+  saveExamState(true);
 }
 
 async function resumeExamFromVisibility() {
@@ -2407,8 +2407,10 @@ function answerQuestion(optionIndex) {
   
   showFeedback(isCorrect, isCorrect ? '回答正确！' : '回答错误', q.explanation);
   
-  // 答完题，只保存到 localStorage
-  saveExamState();
+  // 答完题，保存到 localStorage
+  // 每5题同步一次到服务器，或者最后一题同步
+  const shouldSync = (currentExam.answers.length % 5 === 0) || (currentExam.currentIndex + 1 >= currentExam.totalCount);
+  saveExamState(shouldSync);
   
   // 500ms后解锁按钮（给反馈展示留出时间）
   setTimeout(() => {
@@ -2507,8 +2509,10 @@ function submitFillAnswer() {
     q.explanation
   );
   
-  // 答完题，只保存到 localStorage
-  saveExamState();
+  // 答完题，保存到 localStorage
+  // 每5题同步一次到服务器，或者最后一题同步
+  const shouldSync = (currentExam.answers.length % 5 === 0) || (currentExam.currentIndex + 1 >= currentExam.totalCount);
+  saveExamState(shouldSync);
   
   // 500ms后解锁按钮
   setTimeout(() => {
