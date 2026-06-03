@@ -116,6 +116,13 @@ module.exports = async (req, res) => {
         UNIQUE(user_id, card_id, orientation)
       )
     `);
+    // 迁移：确保旧表有新加的列
+    await pool.query(`ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS correct_count INT DEFAULT 0`);
+    await pool.query(`ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS error_count INT DEFAULT 0`);
+    await pool.query(`ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS "interval" INT DEFAULT 1`);
+    await pool.query(`ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS ease_factor FLOAT DEFAULT 2.5`);
+    await pool.query(`ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS due_date TIMESTAMPTZ DEFAULT NOW()`);
+    await pool.query(`ALTER TABLE user_progress ADD COLUMN IF NOT EXISTS last_time TIMESTAMPTZ DEFAULT NOW()`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_errors (
         id SERIAL PRIMARY KEY,
@@ -129,6 +136,8 @@ module.exports = async (req, res) => {
         UNIQUE(user_id, card_id, orientation)
       )
     `);
+    // 迁移：确保旧表有 timeout 列
+    await pool.query(`ALTER TABLE user_errors ADD COLUMN IF NOT EXISTS timeout BOOLEAN DEFAULT FALSE`);
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_exams (
         id SERIAL PRIMARY KEY,
