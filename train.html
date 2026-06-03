@@ -349,6 +349,14 @@ function clearAllTimers() {
 // 保存考试状态：默认只保存到 localStorage，syncToServer=true 时同步到服务器
 async function saveExamState(syncToServer = false) {
   if (!currentExam) return;
+  
+  // 保留旧的 lastSyncAt（只当同步成功时才更新）
+  let oldLastSyncAt = 0;
+  try {
+    const old = JSON.parse(localStorage.getItem(STORAGE_KEY_EXAM_STATE) || '{}');
+    oldLastSyncAt = old.lastSyncAt || 0;
+  } catch (e) {}
+  
   const state = {
     questions: currentExam.questions,
     currentIndex: currentExam.currentIndex,
@@ -361,7 +369,7 @@ async function saveExamState(syncToServer = false) {
     questionRemaining: currentExam.questionRemaining,
     pausePhase: currentExam.pausePhase,
     createdAt: Date.now(),
-    serverUpdatedAt: currentExam.serverUpdatedAt || 0 // 记录服务器同步时间
+    lastSyncAt: oldLastSyncAt // 保留上一次成功同步时间，不随意刷新
   };
   let stateJson = JSON.stringify(state);
   
@@ -389,14 +397,9 @@ async function saveExamState(syncToServer = false) {
         if (res.ok) {
           const data = await res.json();
           if (data.updated_at) {
-            // 更新本地状态，保存服务器返回的时间戳
-            const updatedState = {
-              ...state,
-              serverUpdatedAt: data.updated_at,
-              createdAt: Date.now() // 同时更新本地 createdAt
-            };
-            stateJson = JSON.stringify(updatedState);
-            currentExam.serverUpdatedAt = data.updated_at;
+            // 同步成功！更新 lastSyncAt 为服务器时间
+            state.lastSyncAt = data.updated_at;
+            stateJson = JSON.stringify(state);
             localStorage.setItem(STORAGE_KEY_EXAM_STATE, stateJson);
           }
         }
@@ -404,6 +407,31 @@ async function saveExamState(syncToServer = false) {
     } catch (e) {
       console.error('同步到服务器失败:', e);
     }
+  }
+}
+
+// 增量答题同步：每答1题，只同步「当前这道题的答案」，不会把100道题都提交
+// 这样大幅节省网络资源
+function syncExamAnswerToServer(answerData, currentIndex) {
+  try {
+    const token = getAuthToken();
+    if (!token) return;
+    
+    // 发射后不管：不阻塞 UI，静默完成
+    fetch(`${API_BASE_URL}/training/exam-state/answer`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        currentIndex: currentIndex,
+        answer: answerData
+      })
+    }).catch(() => {});
+    // 不需要 await，轻量同步不阻塞用户
+  } catch (e) {
+    // 静默失败，本地数据作为兜底
   }
 }
 
@@ -428,10 +456,6 @@ async function loadExamState() {
           try {
             serverState = JSON.parse(data.exam_state);
             serverUpdatedAt = data.updated_at || 0;
-            // 确保服务器状态里也有 serverUpdatedAt
-            if (serverState) {
-              serverState.serverUpdatedAt = serverUpdatedAt;
-            }
           } catch (e) {
             console.error('解析服务端考试状态失败:', e);
           }
@@ -444,22 +468,38 @@ async function loadExamState() {
   
   // 再从 localStorage 加载
   let localState = null;
-  // 本地时间戳：优先用本地状态里的 serverUpdatedAt，没有的话用 createdAt
-  let localUpdatedAt = 0;
+  // 本地同步时间戳：用 lastSyncAt（仅成功同步后才更新）
+  let localLastSyncAt = 0;
   try {
     const raw = localStorage.getItem(STORAGE_KEY_EXAM_STATE);
     if (raw) {
       localState = JSON.parse(raw);
-      localUpdatedAt = localState.serverUpdatedAt || localState.createdAt || 0;
+      localLastSyncAt = localState.lastSyncAt || 0;
     }
   } catch (e) {
     console.error('解析本地考试状态失败:', e);
     clearExamState();
   }
   
-  // 返回更新时间较新的那个，同时标记来源
-  if (serverState && (!localState || serverUpdatedAt > localUpdatedAt)) {
-    // 同时更新本地缓存
+  // 对比逻辑：
+  // 1. 如果服务器 updated_at > 本地 lastSyncAt → 服务器更新，用服务器数据
+  // 2. 否则 → 本地数据更新，用本地数据
+  if (serverState && serverUpdatedAt > localLastSyncAt) {
+    // 服务器数据更新！覆盖本地，并更新 lastSyncAt
+    if (localState) {
+      // 合并本地 answers（防止本地有新的答题记录丢失）
+      const localAnswers = localState.answers || [];
+      const serverAnswers = serverState.answers || [];
+      if (localAnswers.length > serverAnswers.length) {
+        // 本地答题数更多，保留本地的
+        try {
+          localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(localState));
+        } catch (e) {}
+        return { state: localState, source: 'local' };
+      }
+    }
+    // 用服务器数据，更新 lastSyncAt
+    serverState.lastSyncAt = serverUpdatedAt;
     try {
       localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(serverState));
     } catch (e) {}
@@ -520,13 +560,8 @@ async function resumeExam() {
         if (res.ok) {
           const data = await res.json();
           if (data.updated_at) {
-            // 更新状态里的 serverUpdatedAt
-            state = {
-              ...state,
-              serverUpdatedAt: data.updated_at,
-              createdAt: Date.now()
-            };
-            // 更新本地缓存
+            // 同步成功！更新 lastSyncAt
+            state.lastSyncAt = data.updated_at;
             localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
             toast('考试状态已同步');
           }
@@ -554,8 +589,7 @@ async function resumeExam() {
     questionRemaining: state.questionRemaining,
     pausePhase: state.pausePhase,
     totalCount: state.questions.length,
-    examType: state.examType || 'normal',
-    serverUpdatedAt: state.serverUpdatedAt || 0 // 同步服务器时间戳
+    examType: state.examType || 'normal'
   };
   
   // 隐藏弹窗
@@ -2054,12 +2088,11 @@ function startExam() {
     examType: 'normal',
     pausedTime: 0,
     pauseStart: null,
-    createdAt: Date.now(),
-    serverUpdatedAt: 0 // 初始化为0，表示还没同步到服务器
+    createdAt: Date.now()
   };
 
-    // 立即保存考试状态
-    saveExamState();
+    // 立即把100道题全量保存到服务器（增量同步依赖服务器已有题目数据）
+    saveExamState(true);
     
     // 预加载前几张题的图片
     preloadInitialImages();
@@ -2107,8 +2140,8 @@ function pauseExamFromVisibility() {
   // 清理所有定时器
   clearAllTimers();
   
-  // 保存考试状态：切出浏览器时，同步到服务器！
-  saveExamState(true);
+  // 只保存本地（每答1题已增量同步到服务器，无需再全量同步）
+  saveExamState();
 }
 
 async function resumeExamFromVisibility() {
@@ -2116,11 +2149,22 @@ async function resumeExamFromVisibility() {
   // 如果没有在暂停，就不处理
   if (!currentExam.pauseStart) return;
   
+  // 先检查服务器是否有更新的考试状态
+  try {
+    const result = await loadExamState();
+    if (result.source === 'server') {
+      // 服务器有更新，重新加载
+      currentExam = null; // 先清空，让 resumeExam 重新构建
+      resumeExam();
+      return;
+    }
+  } catch (e) {}
+  
   // 计算暂停时间
   currentExam.pausedTime = (currentExam.pausedTime || 0) + (Date.now() - currentExam.pauseStart);
   currentExam.pauseStart = null;
   
-  // 保存到 localStorage
+  // 保存到本地
   saveExamState();
   
   // 重新渲染当前题
@@ -2245,8 +2289,9 @@ function renderQuestion() {
       let countdown = 5;
       pendingImageCdInterval = setInterval(() => {
         countdown--;
+        const displayVal = Math.max(0, countdown);
         const cdEl = document.getElementById('image-countdown');
-        if (cdEl) cdEl.textContent = countdown;
+        if (cdEl) cdEl.textContent = displayVal;
         if (countdown <= 0) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
       }, 1000);
       
@@ -2362,6 +2407,13 @@ function onTimeout() {
   updateProgress(q.cardId, q.orientation, false, answerTime);
   recordError(q.cardId, q.orientation, false, undefined, true);
   
+  // 超时也要同步（本地 + 增量服务器）
+  saveExamState();
+  syncExamAnswerToServer(
+    { cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true, answerTime },
+    currentExam.currentIndex
+  );
+  
   // 禁用所有选项按钮，防止超时后继续答题
   const options = document.querySelectorAll('.quiz-option');
   options.forEach(opt => opt.classList.add('disabled'));
@@ -2407,10 +2459,12 @@ function answerQuestion(optionIndex) {
   
   showFeedback(isCorrect, isCorrect ? '回答正确！' : '回答错误', q.explanation);
   
-  // 答完题，保存到 localStorage
-  // 每5题同步一次到服务器，或者最后一题同步
-  const shouldSync = (currentExam.answers.length % 5 === 0) || (currentExam.currentIndex + 1 >= currentExam.totalCount);
-  saveExamState(shouldSync);
+  // 答完题 → 保存本地（快速兜底）+ 增量同步到服务器（轻量，只传一道题）
+  saveExamState();
+  syncExamAnswerToServer(
+    { cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false, answerTime },
+    currentExam.currentIndex
+  );
   
   // 500ms后解锁按钮（给反馈展示留出时间）
   setTimeout(() => {
@@ -2509,10 +2563,12 @@ function submitFillAnswer() {
     q.explanation
   );
   
-  // 答完题，保存到 localStorage
-  // 每5题同步一次到服务器，或者最后一题同步
-  const shouldSync = (currentExam.answers.length % 5 === 0) || (currentExam.currentIndex + 1 >= currentExam.totalCount);
-  saveExamState(shouldSync);
+  // 答完题 → 保存本地（快速兜底）+ 增量同步到服务器（轻量，只传一道题）
+  saveExamState();
+  syncExamAnswerToServer(
+    { cardId: q.cardId, orientation: q.orientation, correct: isCorrect, timeout: false, answerTime },
+    currentExam.currentIndex
+  );
   
   // 500ms后解锁按钮
   setTimeout(() => {

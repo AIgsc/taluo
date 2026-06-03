@@ -609,6 +609,61 @@ module.exports = async (req, res) => {
       });
     }
     
+    // ==================== 训练系统：增量答题同步（轻量） ====================
+    if (req.method === 'POST' && path === '/api/training/exam-state/answer') {
+      const { currentIndex, answer } = req.body;
+      
+      if (!answer) {
+        return res.json({ success: false, error: '缺少答案数据' });
+      }
+      
+      // 读取现有考试状态
+      const existing = await pool.query(
+        'SELECT exam_state FROM user_exam_states WHERE user_id = $1',
+        [userPayload.userId]
+      );
+      
+      let state = { questions: [], answers: [], currentIndex: 0 };
+      if (existing.rows.length > 0 && existing.rows[0].exam_state && existing.rows[0].exam_state !== '{}') {
+        try {
+          state = JSON.parse(existing.rows[0].exam_state);
+        } catch (e) {
+          state = { questions: [], answers: [], currentIndex: 0 };
+        }
+      }
+      
+      // 追加答案
+      if (!state.answers) state.answers = [];
+      state.answers.push(answer);
+      if (currentIndex !== undefined) state.currentIndex = currentIndex;
+      state.updatedAt = Date.now();
+      
+      const stateJson = JSON.stringify(state);
+      
+      if (existing.rows.length > 0) {
+        await pool.query(
+          'UPDATE user_exam_states SET exam_state = $1, updated_at = NOW() WHERE user_id = $2',
+          [stateJson, userPayload.userId]
+        );
+      } else {
+        await pool.query(
+          'INSERT INTO user_exam_states (user_id, exam_state, updated_at) VALUES ($1, $2, NOW())',
+          [userPayload.userId, stateJson]
+        );
+      }
+      
+      // 返回服务器时间戳
+      const result2 = await pool.query(
+        'SELECT EXTRACT(EPOCH FROM updated_at)::bigint * 1000 as updated_at FROM user_exam_states WHERE user_id = $1',
+        [userPayload.userId]
+      );
+      
+      return res.json({ 
+        success: true, 
+        updated_at: result2.rows[0]?.updated_at ? Number(result2.rows[0].updated_at) : Date.now() 
+      });
+    }
+    
     // ==================== 训练系统：清除考试状态 ====================
     if (req.method === 'DELETE' && path === '/api/training/exam-state') {
       await pool.query('DELETE FROM user_exam_states WHERE user_id = $1', [userPayload.userId]);
