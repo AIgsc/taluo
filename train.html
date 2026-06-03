@@ -463,10 +463,11 @@ function getCardAnchors(cardId, orientation) {
   // 从pattern字段提取：正位画面后面的内容到</div>，或逆位画面后面的内容到</div>
   const isUp = orientation === 'upright';
   const prefix = isUp ? '正位画面' : '逆位画面';
-  const regex = new RegExp(prefix + '[：:]\\s*(.*?)(?:<\\/div|$)', 's');
+  // 同时支持带 "- " 前缀和不带前缀的格式
+  const regex = new RegExp('(-\\s*)?' + prefix + '[：:]\\s*(.*?)(?:<\\/div|$)', 's');
   const m = card.pattern.match(regex);
   if (!m) return null;
-  const raw = m[1].replace(/<[^>]+>/g, '').trim();
+  const raw = m[2].replace(/<[^>]+>/g, '').trim();
   if (!raw) return null;
   // 按标点符号分割为锚点数组
   const anchors = raw.split(/[，,、；;。.\s]+/).filter(a => a.trim().length >= 2);
@@ -1894,9 +1895,12 @@ function startExam() {
     pausedTime: 0,
     pauseStart: null
   };
-  
+
     // 立即保存考试状态
     saveExamState();
+    
+    // 预加载前几张题的图片
+    preloadInitialImages();
     
     showScreen('exam');
     renderQuestion();
@@ -1929,6 +1933,23 @@ function startExamTimer() {
   }, 1000);
 }
 
+// 预加载指定卡牌图片的辅助函数
+function preloadCardImage(cardId) {
+  if (!cardId || !cardImages[cardId]) return;
+  const img = new Image();
+  img.src = cardImages[cardId];
+}
+
+// 开始答题时预加载前几张题的图片
+function preloadInitialImages() {
+  if (!currentExam || !currentExam.questions) return;
+  const preloadCount = Math.min(3, currentExam.questions.length);
+  for (let i = 0; i < preloadCount; i++) {
+    const q = currentExam.questions[i];
+    if (q && q.cardId) preloadCardImage(q.cardId);
+  }
+}
+
 function renderQuestion() {
   if (!currentExam || !currentExam.questions || currentExam.currentIndex >= currentExam.totalCount) {
     finishExam();
@@ -1944,6 +1965,12 @@ function renderQuestion() {
   if (!q) {
     finishExam();
     return;
+  }
+  
+  // 预加载下一题的图片（如果有的话）
+  if (currentExam.currentIndex + 1 < currentExam.totalCount) {
+    const nextQ = currentExam.questions[currentExam.currentIndex + 1];
+    if (nextQ && nextQ.cardId) preloadCardImage(nextQ.cardId);
   }
   
   const idx = currentExam.currentIndex + 1;
@@ -1968,7 +1995,7 @@ function renderQuestion() {
   // 逆位图片旋转180度
   const imgRotation = q.orientation === 'reversed' ? 'transform:rotate(180deg);transform-origin:center' : '';
   
-  // 先显示图片（放大到60%屏幕宽度），5秒后显示题目
+  // 先显示图片（放大到60%屏幕宽度），等图片加载完成后开始5秒倒计时
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
   
@@ -1987,71 +2014,95 @@ function renderQuestion() {
     document.getElementById('quiz-feedback-area').innerHTML = '';
     startQuestionTimer();
   } else {
-    // 先显示图片 + "仔细观察画面"提示
+    // 先显示图片 + "加载中..."提示
     document.getElementById('quiz-question-area').innerHTML = `
-      <img class="quiz-card-img pending" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
-      <div style="text-align:center;color:#d4b87a;font-size:14px;margin:8px 0">🔍 仔细观察画面 <span id="image-countdown">5</span>s</div>
+      <img class="quiz-card-img pending" id="current-card-img" src="${cardImages[q.cardId]}" alt="" loading="eager" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
+      <div style="text-align:center;color:#d4b87a;font-size:14px;margin:8px 0" id="img-status">⏳ 图片加载中...</div>
     `;
     document.getElementById('quiz-options-area').innerHTML = '';
     document.getElementById('quiz-feedback-area').innerHTML = '';
     
-    // 5秒倒计时
-    let countdown = 5;
-    pendingImageCdInterval = setInterval(() => {
-      countdown--;
-      const cdEl = document.getElementById('image-countdown');
-      if (cdEl) cdEl.textContent = countdown;
-      if (countdown <= 0) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
-    }, 1000);
+    // 等待图片加载完成后开始5秒观察倒计时
+    const imgEl = document.getElementById('current-card-img');
     
-    pendingImageTimerId = setTimeout(() => {
-      pendingImageTimerId = null;
-      if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+    const startImageCountdown = () => {
+      const statusEl = document.getElementById('img-status');
+      if (statusEl) statusEl.innerHTML = '🔍 仔细观察画面 <span id="image-countdown">5</span>s';
       
-      // 现在显示完整题目
-      let qHtml = '';
-      const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor' || q.type === 'deduction');
-      if (isImageOnly) {
-        qHtml = `
-          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
-          <div class="q-text">${q.question}</div>
-        `;
-      } else {
-        qHtml = `
-          <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
-          <div class="card-name">${q.cardName}</div>
-          <span class="orientation-tag ${tagClass}">${tagText}</span>
-          <div class="q-text">${q.question}</div>
-        `;
-      }
-      document.getElementById('quiz-question-area').innerHTML = qHtml;
+      let countdown = 5;
+      pendingImageCdInterval = setInterval(() => {
+        countdown--;
+        const cdEl = document.getElementById('image-countdown');
+        if (cdEl) cdEl.textContent = countdown;
+        if (countdown <= 0) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+      }, 1000);
       
-      if (q.type === 'fillblank' || q.type === 'recall') {
-        document.getElementById('quiz-options-area').innerHTML = `
-          ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
-          <div class="quiz-input-wrap">
-            <input type="text" id="fill-answer" placeholder="${q.type === 'recall' ? '输入关键词，用逗号分隔...' : '输入关键词...'}" onkeydown="if(event.key==='Enter' && !buttonLocks['submitFillAnswer'])submitFillAnswer()">
-            <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
-          </div>
-        `;
-        const fillInput = document.getElementById('fill-answer');
-        // 修复：iOS设备键盘遮挡确认按钮 - 输入框获得焦点时自动滚动
-        fillInput.addEventListener('focus', () => {
-          setTimeout(() => {
-            if (window.innerHeight < 500) {
-              window.scrollTo(0, document.body.scrollHeight);
-            }
-          }, 300);
-        });
-        fillInput.focus();
-      } else {
-        document.getElementById('quiz-options-area').innerHTML = q.options.map((opt, i) => `
-          <button class="quiz-option" data-index="${i}" onclick="answerQuestion(${i})">${opt}</button>
-        `).join('');
-      }
-      
-      startQuestionTimer();
-    }, 5000);
+      pendingImageTimerId = setTimeout(() => {
+        pendingImageTimerId = null;
+        if (pendingImageCdInterval) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+        
+        // 现在显示完整题目
+        let qHtml = '';
+        const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor' || q.type === 'deduction');
+        if (isImageOnly) {
+          qHtml = `
+            <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
+            <div class="q-text">${q.question}</div>
+          `;
+        } else {
+          qHtml = `
+            <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
+            <div class="card-name">${q.cardName}</div>
+            <span class="orientation-tag ${tagClass}">${tagText}</span>
+            <div class="q-text">${q.question}</div>
+          `;
+        }
+        document.getElementById('quiz-question-area').innerHTML = qHtml;
+        
+        if (q.type === 'fillblank' || q.type === 'recall') {
+          document.getElementById('quiz-options-area').innerHTML = `
+            ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
+            <div class="quiz-input-wrap">
+              <input type="text" id="fill-answer" placeholder="${q.type === 'recall' ? '输入关键词，用逗号分隔...' : '输入关键词...'}" onkeydown="if(event.key==='Enter' && !buttonLocks['submitFillAnswer'])submitFillAnswer()">
+              <button class="btn btn-primary btn-sm" onclick="submitFillAnswer()">确认</button>
+            </div>
+          `;
+          const fillInput = document.getElementById('fill-answer');
+          // 修复：iOS设备键盘遮挡确认按钮 - 输入框获得焦点时自动滚动
+          fillInput.addEventListener('focus', () => {
+            setTimeout(() => {
+              if (window.innerHeight < 500) {
+                window.scrollTo(0, document.body.scrollHeight);
+              }
+            }, 300);
+          });
+          fillInput.focus();
+        } else {
+          document.getElementById('quiz-options-area').innerHTML = q.options.map((opt, i) => `
+            <button class="quiz-option" data-index="${i}" onclick="answerQuestion(${i})">${opt}</button>
+          `).join('');
+        }
+        
+        startQuestionTimer();
+      }, 5000);
+    };
+    
+    // 监听图片加载完成和错误
+    let imageLoaded = false;
+    const onImageReady = () => {
+      if (imageLoaded) return;
+      imageLoaded = true;
+      startImageCountdown();
+    };
+    
+    imgEl.onload = onImageReady;
+    imgEl.onerror = onImageReady;
+    
+    // 超时 fallback，最多等 3 秒
+    setTimeout(onImageReady, 3000);
+    
+    // 检查图片是否已经加载完成
+    if (imgEl.complete) onImageReady();
   }
 }
 
