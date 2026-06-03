@@ -1036,7 +1036,7 @@ async function loadServerProgress() {
       dueDate: r.due_date ? new Date(r.due_date).getTime() : Date.now()
     };
   });
-  // 合并：只在本地数据更新时间更早时才用服务端数据覆盖
+  // 合并：用答题总数判断哪个更新
   const local = getProgress();
   let updated = false;
   for (const key in p) {
@@ -1044,16 +1044,11 @@ async function loadServerProgress() {
     const serverItem = p[key];
     const localTotal = (localItem?.correctCount || 0) + (localItem?.errorCount || 0);
     const serverTotal = (serverItem.correctCount || 0) + (serverItem.errorCount || 0);
-    // 关键修复：只有服务端数据答题数更多时才覆盖，否则保留本地数据
-    if (!localItem || typeof localItem !== 'object') {
-      local[key] = serverItem;
-      updated = true;
-    } else if (serverTotal > localTotal) {
-      // 服务端数据更完整，使用服务端数据
+    // 谁答题总数多，用谁
+    if (!localItem || typeof localItem !== 'object' || serverTotal > localTotal) {
       local[key] = serverItem;
       updated = true;
     }
-    // 否则保留本地最新数据
   }
   if (updated) {
     saveProgress(local);
@@ -1075,8 +1070,11 @@ async function loadServerErrors() {
   const local = getErrors();
   let updated = false;
   for (const key in e) {
-    if (!local[key] || e[key].ec > (local[key]?.ec || 0)) {
-      local[key] = e[key];
+    // 谁错误次数多，用谁；次数一样的话，timeout 优先用服务器的
+    const localItem = local[key];
+    const serverItem = e[key];
+    if (!localItem || serverItem.ec > (localItem.ec || 0)) {
+      local[key] = serverItem;
       updated = true;
     }
   }

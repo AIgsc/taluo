@@ -125,6 +125,7 @@ module.exports = async (req, res) => {
         error_count INT DEFAULT 0,
         last_error_time TIMESTAMPTZ DEFAULT NOW(),
         continuous_correct INT DEFAULT 0,
+        timeout BOOLEAN DEFAULT FALSE,
         UNIQUE(user_id, card_id, orientation)
       )
     `);
@@ -473,7 +474,7 @@ module.exports = async (req, res) => {
     // ==================== 训练系统：获取错题 ====================
     if (req.method === 'GET' && path === '/api/training/errors') {
       const result = await pool.query(
-        'SELECT card_id, orientation, error_count, continuous_correct FROM user_errors WHERE user_id = $1 ORDER BY error_count DESC',
+        'SELECT card_id, orientation, error_count, continuous_correct, timeout FROM user_errors WHERE user_id = $1 ORDER BY error_count DESC',
         [userPayload.userId]
       );
       return res.json(result.rows);
@@ -481,7 +482,7 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：记录错题 ====================
     if (req.method === 'POST' && path === '/api/training/errors') {
-      const { card_id, orientation, is_correct, error_count, continuous_correct } = req.body;
+      const { card_id, orientation, is_correct, error_count, continuous_correct, timeout } = req.body;
       
       if (!card_id || !orientation) {
         return res.status(400).json({ error: '缺少必要参数' });
@@ -489,13 +490,14 @@ module.exports = async (req, res) => {
       
       const newEc = error_count !== undefined ? error_count : (is_correct ? 0 : 1);
       const newCc = continuous_correct !== undefined ? continuous_correct : (is_correct ? 1 : 0);
+      const newTimeout = timeout !== undefined ? !!timeout : false;
       
       await pool.query(
-        `INSERT INTO user_errors (user_id, card_id, orientation, error_count, continuous_correct, last_error_time)
-         VALUES ($1,$2,$3,$4,$5,NOW())
+        `INSERT INTO user_errors (user_id, card_id, orientation, error_count, continuous_correct, last_error_time, timeout)
+         VALUES ($1,$2,$3,$4,$5,NOW(),$6)
          ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
-           error_count=$4, continuous_correct=$5, last_error_time=NOW()`,
-        [userPayload.userId, card_id, orientation, newEc, newCc]
+           error_count=$4, continuous_correct=$5, last_error_time=NOW(), timeout=$6`,
+        [userPayload.userId, card_id, orientation, newEc, newCc, newTimeout]
       );
       
       return res.json({ success: true });
