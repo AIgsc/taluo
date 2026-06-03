@@ -534,9 +534,20 @@ async function clearExamState() {
 
 // 恢复考试
 async function resumeExam() {
-  const result = await loadExamState();
-  let state = result.state;
-  const source = result.source;
+  // 直接从 localStorage 读取（init 已经下载过并保存了最新数据，避免重复下载）
+  let state = null;
+  let source = 'local';
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_EXAM_STATE);
+    if (raw) state = JSON.parse(raw);
+  } catch (e) {}
+  
+  // 本地没有数据时，再尝试从服务器加载
+  if (!state) {
+    const result = await loadExamState();
+    state = result.state;
+    source = result.source;
+  }
   
   if (!state) {
     document.getElementById('resume-modal').style.display = 'none';
@@ -830,6 +841,7 @@ async function clearAllData() {
       STORAGE_KEY_ERRORS,
       STORAGE_KEY_EXAMS,
       STORAGE_KEY_CONFUSE_ERRORS,
+      STORAGE_KEY_EXAM_STATE,  // 考试进度
       'taro_train_inited'
     ];
     keysToRemove.forEach(key => {
@@ -840,7 +852,8 @@ async function clearAllData() {
     const promises = [
       apiCall('DELETE', '/api/training/progress'),
       apiCall('DELETE', '/api/training/errors'),
-      apiCall('DELETE', '/api/training/exams')
+      apiCall('DELETE', '/api/training/exams'),
+      clearExamState()  // 清理服务器考试状态
     ];
     
     await Promise.all(promises);
