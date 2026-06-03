@@ -134,7 +134,7 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
 .review-empty p{color:#8a7a60;font-size:14px}
 
 /* toast */
-.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#d4b87a,#b8955a);color:#1a1a2e;padding:12px 28px;border-radius:24px;font-size:14px;z-index:2000;opacity:0;transition:opacity .3s;box-shadow:0 4px 20px rgba(212,184,122,.4);font-weight:600}
 .toast.show{opacity:1}
 </style>
 </head>
@@ -3352,9 +3352,11 @@ async function init() {
         loadServerErrors(),
         loadServerExams()
       ]);
+      renderProgress();
       if (pUpdated || eUpdated || xUpdated) {
-        renderProgress();
         toast('数据同步完成');
+      } else {
+        toast('数据已最新');
       }
     }
   } catch (e) {
