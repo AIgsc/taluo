@@ -3348,7 +3348,7 @@ async function init() {
     
     // 从服务器同步所有数据（服务器是唯一数据源）
     if (token && navigator.onLine) {
-      const [pUpdated, eUpdated, xUpdated, examResult] = await Promise.all([
+      const [pUpdated, eUpdated, xUpdated, cUpdated, examResult] = await Promise.all([
         loadServerProgress(),
         loadServerErrors(),
         loadServerExams(),
@@ -3358,7 +3358,7 @@ async function init() {
       networkOk = examResult.hasServerData || xUpdated !== false;
       renderProgress();
       
-      if (pUpdated || eUpdated || xUpdated) {
+      if (pUpdated || eUpdated || xUpdated || cUpdated) {
         toast('数据同步完成');
       } else {
         toast('数据已最新');
