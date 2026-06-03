@@ -2287,13 +2287,19 @@ function renderQuestion() {
       const statusEl = document.getElementById('img-status');
       if (statusEl) statusEl.innerHTML = '🔍 仔细观察画面 <span id="image-countdown">5</span>s';
       
-      let countdown = 5;
+      // 把倒计时值存在 DOM 元素上，避免闭包变量被干扰
+      const cdEl = document.getElementById('image-countdown');
+      if (cdEl) cdEl.dataset.remaining = '5';
+      
       pendingImageCdInterval = setInterval(() => {
-        countdown--;
-        const displayVal = Math.max(0, countdown);
-        const cdEl = document.getElementById('image-countdown');
-        if (cdEl) cdEl.textContent = displayVal;
-        if (countdown <= 0) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
+        const el = document.getElementById('image-countdown');
+        if (!el) return;
+        let val = parseInt(el.dataset.remaining || '5');
+        val--;
+        const displayVal = Math.max(0, val);
+        el.textContent = displayVal;
+        el.dataset.remaining = String(val);
+        if (val <= 0) { clearInterval(pendingImageCdInterval); pendingImageCdInterval = null; }
       }, 1000);
       
       pendingImageTimerId = setTimeout(() => {
@@ -3406,16 +3412,22 @@ async function init() {
     
     // 同步服务端数据并给出提示
     if (token) {
-      const [pUpdated, eUpdated, xUpdated] = await Promise.all([
+      const [pUpdated, eUpdated, xUpdated, examResult] = await Promise.all([
         loadServerProgress(),
         loadServerErrors(),
-        loadServerExams()
+        loadServerExams(),
+        loadExamState()
       ]);
       renderProgress();
       if (pUpdated || eUpdated || xUpdated) {
         toast('数据同步完成');
       } else {
         toast('数据已最新');
+      }
+      
+      // 检查是否有未完成的考试（数据已全部就绪）
+      if (examResult && examResult.state) {
+        document.getElementById('resume-modal').style.display = 'flex';
       }
     }
   } catch (e) {
@@ -3435,12 +3447,6 @@ async function init() {
   if (startBtn) {
     startBtn.disabled = false;
     startBtn.textContent = '开始训练';
-  }
-  
-  // 检查是否有未完成的考试
-  const result = await loadExamState();
-  if (result && result.state) {
-    document.getElementById('resume-modal').style.display = 'flex';
   }
 }
 
