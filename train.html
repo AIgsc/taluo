@@ -1918,6 +1918,53 @@ function startExam() {
   }
 }
 
+function pauseExam() {
+  if (!currentExam) return;
+  // 如果已经在暂停，就不重复处理
+  if (currentExam.pauseStart) return;
+  
+  // 记录暂停开始时间
+  currentExam.pauseStart = Date.now();
+  
+  // 如果答题计时器正在运行，计算并保存剩余时间
+  if (questionTimer && currentExam.questionStartTime) {
+    const elapsed = Math.floor((Date.now() - currentExam.questionStartTime) / 1000);
+    currentExam.questionRemaining = Math.max(0, currentExam.timeLimit - elapsed);
+    currentExam.pausePhase = 'answering'; // 标记暂停阶段：答题中
+  } else if (pendingImageTimerId || pendingImageCdInterval) {
+    // 如果处于图片观察阶段，记录这个阶段
+    currentExam.pausePhase = 'observing'; // 标记暂停阶段：图片观察中
+    // 同时也保存完整答题时间
+    currentExam.questionRemaining = currentExam.timeLimit;
+  } else {
+    // 其他阶段
+    currentExam.questionRemaining = currentExam.timeLimit;
+    currentExam.pausePhase = 'idle';
+  }
+  
+  // 清理所有计时器
+  clearAllTimers();
+  
+  // 保存考试状态
+  saveExamState();
+}
+
+function resumeExam() {
+  if (!currentExam) return;
+  // 如果没有在暂停，就不处理
+  if (!currentExam.pauseStart) return;
+  
+  // 计算暂停的时间
+  currentExam.pausedTime = (currentExam.pausedTime || 0) + (Date.now() - currentExam.pauseStart);
+  currentExam.pauseStart = null;
+  
+  // 保存考试状态
+  saveExamState();
+  
+  // 重新渲染当前题
+  renderQuestion();
+}
+
 function startExamTimer() {
   if (examTimer) clearInterval(examTimer);
   // 如果之前有暂停时间，恢复时清除暂停开始标记
@@ -1955,6 +2002,9 @@ function renderQuestion() {
     finishExam();
     return;
   }
+  
+  // 先清理所有定时器，防止多个计时器同时运行！
+  clearAllTimers();
   
   let q = currentExam.questions[currentExam.currentIndex];
   // 如果当前题无效，就跳过到下一题
@@ -2113,7 +2163,17 @@ function startQuestionTimer() {
   currentExam.questionStartTime = Date.now();
   
   const timerEl = document.getElementById('quiz-timer');
-  let remaining = currentExam.timeLimit;
+  
+  // 如果有暂停时的剩余时间，就用那个；否则用完整时间
+  let remaining;
+  if (currentExam.questionRemaining !== undefined && currentExam.questionRemaining !== null) {
+    remaining = currentExam.questionRemaining;
+    // 使用完后清除剩余时间标记
+    currentExam.questionRemaining = null;
+  } else {
+    remaining = currentExam.timeLimit;
+  }
+  
   timerEl.textContent = remaining + 's';
   timerEl.classList.remove('warning');
   
@@ -3021,6 +3081,18 @@ document.querySelector('#screen-review .progress-filter').addEventListener('clic
   if (!tag) return;
   document.querySelectorAll('#screen-review .filter-tag').forEach(t => t.classList.remove('active'));
   tag.classList.add('active');
+});
+
+// 监听页面可见性变化（离开页面时暂停，回来时恢复）
+document.addEventListener('visibilitychange', () => {
+  if (!currentExam) return;
+  if (document.hidden) {
+    // 页面不可见，暂停考试
+    pauseExam();
+  } else {
+    // 页面可见，恢复考试
+    resumeExam();
+  }
 });
 
 // ======================== 初始化 ========================
