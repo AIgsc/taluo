@@ -407,13 +407,24 @@ async function syncExamStateToServer() {
 }
 
 // 增量答题同步：每答1题，只同步「当前这道题的答案」，不会把100道题都提交
-// 这样大幅节省网络资源
+// 失败时自动加入重试队列，网络恢复后自动重试
+const syncRetryQueue = [];
+let syncRetryTimer = null;
+
 function syncExamAnswerToServer(answerData, currentIndex) {
+  if (!answerData) return;
+  
+  // 离线时直接加入重试队列
+  if (!navigator.onLine) {
+    syncRetryQueue.push({ answerData, currentIndex });
+    if (syncRetryQueue.length > 100) syncRetryQueue.shift();
+    return;
+  }
+  
   try {
     const token = getAuthToken();
     if (!token) return;
     
-    // 发射后不管：不阻塞 UI，静默完成
     fetch(`${API_BASE_URL}/training/exam-state/answer`, {
       method: 'POST',
       headers: {
@@ -424,10 +435,28 @@ function syncExamAnswerToServer(answerData, currentIndex) {
         currentIndex: currentIndex,
         answer: answerData
       })
-    }).catch(() => {});
-    // 不需要 await，轻量同步不阻塞用户
+    }).then(res => {
+      if (!res.ok) syncRetryQueue.push({ answerData, currentIndex });
+    }).catch(() => {
+      syncRetryQueue.push({ answerData, currentIndex });
+    });
   } catch (e) {
-    // 静默失败，本地数据作为兜底
+    syncRetryQueue.push({ answerData, currentIndex });
+  }
+}
+
+// 刷新重试队列（网络恢复时调用）
+function flushSyncRetryQueue() {
+  if (!navigator.onLine || syncRetryQueue.length === 0) return;
+  if (syncRetryTimer) clearTimeout(syncRetryTimer);
+  
+  const item = syncRetryQueue.shift();
+  if (item) {
+    syncExamAnswerToServer(item.answerData, item.currentIndex);
+  }
+  
+  if (syncRetryQueue.length > 0) {
+    syncRetryTimer = setTimeout(flushSyncRetryQueue, 500);
   }
 }
 
@@ -494,6 +523,13 @@ async function clearExamState() {
 
 // 恢复考试（从本地缓存读取，init 时已从服务器同步到本地）
 async function resumeExam() {
+  // 断网时禁止继续考试
+  if (!navigator.onLine) {
+    toast('网络连接不可用，无法继续考试');
+    document.getElementById('resume-modal').style.display = 'none';
+    return;
+  }
+  
   let state = getCachedExamState();
   
   // 缓存没有时，再从服务器拉取
@@ -755,28 +791,34 @@ async function clearAllData() {
   }
   
   try {
-    // 清理本地存储
+    // 先清理服务端数据（必须联网）
+    if (!navigator.onLine) {
+      toast('离线状态：无法清空服务器数据，请联网后重试');
+      return;
+    }
+    
+    const promises = [
+      apiCall('DELETE', '/api/training/progress'),
+      apiCall('DELETE', '/api/training/errors'),
+      apiCall('DELETE', '/api/training/exams'),
+      apiCall('DELETE', '/api/training/confuse-errors'),
+      clearExamState()
+    ];
+    
+    await Promise.all(promises);
+    
+    // 服务器清空成功后，再清理本地存储
     const keysToRemove = [
       STORAGE_KEY_PROGRESS,
       STORAGE_KEY_ERRORS,
       STORAGE_KEY_EXAMS,
       STORAGE_KEY_CONFUSE_ERRORS,
-      STORAGE_KEY_EXAM_STATE,  // 考试进度
+      STORAGE_KEY_EXAM_STATE,
       'taro_train_inited'
     ];
     keysToRemove.forEach(key => {
       try { localStorage.removeItem(key); } catch(e) { console.warn('删除key失败:', key, e); }
     });
-    
-    // 清理服务端数据（并行请求）
-    const promises = [
-      apiCall('DELETE', '/api/training/progress'),
-      apiCall('DELETE', '/api/training/errors'),
-      apiCall('DELETE', '/api/training/exams'),
-      clearExamState()  // 清理服务器考试状态
-    ];
-    
-    await Promise.all(promises);
     
     toast('数据已清空');
     renderProgress();
@@ -878,13 +920,13 @@ function saveConfuseErrors(e) {
 function buildProgressKey(cardId, orientation) { return `${cardId}_${orientation}`; }
 function recordConfusePairError(cardId, orientation) {
   const pairs = getConfuseErrors();
-  // 找到cardId属于哪个pair
   const pair = CONFUSE_PAIRS.find(p => p.includes(cardId));
   if (!pair) return;
   const pairKey = pair.sort((a,b)=>a-b).join('_');
   if (!pairs[pairKey]) pairs[pairKey] = 0;
   pairs[pairKey]++;
   saveConfuseErrors(pairs);
+  syncConfuseErrorToServer(pairKey, pairs[pairKey]);
 }
 
 function getProgressValue(cardId, orientation) {
@@ -993,9 +1035,9 @@ async function syncExamToServer(total, score, rate, duration, errorIds) {
 async function loadServerProgress() {
   const data = await apiCall('GET', '/api/training/progress');
   if (!data || !data.length) return false;
-  const p = {};
-  data.forEach(r => { 
-    p[buildProgressKey(r.card_id, r.orientation)] = {
+  const local = getProgress();
+  data.forEach(r => {
+    local[buildProgressKey(r.card_id, r.orientation)] = {
       progress: r.progress,
       correctCount: r.correct_count,
       errorCount: r.error_count,
@@ -1004,66 +1046,30 @@ async function loadServerProgress() {
       dueDate: r.due_date ? new Date(r.due_date).getTime() : Date.now()
     };
   });
-  // 合并：用答题总数判断哪个更新
-  const local = getProgress();
-  let updated = false;
-  for (const key in p) {
-    const localItem = local[key];
-    const serverItem = p[key];
-    const localTotal = (localItem?.correctCount || 0) + (localItem?.errorCount || 0);
-    const serverTotal = (serverItem.correctCount || 0) + (serverItem.errorCount || 0);
-    // 谁答题总数多，用谁
-    if (!localItem || typeof localItem !== 'object' || serverTotal > localTotal) {
-      local[key] = serverItem;
-      updated = true;
-    }
-  }
-  if (updated) {
-    saveProgress(local);
-  }
-  return updated;
+  saveProgress(local);
+  return true;
 }
 
 async function loadServerErrors() {
   const data = await apiCall('GET', '/api/training/errors');
   if (!data || !data.length) return false;
-  const e = {};
-  data.forEach(r => { 
-    e[buildProgressKey(r.card_id, r.orientation)] = { 
-      ec: r.error_count, 
-      cc: r.continuous_correct,
-      timeout: !!r.timeout 
-    }; 
-  });
   const local = getErrors();
-  let updated = false;
-  for (const key in e) {
-    // 谁错误次数多，用谁；次数一样的话，timeout 优先用服务器的
-    const localItem = local[key];
-    const serverItem = e[key];
-    if (!localItem || serverItem.ec > (localItem.ec || 0)) {
-      local[key] = serverItem;
-      updated = true;
-    }
-  }
-  if (updated) {
-    saveErrors(local);
-  }
-  return updated;
+  data.forEach(r => {
+    local[buildProgressKey(r.card_id, r.orientation)] = {
+      ec: r.error_count,
+      cc: r.continuous_correct,
+      timeout: !!r.timeout
+    };
+  });
+  saveErrors(local);
+  return true;
 }
 
 async function loadServerExams() {
   const data = await apiCall('GET', '/api/training/exams');
   if (!data || !data.length) return false;
-  const local = getExams();
   
-  // 计算考试记录的唯一签名（包含更多特征）
-  function getExamSignature(item) {
-    const errorStr = (item.errorIds || []).sort().join(',');
-    return `${item.total}_${item.score}_${item.rate}_${item.duration}_${errorStr}`;
-  }
-  
-  // 将服务端数据转换为统一格式
+  // 服务器是唯一数据源，直接覆盖本地
   const serverExams = data.map(r => ({
     time: r.exam_time,
     total: r.total,
@@ -1073,40 +1079,35 @@ async function loadServerExams() {
     errorIds: (r.error_ids || '').split(',').filter(Boolean)
   }));
   
-  // 创建签名集合用于去重
-  const seenSignatures = new Set();
-  const merged = [];
-  let updated = (serverExams.length > 0);
-  
-  // 先添加服务端的记录
-  serverExams.forEach(exam => {
-    const sig = getExamSignature(exam);
-    if (!seenSignatures.has(sig)) {
-      seenSignatures.add(sig);
-      merged.push(exam);
-    }
-  });
-  
-  // 再添加本地独有的记录
-  local.forEach(exam => {
-    const sig = getExamSignature(exam);
-    if (!seenSignatures.has(sig)) {
-      seenSignatures.add(sig);
-      merged.push(exam);
-    }
-  });
-  
   // 按时间降序排列
-  merged.sort((a, b) => {
-    try {
-      return new Date(b.time) - new Date(a.time);
-    } catch(e) {
-      return 0;
-    }
+  serverExams.sort((a, b) => {
+    try { return new Date(b.time) - new Date(a.time); } catch (e) { return 0; }
   });
   
-  saveExams(merged);
-  return updated;
+  saveExams(serverExams);
+  return true;
+}
+
+// 混淆错误：服务器同步
+async function loadServerConfuseErrors() {
+  const data = await apiCall('GET', '/api/training/confuse-errors');
+  if (!data || !data.length) return false;
+  const local = {};
+  data.forEach(r => { local[r.pair_key] = r.error_count; });
+  saveConfuseErrors(local);
+  return true;
+}
+
+function syncConfuseErrorToServer(pairKey, count) {
+  const token = getAuthToken();
+  if (!token) return;
+  apiCall('POST', '/api/training/confuse-errors', { pair_key: pairKey, error_count: count });
+}
+
+function deleteConfuseErrorsFromServer() {
+  const token = getAuthToken();
+  if (!token) return;
+  apiCall('DELETE', '/api/training/confuse-errors');
 }
 
 function getAuthToken() {
@@ -1863,6 +1864,13 @@ function startExam() {
   buttonLocks['startExam'] = true;
   
   try {
+    // 断网时禁止开始考试
+    if (!navigator.onLine) {
+      toast('网络连接不可用，无法开始考试');
+      buttonLocks['startExam'] = false;
+      return;
+    }
+    
     // 检查牌义数据是否已加载
     if (!TAROT_CARDS || TAROT_CARDS.length < 78) {
       toast('数据加载中，请稍后再试');
@@ -3246,12 +3254,25 @@ function saveExamToLocalBeforeUnload() {
 window.addEventListener('beforeunload', saveExamToLocalBeforeUnload);
 window.addEventListener('pagehide', saveExamToLocalBeforeUnload);
 
+// 网络状态实时检测
+let isOnline = navigator.onLine;
+window.addEventListener('online', () => {
+  isOnline = true;
+  toast('网络已恢复');
+  flushSyncRetryQueue(); // 网络恢复后重试失败的同步
+});
+window.addEventListener('offline', () => {
+  isOnline = false;
+  toast('网络已断开，请检查网络连接');
+});
+
 // 进度筛选标签点击
 document.querySelector('#screen-progress .progress-filter').addEventListener('click', e => {
   const tag = e.target.closest('.filter-tag');
   if (!tag) return;
   document.querySelectorAll('#screen-progress .filter-tag').forEach(t => t.classList.remove('active'));
   tag.classList.add('active');
+  renderProgress();
 });
 
 // 错题筛选标签点击
@@ -3260,6 +3281,7 @@ document.querySelector('#screen-review .progress-filter').addEventListener('clic
   if (!tag) return;
   document.querySelectorAll('#screen-review .filter-tag').forEach(t => t.classList.remove('active'));
   tag.classList.add('active');
+  renderReviewList();
 });
 
 // 监听页面可见性变化（离开页面时暂停，回来时恢复）
@@ -3325,11 +3347,12 @@ async function init() {
     allocateQuestionTypes(100);
     
     // 从服务器同步所有数据（服务器是唯一数据源）
-    if (token) {
+    if (token && navigator.onLine) {
       const [pUpdated, eUpdated, xUpdated, examResult] = await Promise.all([
         loadServerProgress(),
         loadServerErrors(),
         loadServerExams(),
+        loadServerConfuseErrors(),
         fetchExamStateFromServer()
       ]);
       networkOk = examResult.hasServerData || xUpdated !== false;
@@ -3345,6 +3368,8 @@ async function init() {
       if (examResult && examResult.state) {
         document.getElementById('resume-modal').style.display = 'flex';
       }
+    } else if (token && !navigator.onLine) {
+      networkOk = false;
     }
     
     // 网络不可用时提示

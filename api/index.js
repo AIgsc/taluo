@@ -112,9 +112,15 @@ async function ensureTables() {
       exam_state TEXT DEFAULT '{}'
     )
   `);
-  // 迁移：清理旧版用于时间戳对比的 updated_at 列
-  await db.query(`ALTER TABLE user_exam_states DROP COLUMN IF EXISTS updated_at`);
-  
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_confuse_errors (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL,
+      pair_key VARCHAR(50) NOT NULL,
+      error_count INT DEFAULT 0,
+      UNIQUE(user_id, pair_key)
+    )
+  `);
   tablesCreated = true;
   console.log('数据库表初始化完成');
 }
@@ -568,6 +574,34 @@ module.exports = async (req, res) => {
       return res.json({ success: true });
     }
     
+    // ==================== 训练系统：混淆错误记录 ====================
+    if (req.method === 'GET' && path === '/api/training/confuse-errors') {
+      const result = await pool.query(
+        'SELECT pair_key, error_count FROM user_confuse_errors WHERE user_id = $1',
+        [userPayload.userId]
+      );
+      return res.json(result.rows);
+    }
+    
+    if (req.method === 'POST' && path === '/api/training/confuse-errors') {
+      const { pair_key, error_count } = req.body;
+      if (!pair_key) return res.status(400).json({ error: '缺少 pair_key' });
+      
+      await pool.query(
+        `INSERT INTO user_confuse_errors (user_id, pair_key, error_count) 
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, pair_key) 
+         DO UPDATE SET error_count = $3`,
+        [userPayload.userId, pair_key, error_count || 0]
+      );
+      return res.json({ success: true });
+    }
+    
+    if (req.method === 'DELETE' && path === '/api/training/confuse-errors') {
+      await pool.query('DELETE FROM user_confuse_errors WHERE user_id = $1', [userPayload.userId]);
+      return res.json({ success: true });
+    }
+    
     // ==================== 训练系统：获取考试记录 ====================
     if (req.method === 'GET' && path === '/api/training/exams') {
       const result = await pool.query(
@@ -656,9 +690,14 @@ module.exports = async (req, res) => {
         }
       }
       
-      // 追加答案
+      // 追加答案（防止重复：同一 cardId+orientation 只保留最后一次）
       if (!state.answers) state.answers = [];
-      state.answers.push(answer);
+      const dupIdx = state.answers.findIndex(a => a.cardId === answer.cardId && a.orientation === answer.orientation);
+      if (dupIdx >= 0) {
+        state.answers[dupIdx] = answer; // 覆盖旧答案，不重复累积
+      } else {
+        state.answers.push(answer);
+      }
       if (currentIndex !== undefined) state.currentIndex = currentIndex;
       
       const stateJson = JSON.stringify(state);
