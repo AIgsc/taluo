@@ -1918,7 +1918,7 @@ function startExam() {
   }
 }
 
-function pauseExam() {
+function pauseExamFromVisibility() {
   if (!currentExam) return;
   // 如果已经在暂停，就不重复处理
   if (currentExam.pauseStart) return;
@@ -1949,7 +1949,7 @@ function pauseExam() {
   saveExamState();
 }
 
-function resumeExam() {
+function resumeExamFromVisibility() {
   if (!currentExam) return;
   // 如果没有在暂停，就不处理
   if (!currentExam.pauseStart) return;
@@ -3088,10 +3088,10 @@ document.addEventListener('visibilitychange', () => {
   if (!currentExam) return;
   if (document.hidden) {
     // 页面不可见，暂停考试
-    pauseExam();
+    pauseExamFromVisibility();
   } else {
     // 页面可见，恢复考试
-    resumeExam();
+    resumeExamFromVisibility();
   }
 });
 
