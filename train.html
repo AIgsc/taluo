@@ -337,6 +337,7 @@ let currentExam = null, examTimer = null, questionTimer = null;
 let pendingImageTimerId = null, pendingImageCdInterval = null;
 let selectedTimeLimit = 30; // 默认30秒
 let buttonLocks = {}; // 按钮防抖锁
+let examStateSource = null; // init时记住考试状态来源：'server' 或 'local'
 
 // 清理所有定时器
 function clearAllTimers() {
@@ -534,9 +535,8 @@ async function clearExamState() {
 
 // 恢复考试
 async function resumeExam() {
-  // 直接从 localStorage 读取（init 已经下载过并保存了最新数据，避免重复下载）
+  // 直接从 localStorage 读取（init 已经下载过并保存了最新数据，无需重复下载）
   let state = null;
-  let source = 'local';
   try {
     const raw = localStorage.getItem(STORAGE_KEY_EXAM_STATE);
     if (raw) state = JSON.parse(raw);
@@ -546,7 +546,6 @@ async function resumeExam() {
   if (!state) {
     const result = await loadExamState();
     state = result.state;
-    source = result.source;
   }
   
   if (!state) {
@@ -554,33 +553,24 @@ async function resumeExam() {
     return;
   }
   
-  // 只有当最新状态来自本地时，才同步到服务器（如果来自服务器就不用再同步回去了）
-  if (source === 'local') {
-    try {
-      const token = getAuthToken();
-      if (token) {
-        const stateJson = JSON.stringify(state);
-        const res = await fetch(`${API_BASE_URL}/training/exam-state`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ exam_state: stateJson })
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
+  // 如果 init 时发现本地数据比服务器新（多端离线答题），后台静默上传
+  if (examStateSource === 'local') {
+    examStateSource = null; // 只上传一次
+    const token = getAuthToken();
+    if (token) {
+      const stateJson = JSON.stringify(state);
+      fetch(`${API_BASE_URL}/training/exam-state`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ exam_state: stateJson })
+      }).then(res => {
+        if (res.ok) res.json().then(data => {
           if (data.updated_at) {
-            // 同步成功！更新 lastSyncAt
             state.lastSyncAt = data.updated_at;
             localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
-            toast('考试状态已同步');
           }
-        }
-      }
-    } catch (e) {
-      console.error('恢复时同步到服务器失败:', e);
+        });
+      }).catch(() => {});
     }
   }
   
@@ -3441,6 +3431,7 @@ async function init() {
       // 检查是否有未完成的考试（数据已全部就绪）
       if (examResult && examResult.state) {
         document.getElementById('resume-modal').style.display = 'flex';
+        examStateSource = examResult.source; // 记住来源：server=刚下载，local=本地的更新
       }
     }
   } catch (e) {
