@@ -338,7 +338,6 @@ let currentExam = null, examTimer = null, questionTimer = null;
 let pendingImageTimerId = null, pendingImageCdInterval = null;
 let selectedTimeLimit = 30; // 默认30秒
 let buttonLocks = {}; // 按钮防抖锁
-let examStateSource = null; // init时记住考试状态来源：'server' 或 'local'
 
 // 清理所有定时器
 function clearAllTimers() {
@@ -348,17 +347,14 @@ function clearAllTimers() {
   if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
 }
 
-// ======================== 断点续传 ========================
-// 保存考试状态：默认只保存到 localStorage，syncToServer=true 时同步到服务器
-async function saveExamState(syncToServer = false) {
+// ======================== 考试状态保存 ========================
+// 服务器是唯一数据源，本地 localStorage 仅做缓存和异步提交缓冲
+// saveExamState() → 只保存到 localStorage（快速，无网络开销）
+// syncExamAnswerToServer() → 增量同步（每答1题，轻量，只传1道题答案）
+// syncExamStateToServer() → 全量同步（考试开始/交卷，确保完整）
+
+function saveExamState() {
   if (!currentExam) return;
-  
-  // 保留旧的 lastSyncAt（只当同步成功时才更新）
-  let oldLastSyncAt = 0;
-  try {
-    const old = JSON.parse(localStorage.getItem(STORAGE_KEY_EXAM_STATE) || '{}');
-    oldLastSyncAt = old.lastSyncAt || 0;
-  } catch (e) {}
   
   const state = {
     questions: currentExam.questions,
@@ -370,46 +366,43 @@ async function saveExamState(syncToServer = false) {
     pausedTime: currentExam.pausedTime || 0,
     pauseStart: currentExam.pauseStart,
     questionRemaining: currentExam.questionRemaining,
-    pausePhase: currentExam.pausePhase,
-    createdAt: Date.now(),
-    lastSyncAt: oldLastSyncAt // 保留上一次成功同步时间，不随意刷新
+    pausePhase: currentExam.pausePhase
   };
-  let stateJson = JSON.stringify(state);
   
-  // 总是保存到 localStorage（快速且可靠）
   try {
-    localStorage.setItem(STORAGE_KEY_EXAM_STATE, stateJson);
+    localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
   } catch (e) {
     console.error('保存到 localStorage 失败:', e);
   }
-  
-  // 如果需要同步到服务器
-  if (syncToServer) {
-    try {
-      const token = getAuthToken();
-      if (token) {
-        const res = await fetch(`${API_BASE_URL}/training/exam-state`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ exam_state: stateJson })
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          if (data.updated_at) {
-            // 同步成功！更新 lastSyncAt 为服务器时间
-            state.lastSyncAt = data.updated_at;
-            stateJson = JSON.stringify(state);
-            localStorage.setItem(STORAGE_KEY_EXAM_STATE, stateJson);
-          }
-        }
-      }
-    } catch (e) {
-      console.error('同步到服务器失败:', e);
-    }
+}
+
+async function syncExamStateToServer() {
+  if (!currentExam) return;
+  try {
+    const token = getAuthToken();
+    if (!token) return;
+    const state = {
+      questions: currentExam.questions,
+      currentIndex: currentExam.currentIndex,
+      answers: currentExam.answers,
+      timeLimit: currentExam.timeLimit,
+      examType: currentExam.examType,
+      startTime: currentExam.startTime,
+      pausedTime: currentExam.pausedTime || 0,
+      pauseStart: currentExam.pauseStart,
+      questionRemaining: currentExam.questionRemaining,
+      pausePhase: currentExam.pausePhase
+    };
+    await fetch(`${API_BASE_URL}/training/exam-state`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ exam_state: JSON.stringify(state) })
+    });
+  } catch (e) {
+    console.error('同步考试状态到服务器失败:', e);
   }
 }
 
@@ -438,80 +431,45 @@ function syncExamAnswerToServer(answerData, currentIndex) {
   }
 }
 
-// 加载考试状态（先从服务端加载，再从本地加载，取更新时间较新的）
-// 返回：{ state: 对象, source: 'server' | 'local' | null }
-async function loadExamState() {
-  let serverState = null;
-  let serverUpdatedAt = 0;
-  
-  // 先尝试从服务端加载
+// 从服务器加载考试状态（服务器是唯一数据源）
+// 返回：{ state: 对象 | null, hasServerData: boolean }
+async function fetchExamStateFromServer() {
   try {
     const token = getAuthToken();
-    if (token) {
-      const res = await fetch(`${API_BASE_URL}/training/exam-state`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.exam_state && data.exam_state !== '{}') {
-          try {
-            serverState = JSON.parse(data.exam_state);
-            serverUpdatedAt = data.updated_at || 0;
-          } catch (e) {
-            console.error('解析服务端考试状态失败:', e);
-          }
-        }
+    if (!token) return { state: null, hasServerData: false };
+    
+    const res = await fetch(`${API_BASE_URL}/training/exam-state`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.exam_state && data.exam_state !== '{}') {
+        const state = JSON.parse(data.exam_state);
+        // 缓存到 localStorage（为页面渲染加速）
+        try {
+          localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
+        } catch (e) {}
+        return { state, hasServerData: true };
       }
     }
+    return { state: null, hasServerData: true };
   } catch (e) {
-    console.error('从服务端加载考试状态失败:', e);
+    console.error('从服务器加载考试状态失败:', e);
+    // 网络不可用 → 降级到本地缓存
+    const cached = getCachedExamState();
+    return { state: cached, hasServerData: false };
   }
-  
-  // 再从 localStorage 加载
-  let localState = null;
-  // 本地同步时间戳：用 lastSyncAt（仅成功同步后才更新）
-  let localLastSyncAt = 0;
+}
+
+// 读取本地缓存的考试状态
+function getCachedExamState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_EXAM_STATE);
-    if (raw) {
-      localState = JSON.parse(raw);
-      localLastSyncAt = localState.lastSyncAt || 0;
-    }
+    return raw ? JSON.parse(raw) : null;
   } catch (e) {
-    console.error('解析本地考试状态失败:', e);
-    clearExamState();
+    return null;
   }
-  
-  // 对比逻辑：
-  // 1. 如果服务器 updated_at > 本地 lastSyncAt → 服务器更新，用服务器数据
-  // 2. 否则 → 本地数据更新，用本地数据
-  if (serverState && serverUpdatedAt > localLastSyncAt) {
-    // 服务器数据更新！覆盖本地，并更新 lastSyncAt
-    if (localState) {
-      // 合并本地 answers（防止本地有新的答题记录丢失）
-      const localAnswers = localState.answers || [];
-      const serverAnswers = serverState.answers || [];
-      if (localAnswers.length > serverAnswers.length) {
-        // 本地答题数更多，保留本地的
-        try {
-          localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(localState));
-        } catch (e) {}
-        return { state: localState, source: 'local' };
-      }
-    }
-    // 用服务器数据，更新 lastSyncAt
-    serverState.lastSyncAt = serverUpdatedAt;
-    try {
-      localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(serverState));
-    } catch (e) {}
-    return { state: serverState, source: 'server' };
-  }
-  if (localState) {
-    return { state: localState, source: 'local' };
-  }
-  return { state: null, source: null };
 }
 
 // 清除考试状态（同时清除本地和服务端）
@@ -534,45 +492,19 @@ async function clearExamState() {
   }
 }
 
-// 恢复考试
+// 恢复考试（从本地缓存读取，init 时已从服务器同步到本地）
 async function resumeExam() {
-  // 直接从 localStorage 读取（init 已经下载过并保存了最新数据，无需重复下载）
-  let state = null;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_EXAM_STATE);
-    if (raw) state = JSON.parse(raw);
-  } catch (e) {}
+  let state = getCachedExamState();
   
-  // 本地没有数据时，再尝试从服务器加载
+  // 缓存没有时，再从服务器拉取
   if (!state) {
-    const result = await loadExamState();
+    const result = await fetchExamStateFromServer();
     state = result.state;
   }
   
   if (!state) {
     document.getElementById('resume-modal').style.display = 'none';
     return;
-  }
-  
-  // 如果 init 时发现本地数据比服务器新（多端离线答题），后台静默上传
-  if (examStateSource === 'local') {
-    examStateSource = null; // 只上传一次
-    const token = getAuthToken();
-    if (token) {
-      const stateJson = JSON.stringify(state);
-      fetch(`${API_BASE_URL}/training/exam-state`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ exam_state: stateJson })
-      }).then(res => {
-        if (res.ok) res.json().then(data => {
-          if (data.updated_at) {
-            state.lastSyncAt = data.updated_at;
-            localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
-          }
-        });
-      }).catch(() => {});
-    }
   }
   
   // 计算暂停时间
@@ -595,10 +527,7 @@ async function resumeExam() {
     examType: state.examType || 'normal'
   };
   
-  // 隐藏弹窗
   document.getElementById('resume-modal').style.display = 'none';
-  
-  // 显示考试页面，渲染当前题
   showScreen('exam');
   renderQuestion();
   startExamTimer();
@@ -2096,8 +2025,9 @@ function startExam() {
     createdAt: Date.now()
   };
 
-    // 立即把100道题全量保存到服务器（增量同步依赖服务器已有题目数据）
-    saveExamState(true);
+    // 立即全量保存考试状态到服务器（包含100道题，确保后续增量同步有完整数据）
+    saveExamState();
+    syncExamStateToServer();
     
     // 预加载前几张题的图片
     preloadInitialImages();
@@ -2151,17 +2081,20 @@ function pauseExamFromVisibility() {
 
 async function resumeExamFromVisibility() {
   if (!currentExam) return;
-  // 如果没有在暂停，就不处理
   if (!currentExam.pauseStart) return;
   
-  // 先检查服务器是否有更新的考试状态
+  // 检查服务器是否有更多答题记录（其他设备可能答了更多题）
   try {
-    const result = await loadExamState();
-    if (result.source === 'server') {
-      // 服务器有更新，重新加载
-      currentExam = null; // 先清空，让 resumeExam 重新构建
-      resumeExam();
-      return;
+    const result = await fetchExamStateFromServer();
+    if (result.state && result.state.answers) {
+      const serverCount = result.state.answers.length;
+      const localCount = (currentExam.answers || []).length;
+      if (serverCount > localCount) {
+        // 服务器进度更新，重新加载
+        currentExam = null;
+        resumeExam();
+        return;
+      }
     }
   } catch (e) {}
   
@@ -2169,10 +2102,7 @@ async function resumeExamFromVisibility() {
   currentExam.pausedTime = (currentExam.pausedTime || 0) + (Date.now() - currentExam.pauseStart);
   currentExam.pauseStart = null;
   
-  // 保存到本地
   saveExamState();
-  
-  // 重新渲染当前题
   renderQuestion();
   startExamTimer();
 }
@@ -2815,7 +2745,8 @@ async function submitExam() {
     }
   }
   // 交卷前立即同步考试状态
-  await saveExamState(true);
+  saveExamState();
+  await syncExamStateToServer();
   finishExam();
   
   // 500ms后解锁按钮
@@ -3307,31 +3238,13 @@ function shuffle(arr) {
 }
 
 // ======================== 事件绑定 ========================
-// 页面关闭/刷新前保存考试状态到 localStorage（不做网络请求，避免失败）
-window.addEventListener('beforeunload', (e) => {
-  if (currentExam) {
-    // 只保存到 localStorage（本地保存成功率100%）
-    // 网络同步已经在重要时刻（答完题、切出浏览器、离开答题页）做过了
-    const state = {
-      questions: currentExam.questions,
-      currentIndex: currentExam.currentIndex,
-      answers: currentExam.answers,
-      timeLimit: currentExam.timeLimit,
-      examType: currentExam.examType,
-      startTime: currentExam.startTime,
-      pausedTime: currentExam.pausedTime || 0,
-      pauseStart: currentExam.pauseStart,
-      questionRemaining: currentExam.questionRemaining,
-      pausePhase: currentExam.pausePhase,
-      createdAt: Date.now()
-    };
-    try {
-      localStorage.setItem(STORAGE_KEY_EXAM_STATE, JSON.stringify(state));
-    } catch (e) {
-      console.error('保存到 localStorage 失败', e);
-    }
-  }
-});
+// 页面关闭/刷新/切走前保存到localStorage（不做网络请求，避免异步失败）
+// beforeunload 覆盖桌面刷新/关闭；pagehide 覆盖手机杀后台/bfcache（更可靠）
+function saveExamToLocalBeforeUnload() {
+  saveExamState();
+}
+window.addEventListener('beforeunload', saveExamToLocalBeforeUnload);
+window.addEventListener('pagehide', saveExamToLocalBeforeUnload);
 
 // 进度筛选标签点击
 document.querySelector('#screen-progress .progress-filter').addEventListener('click', e => {
@@ -3364,8 +3277,8 @@ document.addEventListener('visibilitychange', () => {
 // ======================== 初始化 ========================
 async function init() {
   const startBtn = document.getElementById('start-exam-btn');
+  let networkOk = true;
   
-  // 一开始显示加载中状态
   if (startBtn) {
     startBtn.disabled = true;
     startBtn.textContent = '加载中...';
@@ -3374,7 +3287,7 @@ async function init() {
   try {
     const token = getAuthToken();
     
-    // 加载配置数据（卡牌名称、推导数据等）
+    // 加载配置数据（卡牌名称、推导数据等）—— 网络必须可用
     await loadConfigData();
     
     // 加载保存的时间限制
@@ -3386,13 +3299,10 @@ async function init() {
       }
     }
     
-    // 生成初始随机题型比例显示
-    allocateQuestionTypes(100);
-    
     // 加载数据库牌义数据（成功→DB牌义，失败→fallback）
     await loadCardDataFromDB();
     
-    // 加载完成后渲染并启用按钮
+    // 加载完成后渲染
     renderProgress();
     
     // 首页显示总掌握率
@@ -3400,54 +3310,60 @@ async function init() {
     if (homeMastery) {
       const progress = getProgress();
       let total = 0, mastered = 0;
-      // 遍历所有卡牌的正逆位，而不是只遍历progress里的键
       TAROT_CARDS.forEach(card => {
         ['upright', 'reversed'].forEach(ori => {
           total++;
           const key = buildProgressKey(card.id, ori);
-          const raw = progress[key];
-          const prog = raw?.progress || 0;
+          const prog = (progress[key]?.progress) || 0;
           if (prog >= 100) mastered++;
         });
       });
       homeMastery.textContent = total > 0 ? `已掌握 ${mastered}/${total} (${Math.round(mastered/total*100)}%)` : '';
     }
     
-    // 同步服务端数据并给出提示
+    // 生成初始随机题型比例显示
+    allocateQuestionTypes(100);
+    
+    // 从服务器同步所有数据（服务器是唯一数据源）
     if (token) {
       const [pUpdated, eUpdated, xUpdated, examResult] = await Promise.all([
         loadServerProgress(),
         loadServerErrors(),
         loadServerExams(),
-        loadExamState()
+        fetchExamStateFromServer()
       ]);
+      networkOk = examResult.hasServerData || xUpdated !== false;
       renderProgress();
+      
       if (pUpdated || eUpdated || xUpdated) {
         toast('数据同步完成');
       } else {
         toast('数据已最新');
       }
       
-      // 检查是否有未完成的考试（数据已全部就绪）
+      // 检查是否有未完成的考试
       if (examResult && examResult.state) {
         document.getElementById('resume-modal').style.display = 'flex';
-        examStateSource = examResult.source; // 记住来源：server=刚下载，local=本地的更新
       }
+    }
+    
+    // 网络不可用时提示
+    if (!networkOk) {
+      toast('网络连接不可用，部分数据可能不是最新');
     }
   } catch (e) {
     console.error('初始化错误:', e);
-    // 即使出错，也尝试启用按钮
     try {
-      // 尝试加载fallback数据
       if (TAROT_CARDS.length === 0) {
         buildFallbackCards();
       }
     } catch (e2) {
       console.error('加载fallback失败:', e2);
     }
+    toast('网络连接不可用，请检查网络后刷新页面');
   }
   
-  // 无论成功失败，都启用按钮
+  // 启用按钮
   if (startBtn) {
     startBtn.disabled = false;
     startBtn.textContent = '开始训练';

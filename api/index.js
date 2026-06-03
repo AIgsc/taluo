@@ -3,6 +3,121 @@
  */
 
 const crypto = require('crypto');
+const { Pool } = require('pg');
+
+// ==================== 数据库连接池（全局复用） ====================
+let pool = null;
+function getPool() {
+  if (!pool) {
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    console.log('数据库连接池已创建（首次）');
+  }
+  return pool;
+}
+
+// ==================== 自动建表（仅首次请求执行一次） ====================
+let tablesCreated = false;
+async function ensureTables() {
+  if (tablesCreated) return;
+  const db = getPool();
+  
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(255) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS card_meanings (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL,
+      card_id INT NOT NULL,
+      name VARCHAR(255) DEFAULT '',
+      upright TEXT DEFAULT '',
+      reversed TEXT DEFAULT '',
+      pattern TEXT DEFAULT '',
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, card_id)
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS taro_records (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL,
+      record_id VARCHAR(255) NOT NULL,
+      timestamp BIGINT DEFAULT 0,
+      rounds TEXT DEFAULT '[]',
+      game_state TEXT DEFAULT '{}',
+      current_round INT DEFAULT 0,
+      full_deck TEXT DEFAULT '[]',
+      cached_numbers TEXT DEFAULT '[]',
+      re_sort_count INT DEFAULT 0,
+      lock_picking INT DEFAULT 0,
+      lock_current_main_delete INT DEFAULT 0,
+      type VARCHAR(50) DEFAULT '',
+      title VARCHAR(255) DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, record_id)
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_progress (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL,
+      card_id INT NOT NULL,
+      orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
+      progress INT DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+      correct_count INT DEFAULT 0,
+      error_count INT DEFAULT 0,
+      last_time TIMESTAMPTZ DEFAULT NOW(),
+      "interval" INT DEFAULT 1,
+      ease_factor FLOAT DEFAULT 2.5,
+      due_date TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(user_id, card_id, orientation)
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_errors (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL,
+      card_id INT NOT NULL,
+      orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
+      error_count INT DEFAULT 0,
+      last_error_time TIMESTAMPTZ DEFAULT NOW(),
+      continuous_correct INT DEFAULT 0,
+      timeout BOOLEAN DEFAULT FALSE,
+      UNIQUE(user_id, card_id, orientation)
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_exams (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL,
+      exam_time TIMESTAMPTZ DEFAULT NOW(),
+      total INT NOT NULL,
+      score INT NOT NULL,
+      correct_rate FLOAT NOT NULL,
+      duration INT NOT NULL,
+      error_ids TEXT DEFAULT ''
+    )
+  `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS user_exam_states (
+      id SERIAL PRIMARY KEY,
+      user_id INT NOT NULL UNIQUE,
+      exam_state TEXT DEFAULT '{}'
+    )
+  `);
+  // 迁移：清理旧版用于时间戳对比的 updated_at 列
+  await db.query(`ALTER TABLE user_exam_states DROP COLUMN IF EXISTS updated_at`);
+  
+  tablesCreated = true;
+  console.log('数据库表初始化完成');
+}
 
 // SHA256 哈希
 function hashPassword(password) {
@@ -36,8 +151,6 @@ function verifyToken(token, secret) {
 }
 
 module.exports = async (req, res) => {
-  const { Pool } = require('pg');
-  
   // 允许跨域
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -51,105 +164,8 @@ module.exports = async (req, res) => {
   console.log('请求:', req.method, path);
   
   try {
-    // 数据库连接
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-    
-    // 自动建表（首次访问时自动创建）
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) NOT NULL UNIQUE,
-        password_hash VARCHAR(255) NOT NULL
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS card_meanings (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL,
-        card_id INT NOT NULL,
-        name VARCHAR(255) DEFAULT '',
-        upright TEXT DEFAULT '',
-        reversed TEXT DEFAULT '',
-        pattern TEXT DEFAULT '',
-        updated_at TIMESTAMPTZ DEFAULT NOW(),
-        UNIQUE(user_id, card_id)
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS taro_records (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL,
-        record_id VARCHAR(255) NOT NULL,
-        timestamp BIGINT DEFAULT 0,
-        rounds TEXT DEFAULT '[]',
-        game_state TEXT DEFAULT '{}',
-        current_round INT DEFAULT 0,
-        full_deck TEXT DEFAULT '[]',
-        cached_numbers TEXT DEFAULT '[]',
-        re_sort_count INT DEFAULT 0,
-        lock_picking INT DEFAULT 0,
-        lock_current_main_delete INT DEFAULT 0,
-        type VARCHAR(50) DEFAULT '',
-        title VARCHAR(255) DEFAULT '',
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        UNIQUE(user_id, record_id)
-      )
-    `);
-    
-    // 训练系统表（与上方业务表统一在此自动创建）
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS user_progress (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL,
-        card_id INT NOT NULL,
-        orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
-        progress INT DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
-        correct_count INT DEFAULT 0,
-        error_count INT DEFAULT 0,
-        last_time TIMESTAMPTZ DEFAULT NOW(),
-        "interval" INT DEFAULT 1,
-        ease_factor FLOAT DEFAULT 2.5,
-        due_date TIMESTAMPTZ DEFAULT NOW(),
-        UNIQUE(user_id, card_id, orientation)
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS user_errors (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL,
-        card_id INT NOT NULL,
-        orientation VARCHAR(10) NOT NULL CHECK (orientation IN ('upright', 'reversed')),
-        error_count INT DEFAULT 0,
-        last_error_time TIMESTAMPTZ DEFAULT NOW(),
-        continuous_correct INT DEFAULT 0,
-        timeout BOOLEAN DEFAULT FALSE,
-        UNIQUE(user_id, card_id, orientation)
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS user_exams (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL,
-        exam_time TIMESTAMPTZ DEFAULT NOW(),
-        total INT NOT NULL,
-        score INT NOT NULL,
-        correct_rate FLOAT NOT NULL,
-        duration INT NOT NULL,
-        error_ids TEXT DEFAULT ''
-      )
-    `);
-    
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS user_exam_states (
-        id SERIAL PRIMARY KEY,
-        user_id INT NOT NULL UNIQUE,
-        exam_state TEXT DEFAULT '{}',
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
+    const pool = getPool();
+    await ensureTables();
     
     // ==================== 健康检查 ====================
     if (req.method === 'GET' && path === '/api/health') {
@@ -355,19 +371,31 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: '牌义数据不能为空' });
       }
       
-      await pool.query('DELETE FROM card_meanings WHERE user_id = $1', [userPayload.userId]);
-      
-      for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
-        if (card && card.name) {
-          await pool.query(
-            'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-            [userPayload.userId, i + 1, card.name, card.upright || '', card.reversed || '', card.pattern || '']
-          );
+      // 使用事务保护：DELETE + 循环 INSERT 要么全部成功，要么全部回滚
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        await client.query('DELETE FROM card_meanings WHERE user_id = $1', [userPayload.userId]);
+        
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+          if (card && card.name) {
+            await client.query(
+              'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
+              [userPayload.userId, i + 1, card.name, card.upright || '', card.reversed || '', card.pattern || '']
+            );
+          }
         }
+        
+        await client.query('COMMIT');
+        return res.json({ success: true, count: cards.length });
+      } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+      } finally {
+        client.release();
       }
-      
-      return res.json({ success: true, count: cards.length });
     }
     
     // ==================== 更新单张牌义（按用户） ====================
@@ -492,6 +520,15 @@ module.exports = async (req, res) => {
       const newCc = continuous_correct !== undefined ? continuous_correct : (is_correct ? 1 : 0);
       const newTimeout = timeout !== undefined ? !!timeout : false;
       
+      // 连续答对5次 → 已掌握，自动删除错题记录
+      if (newCc >= 5) {
+        await pool.query(
+          'DELETE FROM user_errors WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
+          [userPayload.userId, card_id, orientation]
+        );
+        return res.json({ success: true, deleted: true });
+      }
+      
       await pool.query(
         `INSERT INTO user_errors (user_id, card_id, orientation, error_count, continuous_correct, last_error_time, timeout)
          VALUES ($1,$2,$3,$4,$5,NOW(),$6)
@@ -562,17 +599,13 @@ module.exports = async (req, res) => {
     // ==================== 训练系统：获取考试状态 ====================
     if (req.method === 'GET' && path === '/api/training/exam-state') {
       const result = await pool.query(
-        'SELECT exam_state, EXTRACT(EPOCH FROM updated_at)::bigint * 1000 as updated_at FROM user_exam_states WHERE user_id = $1',
+        'SELECT exam_state FROM user_exam_states WHERE user_id = $1',
         [userPayload.userId]
       );
       if (result.rows.length > 0) {
-        const row = result.rows[0];
-        return res.json({
-          exam_state: row.exam_state,
-          updated_at: row.updated_at ? Number(row.updated_at) : 0
-        });
+        return res.json({ exam_state: result.rows[0].exam_state });
       } else {
-        return res.json({ exam_state: '{}', updated_at: 0 });
+        return res.json({ exam_state: '{}' });
       }
     }
     
@@ -587,26 +620,17 @@ module.exports = async (req, res) => {
       
       if (existing.rows.length > 0) {
         await pool.query(
-          'UPDATE user_exam_states SET exam_state = $1, updated_at = NOW() WHERE user_id = $2',
+          'UPDATE user_exam_states SET exam_state = $1 WHERE user_id = $2',
           [exam_state || '{}', userPayload.userId]
         );
       } else {
         await pool.query(
-          'INSERT INTO user_exam_states (user_id, exam_state, updated_at) VALUES ($1, $2, NOW())',
+          'INSERT INTO user_exam_states (user_id, exam_state) VALUES ($1, $2)',
           [userPayload.userId, exam_state || '{}']
         );
       }
       
-      // 返回服务器生成的 updated_at 时间戳
-      const result = await pool.query(
-        'SELECT EXTRACT(EPOCH FROM updated_at)::bigint * 1000 as updated_at FROM user_exam_states WHERE user_id = $1',
-        [userPayload.userId]
-      );
-      
-      return res.json({ 
-        success: true, 
-        updated_at: result.rows[0]?.updated_at ? Number(result.rows[0].updated_at) : Date.now() 
-      });
+      return res.json({ success: true });
     }
     
     // ==================== 训练系统：增量答题同步（轻量） ====================
@@ -636,32 +660,22 @@ module.exports = async (req, res) => {
       if (!state.answers) state.answers = [];
       state.answers.push(answer);
       if (currentIndex !== undefined) state.currentIndex = currentIndex;
-      state.updatedAt = Date.now();
       
       const stateJson = JSON.stringify(state);
       
       if (existing.rows.length > 0) {
         await pool.query(
-          'UPDATE user_exam_states SET exam_state = $1, updated_at = NOW() WHERE user_id = $2',
+          'UPDATE user_exam_states SET exam_state = $1 WHERE user_id = $2',
           [stateJson, userPayload.userId]
         );
       } else {
         await pool.query(
-          'INSERT INTO user_exam_states (user_id, exam_state, updated_at) VALUES ($1, $2, NOW())',
+          'INSERT INTO user_exam_states (user_id, exam_state) VALUES ($1, $2)',
           [userPayload.userId, stateJson]
         );
       }
       
-      // 返回服务器时间戳
-      const result2 = await pool.query(
-        'SELECT EXTRACT(EPOCH FROM updated_at)::bigint * 1000 as updated_at FROM user_exam_states WHERE user_id = $1',
-        [userPayload.userId]
-      );
-      
-      return res.json({ 
-        success: true, 
-        updated_at: result2.rows[0]?.updated_at ? Number(result2.rows[0].updated_at) : Date.now() 
-      });
+      return res.json({ success: true });
     }
     
     // ==================== 训练系统：清除考试状态 ====================
