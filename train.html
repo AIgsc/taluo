@@ -335,7 +335,7 @@ const STORAGE_KEY_EXAM_STATE = 'taro_exam_state';
 const API_BASE_URL = '/api';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
-let pendingImageTimerId = null, pendingImageCdInterval = null;
+let pendingImageTimerId = null, pendingImageCdInterval = null, pendingImageFallbackId = null;
 let selectedTimeLimit = 30; // 默认30秒
 let buttonLocks = {}; // 按钮防抖锁
 
@@ -345,6 +345,7 @@ function clearAllTimers() {
   if (questionTimer) { clearInterval(questionTimer); questionTimer = null; }
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
+  if (pendingImageFallbackId) { clearTimeout(pendingImageFallbackId); pendingImageFallbackId = null; }
 }
 
 // ======================== 考试状态保存 ========================
@@ -366,7 +367,8 @@ function saveExamState() {
     pausedTime: currentExam.pausedTime || 0,
     pauseStart: currentExam.pauseStart,
     questionRemaining: currentExam.questionRemaining,
-    pausePhase: currentExam.pausePhase
+    pausePhase: currentExam.pausePhase,
+    isReview: currentExam.isReview
   };
   
   try {
@@ -552,7 +554,7 @@ async function resumeExam() {
   currentExam = {
     questions: state.questions,
     currentIndex: state.currentIndex,
-    answers: state.answers,
+    answers: (state.answers || []).filter(a => a != null), // 过滤稀疏数组中的空位
     timeLimit: state.timeLimit,
     startTime: state.startTime,
     pausedTime: pausedTime,
@@ -560,7 +562,8 @@ async function resumeExam() {
     questionRemaining: state.questionRemaining,
     pausePhase: state.pausePhase,
     totalCount: state.questions.length,
-    examType: state.examType || 'normal'
+    examType: state.examType || 'normal',
+    isReview: state.isReview || false
   };
   
   document.getElementById('resume-modal').style.display = 'none';
@@ -1986,13 +1989,22 @@ function startExam() {
     if (q) questions.push(q);
   });
   
-  // 6. 如果还不够，用单选题补
+  // 6. 如果还不够，用单选题从 selectedItems 补，仍不足则从原始池子补
   const usedKeys = new Set(questions.map(q => `${q.cardId}_${q.orientation}`));
   for (const item of selectedItems) {
     if (questions.length >= count) break;
     if (usedKeys.has(`${item.cardId}_${item.orientation}`)) continue;
     const q = generateSingleChoice(item);
     if (q) { questions.push(q); usedKeys.add(`${item.cardId}_${item.orientation}`); }
+  }
+  // 如果 selectedItems 耗尽仍不足，从原始池子中补全
+  if (questions.length < count) {
+    const extraCandidates = shuffle(pool.filter(p => !usedKeys.has(`${p.cardId}_${p.orientation}`)));
+    for (const item of extraCandidates) {
+      if (questions.length >= count) break;
+      const q = generateSingleChoice(item);
+      if (q) { questions.push(q); usedKeys.add(`${item.cardId}_${item.orientation}`); }
+    }
   }
   
   // 打乱题目顺序，尽量避免连续同一张牌或连续同一题型
@@ -2304,8 +2316,11 @@ function renderQuestion() {
     imgEl.onload = onImageReady;
     imgEl.onerror = onImageReady;
     
-    // 超时 fallback，最多等 3 秒
-    setTimeout(onImageReady, 3000);
+    // 超时 fallback，最多等 3 秒（句柄保存到全局，切题时可清理）
+    pendingImageFallbackId = setTimeout(() => {
+      pendingImageFallbackId = null;
+      onImageReady();
+    }, 3000);
     
     // 检查图片是否已经加载完成
     if (imgEl.complete) onImageReady();
@@ -2655,7 +2670,8 @@ async function finishExam() {
   
   if (!currentExam) return;
   
-  const correctCount = currentExam.answers.filter(a => a.correct).length;
+  const validAnswers = (currentExam.answers || []).filter(a => a != null);
+  const correctCount = validAnswers.filter(a => a.correct).length;
   const total = currentExam.totalCount;
   const rate = total > 0 ? Math.round(correctCount / total * 100) : 0;
   // 计算总用时扣除暂停时间
@@ -2665,7 +2681,7 @@ async function finishExam() {
   
   // 保存考试记录（错题强化不保存）
   if (!currentExam.isReview) {
-    const errorIds = currentExam.answers.filter(a => !a.correct).map(a => `${a.cardId}_${a.orientation}`);
+    const errorIds = validAnswers.filter(a => !a.correct).map(a => `${a.cardId}_${a.orientation}`);
     const exams = getExams();
     exams.push({ time: new Date().toISOString(), total, score: correctCount, rate, duration, errorIds });
     saveExams(exams);
@@ -2714,11 +2730,8 @@ async function submitExam() {
   // 按钮防抖
   if (buttonLocks['submitExam']) return;
   
-  // 检查是否在图片观察期间（不允许交卷）
-  if (pendingImageTimerId || pendingImageCdInterval) {
-    toast('请先完成当前题目再交卷！');
-    return;
-  }
+  // 清除待处理的图片观察计时器（交卷时不需要再等待）
+  clearAllTimers();
   
   buttonLocks['submitExam'] = true;
   
@@ -3222,8 +3235,16 @@ function showScreen(name) {
   }
   
   // 渲染对应内容
-  if (name === 'review') renderReviewList();
-  if (name === 'progress') renderProgress();
+  if (name === 'review') {
+    reviewFilter = 'all';
+    document.querySelectorAll('#screen-review .filter-tag').forEach((t, i) => t.classList.toggle('active', i === 0));
+    renderReviewList();
+  }
+  if (name === 'progress') {
+    progressFilter = 'all';
+    document.querySelectorAll('#screen-progress .filter-tag').forEach((t, i) => t.classList.toggle('active', i === 0));
+    renderProgress();
+  }
   
   // 滚动到顶部
   window.scrollTo(0, 0);

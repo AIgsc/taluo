@@ -690,15 +690,15 @@ module.exports = async (req, res) => {
         }
       }
       
-      // 追加答案（防止重复：同一 cardId+orientation 只保留最后一次）
+      // 按 currentIndex 存储答案（同一张牌可能出现在多道题中）
       if (!state.answers) state.answers = [];
-      const dupIdx = state.answers.findIndex(a => a.cardId === answer.cardId && a.orientation === answer.orientation);
-      if (dupIdx >= 0) {
-        state.answers[dupIdx] = answer; // 覆盖旧答案，不重复累积
+      if (currentIndex !== undefined) {
+        state.answers[currentIndex] = answer; // 直接按位置覆盖
+        state.currentIndex = currentIndex;
       } else {
+        // 兼容旧客户端：无 currentIndex 时追加到末尾
         state.answers.push(answer);
       }
-      if (currentIndex !== undefined) state.currentIndex = currentIndex;
       
       const stateJson = JSON.stringify(state);
       
