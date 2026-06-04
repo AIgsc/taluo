@@ -345,6 +345,7 @@ function clearAllTimers() {
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
   if (pendingImageFallbackId) { clearTimeout(pendingImageFallbackId); pendingImageFallbackId = null; }
+  if (pendingSlowLoadId) { clearTimeout(pendingSlowLoadId); pendingSlowLoadId = null; }
 }
 
 // ======================== 考试状态保存 ========================
@@ -2143,12 +2144,18 @@ async function resumeExamFromVisibility() {
 
 function startExamTimer() {
   if (examTimer) clearInterval(examTimer);
-  // 如果之前有暂停时间，恢复时清除暂停开始标记
   if (currentExam && currentExam.pauseStart) {
     currentExam.pauseStart = null;
   }
+  // 防御：startTime 无效时用当前时间兜底
+  if (currentExam && (!currentExam.startTime || currentExam.startTime > Date.now())) {
+    currentExam.startTime = Date.now();
+  }
   examTimer = setInterval(() => {
     if (!currentExam) return;
+    if (!currentExam.startTime || currentExam.startTime > Date.now()) {
+      currentExam.startTime = Date.now();
+    }
     const totalElapsed = Math.floor((Date.now() - currentExam.startTime) / 1000);
     const pausedSeconds = Math.floor((currentExam.pausedTime || 0) / 1000);
     const actualElapsed = totalElapsed - pausedSeconds;
@@ -2260,7 +2267,7 @@ function renderQuestion() {
       const tick = () => {
         const remaining = Math.max(0, Math.ceil((expireTime - Date.now()) / 1000));
         const cdEl = document.getElementById('image-countdown');
-        if (cdEl) cdEl.textContent = remaining;
+        if (cdEl && remaining > 0) cdEl.textContent = remaining;
         if (remaining > 0) {
           pendingImageCdInterval = setTimeout(tick, 200); // 200ms 检查一次，保证显示及时更新
         } else {
@@ -2273,25 +2280,77 @@ function renderQuestion() {
         pendingImageTimerId = null;
         if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
         
-        // 现在显示完整题目
-        let qHtml = '';
-        const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor' || q.type === 'deduction');
-        if (isImageOnly) {
-          qHtml = `
-            <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
-            <div class="q-text">${q.question}</div>
-          `;
-        } else {
-          qHtml = `
-            <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
-            <div class="card-name">${q.cardName}</div>
-            <span class="orientation-tag ${tagClass}">${tagText}</span>
-            <div class="q-text">${q.question}</div>
-          `;
-        }
-        document.getElementById('quiz-question-area').innerHTML = qHtml;
-        
-        if (q.type === 'fillblank' || q.type === 'recall') {
+        // 显示完整题目
+        showQuestionAfterImage(q, imgSizeSmall, imgRotation, tagClass, tagText);
+      }, 5000);
+    };
+    
+    // 监听图片加载完成和错误
+    let imageLoaded = false;
+    const onImageReady = () => {
+      if (imageLoaded) return;
+      imageLoaded = true;
+      startImageCountdown();
+    };
+    
+    imgEl.onload = onImageReady;
+    imgEl.onerror = onImageReady;
+    
+    // 超时 fallback，最多等 3 秒（句柄保存到全局，切题时可清理）
+    pendingImageFallbackId = setTimeout(() => {
+      pendingImageFallbackId = null;
+      onImageReady();
+    }, 3000);
+    
+    // 若 5 秒图片仍未加载完成，显示"跳过等待"按钮
+    pendingSlowLoadId = setTimeout(() => {
+      pendingSlowLoadId = null;
+      if (imageLoaded) return;
+      const statusEl = document.getElementById('img-status');
+      if (statusEl) {
+        statusEl.innerHTML = '⏳ 图片加载较慢，<button class="btn btn-sm btn-outline" onclick="skipImageWait()" style="margin-left:8px;vertical-align:middle">点击直接答题</button>';
+      }
+    }, 5000);
+    
+    // 保存当前题目渲染数据，供 skipImageWait 使用
+    window.__currentImageQuestion = { q, imgSizeSmall, imgRotation, tagClass, tagText };
+    
+    // 检查图片是否已经加载完成
+    if (imgEl.complete) onImageReady();
+  }
+}
+
+// 跳过图片观察阶段，直接显示题目
+function skipImageWait() {
+  if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
+  if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
+  if (pendingSlowLoadId) { clearTimeout(pendingSlowLoadId); pendingSlowLoadId = null; }
+  const data = window.__currentImageQuestion;
+  if (!data || !data.q) return;
+  showQuestionAfterImage(data.q, data.imgSizeSmall, data.imgRotation, data.tagClass, data.tagText);
+  window.__currentImageQuestion = null;
+}
+
+// 图片观察倒计时结束后或跳过后显示完整题目
+function showQuestionAfterImage(q, imgSizeSmall, imgRotation, tagClass, tagText) {
+  let qHtml = '';
+  const isImageOnly = (q.type === 'image' || q.type === 'recall' || q.type === 'image_anchor' || q.type === 'deduction');
+  if (isImageOnly) {
+    qHtml = `
+      <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
+      <div class="q-text">${q.question}</div>
+    `;
+  } else {
+    qHtml = `
+      <img class="quiz-card-img large" src="${cardImages[q.cardId]}" alt="${q.cardName}" loading="lazy" onerror="this.style.display='none'" style="${imgSizeSmall};${imgRotation}">
+      <div class="card-name">${q.cardName}</div>
+      <span class="orientation-tag ${tagClass}">${tagText}</span>
+      <div class="q-text">${q.question}</div>
+    `;
+  }
+  document.getElementById('quiz-question-area').innerHTML = qHtml;
+  
+  if (q.type === 'fillblank' || q.type === 'recall') {
           document.getElementById('quiz-options-area').innerHTML = `
             ${q.hint ? `<div style="color:#8a7a60;font-size:13px;margin-bottom:8px">${q.hint}</div>` : ''}
             <div class="quiz-input-wrap">
@@ -2316,31 +2375,8 @@ function renderQuestion() {
         }
         
         startQuestionTimer();
-      }, 5000);
-    };
-    
-    // 监听图片加载完成和错误
-    let imageLoaded = false;
-    const onImageReady = () => {
-      if (imageLoaded) return;
-      imageLoaded = true;
-      startImageCountdown();
-    };
-    
-    imgEl.onload = onImageReady;
-    imgEl.onerror = onImageReady;
-    
-    // 超时 fallback，最多等 3 秒（句柄保存到全局，切题时可清理）
-    pendingImageFallbackId = setTimeout(() => {
-      pendingImageFallbackId = null;
-      onImageReady();
-    }, 3000);
-    
-    // 检查图片是否已经加载完成
-    if (imgEl.complete) onImageReady();
   }
-}
-
+  
 function startQuestionTimer() {
   if (questionTimer) clearInterval(questionTimer);
   
@@ -2693,6 +2729,7 @@ async function finishExam() {
   const total = currentExam.totalCount;
   const rate = total > 0 ? Math.round(correctCount / total * 100) : 0;
   // 计算总用时扣除暂停时间
+  if (!currentExam.startTime || currentExam.startTime > Date.now()) currentExam.startTime = Date.now();
   const totalDuration = Math.floor((Date.now() - currentExam.startTime) / 1000);
   const pausedSeconds = Math.floor((currentExam.pausedTime || 0) / 1000);
   const duration = totalDuration - pausedSeconds;
