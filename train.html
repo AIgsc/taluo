@@ -334,7 +334,7 @@ const STORAGE_KEY_EXAM_STATE = 'taro_exam_state';
 const API_BASE_URL = '/api';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
-let pendingImageTimerId = null, pendingImageCdInterval = null, pendingImageFallbackId = null;
+let pendingImageTimerId = null, pendingImageCdInterval = null, pendingImageFallbackId = null, pendingSlowLoadId = null;
 let selectedTimeLimit = 30; // 默认30秒
 let buttonLocks = {}; // 按钮防抖锁
 
