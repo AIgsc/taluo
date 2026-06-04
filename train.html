@@ -334,7 +334,7 @@ const STORAGE_KEY_EXAM_STATE = 'taro_exam_state';
 const API_BASE_URL = '/api';
 let progressFilter = 'all', reviewFilter = 'all';
 let currentExam = null, examTimer = null, questionTimer = null;
-let pendingImageTimerId = null, pendingImageCdInterval = null, pendingImageFallbackId = null, pendingSlowLoadId = null;
+let pendingImageTimerId = null, pendingImageCdInterval = null;
 let selectedTimeLimit = 30; // 默认30秒
 let buttonLocks = {}; // 按钮防抖锁
 
@@ -344,8 +344,6 @@ function clearAllTimers() {
   if (questionTimer) { clearInterval(questionTimer); questionTimer = null; }
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
-  if (pendingImageFallbackId) { clearTimeout(pendingImageFallbackId); pendingImageFallbackId = null; }
-  if (pendingSlowLoadId) { clearTimeout(pendingSlowLoadId); pendingSlowLoadId = null; }
 }
 
 // ======================== 考试状态保存 ========================
@@ -2251,20 +2249,35 @@ function renderQuestion() {
     document.getElementById('quiz-feedback-area').innerHTML = '';
     startQuestionTimer();
   } else {
-    // 先显示图片 + "加载中..."提示
+    // 先显示图片 + "加载中..."提示 + 跳过按钮（从一开始就可见）
     document.getElementById('quiz-question-area').innerHTML = `
       <img class="quiz-card-img pending" id="current-card-img" src="${cardImages[q.cardId]}" alt="" loading="eager" onerror="this.style.display='none'" style="${imgSize};${imgRotation}">
-      <div style="text-align:center;color:#d4b87a;font-size:14px;margin:8px 0" id="img-status">⏳ 图片加载中...</div>
+      <div style="text-align:center;color:#d4b87a;font-size:14px;margin:8px 0" id="img-status">
+        ⏳ 图片加载中...
+        <button class="btn btn-sm btn-outline" onclick="skipImageWait()" style="margin-left:8px;vertical-align:middle" id="img-skip-btn">
+          跳过观察
+        </button>
+      </div>
     `;
     document.getElementById('quiz-options-area').innerHTML = '';
     document.getElementById('quiz-feedback-area').innerHTML = '';
+    
+    // 保存当前题目渲染数据，供 skipImageWait 使用
+    window.__currentImageQuestion = { q, imgSizeSmall, imgRotation, tagClass, tagText };
     
     // 等待图片加载完成后开始5秒观察倒计时
     const imgEl = document.getElementById('current-card-img');
     
     const startImageCountdown = () => {
       const statusEl = document.getElementById('img-status');
-      if (statusEl) statusEl.innerHTML = '🔍 仔细观察画面 <span id="image-countdown">5</span>s';
+      if (statusEl) {
+        statusEl.innerHTML = `
+          🔍 仔细观察画面 <span id="image-countdown">5</span>s
+          <button class="btn btn-sm btn-outline" onclick="skipImageWait()" style="margin-left:8px;vertical-align:middle" id="img-skip-btn">
+            跳过观察
+          </button>
+        `;
+      }
       
       // 基于时间戳计算剩余秒数，链式 setTimeout 防止 interval 堆叠
       const expireTime = Date.now() + 5000;
@@ -2300,25 +2313,6 @@ function renderQuestion() {
     imgEl.onload = onImageReady;
     imgEl.onerror = onImageReady;
     
-    // 超时 fallback，最多等 3 秒（句柄保存到全局，切题时可清理）
-    pendingImageFallbackId = setTimeout(() => {
-      pendingImageFallbackId = null;
-      onImageReady();
-    }, 3000);
-    
-    // 若 5 秒图片仍未加载完成，显示"跳过等待"按钮
-    pendingSlowLoadId = setTimeout(() => {
-      pendingSlowLoadId = null;
-      if (imageLoaded) return;
-      const statusEl = document.getElementById('img-status');
-      if (statusEl) {
-        statusEl.innerHTML = '⏳ 图片加载较慢，<button class="btn btn-sm btn-outline" onclick="skipImageWait()" style="margin-left:8px;vertical-align:middle">点击直接答题</button>';
-      }
-    }, 5000);
-    
-    // 保存当前题目渲染数据，供 skipImageWait 使用
-    window.__currentImageQuestion = { q, imgSizeSmall, imgRotation, tagClass, tagText };
-    
     // 检查图片是否已经加载完成
     if (imgEl.complete) onImageReady();
   }
@@ -2328,7 +2322,6 @@ function renderQuestion() {
 function skipImageWait() {
   if (pendingImageTimerId) { clearTimeout(pendingImageTimerId); pendingImageTimerId = null; }
   if (pendingImageCdInterval) { clearTimeout(pendingImageCdInterval); pendingImageCdInterval = null; }
-  if (pendingSlowLoadId) { clearTimeout(pendingSlowLoadId); pendingSlowLoadId = null; }
   const data = window.__currentImageQuestion;
   if (!data || !data.q) return;
   showQuestionAfterImage(data.q, data.imgSizeSmall, data.imgRotation, data.tagClass, data.tagText);
