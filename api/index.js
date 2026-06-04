@@ -125,9 +125,21 @@ async function ensureTables() {
   console.log('数据库表初始化完成');
 }
 
-// SHA256 哈希
+// 密码哈希（scrypt + salt）
 function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+function verifyPassword(password, stored) {
+  // 兼容旧格式（纯 SHA256 hex，无 salt）
+  if (stored && stored.indexOf(':') === -1) {
+    return crypto.createHash('sha256').update(password).digest('hex') === stored;
+  }
+  const parts = stored.split(':');
+  if (parts.length !== 2) return false;
+  const [salt, hash] = parts;
+  return crypto.scryptSync(password, salt, 64).toString('hex') === hash;
 }
 
 // JWT 工具
@@ -139,7 +151,8 @@ function createToken(payload, secret) {
   const header = base64urlencode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const body = base64urlencode(JSON.stringify(payload));
   const data = `${header}.${body}`;
-  const signature = base64urlencode(crypto.createHmac('sha256', secret).update(data).digest('base64'));
+  const rawSig = crypto.createHmac('sha256', secret).update(data).digest('base64');
+  const signature = rawSig.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   return `${header}.${body}.${signature}`;
 }
 
@@ -148,9 +161,12 @@ function verifyToken(token, secret) {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const data = `${parts[0]}.${parts[1]}`;
-    const expectedSig = base64urlencode(crypto.createHmac('sha256', secret).update(data).digest('base64'));
+    const rawSig = crypto.createHmac('sha256', secret).update(data).digest('base64');
+    const expectedSig = rawSig.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     if (parts[2] !== expectedSig) return null;
-    return JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+    if (payload.exp && Date.now() / 1000 > payload.exp) return null;
+    return payload;
   } catch (e) {
     return null;
   }
@@ -170,7 +186,7 @@ module.exports = async (req, res) => {
   console.log('请求:', req.method, path);
   
   try {
-    const pool = getPool();
+    const db = getPool();
     await ensureTables();
     
     // ==================== 健康检查 ====================
@@ -180,19 +196,19 @@ module.exports = async (req, res) => {
     
     // ==================== 用户注册 ====================
     if (req.method === 'POST' && path === '/api/auth/register') {
-      const { username, password } = req.body;
+      const { username, password } = req.body || {};
       
       if (!username || !password) {
         return res.status(400).json({ error: '用户名和密码不能为空' });
       }
       
-      const existing = await pool.query('SELECT id FROM users WHERE username = $1', [username]);
+      const existing = await db.query('SELECT id FROM users WHERE username = $1', [username]);
       if (existing.rows.length > 0) {
         return res.status(409).json({ error: '用户名已存在' });
       }
       
       const passwordHash = hashPassword(password);
-      const result = await pool.query(
+      const result = await db.query(
         'INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id',
         [username, passwordHash]
       );
@@ -208,19 +224,19 @@ module.exports = async (req, res) => {
     
     // ==================== 用户登录 ====================
     if (req.method === 'POST' && path === '/api/auth/login') {
-      const { username, password } = req.body;
+      const { username, password } = req.body || {};
       
       if (!username || !password) {
         return res.status(400).json({ error: '用户名和密码不能为空' });
       }
       
-      const result = await pool.query('SELECT id, username, password_hash FROM users WHERE username = $1', [username]);
+      const result = await db.query('SELECT id, username, password_hash FROM users WHERE username = $1', [username]);
       if (result.rows.length === 0) {
         return res.status(401).json({ error: '用户名或密码错误' });
       }
       
       const user = result.rows[0];
-      if (user.password_hash !== hashPassword(password)) {
+      if (!verifyPassword(password, user.password_hash)) {
         return res.status(401).json({ error: '用户名或密码错误' });
       }
       
@@ -250,19 +266,21 @@ module.exports = async (req, res) => {
     
     // ==================== 获取历史记录 ====================
     if (req.method === 'GET' && path === '/api/records') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT record_id, created_at, timestamp, rounds, game_state, current_round, full_deck, cached_numbers, re_sort_count, lock_picking, lock_current_main_delete, type, title FROM taro_records WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1000',
         [userPayload.userId]
       );
       
+      const safeParse = (str, fallback) => { try { return JSON.parse(str); } catch { return fallback; } };
+      
       const history = result.rows.map(row => ({
         id: row.record_id,
         timestamp: Number(row.timestamp),
-        rounds: JSON.parse(row.rounds),
-        gameState: JSON.parse(row.game_state),
+        rounds: safeParse(row.rounds, []),
+        gameState: safeParse(row.game_state, {}),
         currentRound: row.current_round,
-        fullDeck: JSON.parse(row.full_deck),
-        cachedNumbers: JSON.parse(row.cached_numbers),
+        fullDeck: safeParse(row.full_deck, []),
+        cachedNumbers: safeParse(row.cached_numbers, []),
         reSortCount: row.re_sort_count,
         lockPicking: !!row.lock_picking,
         lockCurrentMainDelete: !!row.lock_current_main_delete,
@@ -275,49 +293,37 @@ module.exports = async (req, res) => {
     
     // ==================== 保存记录 ====================
     if (req.method === 'POST' && path === '/api/records') {
-      const record = req.body;
+      const record = req.body || {};
       
-      const existing = await pool.query(
-        'SELECT id FROM taro_records WHERE user_id = $1 AND record_id = $2',
-        [userPayload.userId, record.id]
+      if (!record || !record.id) {
+        return res.status(400).json({ error: '记录数据不完整' });
+      }
+      
+      await db.query(
+        `INSERT INTO taro_records (user_id, record_id, timestamp, rounds, game_state, current_round,
+         full_deck, cached_numbers, re_sort_count, lock_picking, lock_current_main_delete, type, title)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         ON CONFLICT (user_id, record_id) DO UPDATE SET
+           timestamp = $3, rounds = $4, game_state = $5, current_round = $6,
+           full_deck = $7, cached_numbers = $8, re_sort_count = $9, lock_picking = $10,
+           lock_current_main_delete = $11, type = $12, title = $13`,
+        [
+          userPayload.userId, record.id, record.timestamp ?? 0, JSON.stringify(record.rounds ?? []),
+          JSON.stringify(record.gameState ?? {}), record.currentRound ?? 0, JSON.stringify(record.fullDeck ?? []),
+          JSON.stringify(record.cachedNumbers ?? []), record.reSortCount ?? 0, record.lockPicking ? 1 : 0,
+          record.lockCurrentMainDelete ? 1 : 0, record.type ?? '', record.title ?? ''
+        ]
       );
       
-      if (existing.rows.length > 0) {
-        await pool.query(
-          `UPDATE taro_records SET timestamp = $1, rounds = $2, game_state = $3, current_round = $4,
-           full_deck = $5, cached_numbers = $6, re_sort_count = $7, lock_picking = $8,
-           lock_current_main_delete = $9, type = $10, title = $11
-           WHERE user_id = $12 AND record_id = $13`,
-          [
-            record.timestamp, JSON.stringify(record.rounds), JSON.stringify(record.gameState),
-            record.currentRound, JSON.stringify(record.fullDeck), JSON.stringify(record.cachedNumbers),
-            record.reSortCount, record.lockPicking ? 1 : 0, record.lockCurrentMainDelete ? 1 : 0,
-            record.type, record.title, userPayload.userId, record.id
-          ]
-        );
-      } else {
-        await pool.query(
-          `INSERT INTO taro_records (user_id, record_id, timestamp, rounds, game_state, current_round,
-           full_deck, cached_numbers, re_sort_count, lock_picking, lock_current_main_delete, type, title)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-          [
-            userPayload.userId, record.id, record.timestamp, JSON.stringify(record.rounds),
-            JSON.stringify(record.gameState), record.currentRound, JSON.stringify(record.fullDeck),
-            JSON.stringify(record.cachedNumbers), record.reSortCount, record.lockPicking ? 1 : 0,
-            record.lockCurrentMainDelete ? 1 : 0, record.type, record.title
-          ]
-        );
-        
-        // 清理旧记录
-        const countResult = await pool.query(
-          'SELECT id FROM taro_records WHERE user_id = $1 ORDER BY created_at DESC',
-          [userPayload.userId]
-        );
-        if (countResult.rows.length > 1000) {
-          const deleteIds = countResult.rows.slice(1000).map(r => r.id);
-          const placeholders = deleteIds.map((_, i) => `$${i + 1}`).join(',');
-          await pool.query(`DELETE FROM taro_records WHERE id IN (${placeholders})`, deleteIds);
-        }
+      // 清理旧记录
+      const countResult = await db.query(
+        'SELECT id FROM taro_records WHERE user_id = $1 ORDER BY created_at DESC',
+        [userPayload.userId]
+      );
+      if (countResult.rows.length > 1000) {
+        const deleteIds = countResult.rows.slice(1000).map(r => r.id);
+        const placeholders = deleteIds.map((_, i) => `$${i + 1}`).join(',');
+        await db.query(`DELETE FROM taro_records WHERE id IN (${placeholders})`, deleteIds);
       }
       
       return res.json({ success: true });
@@ -326,9 +332,9 @@ module.exports = async (req, res) => {
     // ==================== 更新记录标题 ====================
     if (req.method === 'PUT' && path.startsWith('/api/records/')) {
       const recordId = path.split('/api/records/')[1];
-      const { title } = req.body;
+      const { title } = req.body || {};
       
-      await pool.query(
+      await db.query(
         'UPDATE taro_records SET title = $1 WHERE user_id = $2 AND record_id = $3',
         [title, userPayload.userId, recordId]
       );
@@ -340,7 +346,7 @@ module.exports = async (req, res) => {
     if (req.method === 'DELETE' && path.startsWith('/api/records/')) {
       const recordId = path.split('/api/records/')[1];
       
-      await pool.query(
+      await db.query(
         'DELETE FROM taro_records WHERE user_id = $1 AND record_id = $2',
         [userPayload.userId, recordId]
       );
@@ -350,7 +356,7 @@ module.exports = async (req, res) => {
     
     // ==================== 获取牌义（按用户） ====================
     if (req.method === 'GET' && path === '/api/card-meanings') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT card_id, name, upright, reversed, pattern, EXTRACT(EPOCH FROM updated_at) * 1000 AS updated_at FROM card_meanings WHERE user_id = $1 ORDER BY card_id ASC',
         [userPayload.userId]
       );
@@ -371,14 +377,14 @@ module.exports = async (req, res) => {
     
     // ==================== 初始化牌义到当前用户 ====================
     if (req.method === 'POST' && path === '/api/card-meanings/seed') {
-      const { cards } = req.body;
+      const { cards } = req.body || {};
       
       if (!Array.isArray(cards) || cards.length === 0) {
         return res.status(400).json({ error: '牌义数据不能为空' });
       }
       
       // 使用事务保护：DELETE + 循环 INSERT 要么全部成功，要么全部回滚
-      const client = await pool.connect();
+      const client = await db.connect();
       try {
         await client.query('BEGIN');
         
@@ -389,7 +395,7 @@ module.exports = async (req, res) => {
           if (card && card.name) {
             await client.query(
               'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-              [userPayload.userId, i + 1, card.name, card.upright || '', card.reversed || '', card.pattern || '']
+              [userPayload.userId, card.card_id || (i + 1), card.name, card.upright || '', card.reversed || '', card.pattern || '']
             );
           }
         }
@@ -412,40 +418,24 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: '无效的牌ID' });
       }
       
-      const { name, upright, reversed, pattern } = req.body;
+      const { name, upright, reversed, pattern } = req.body || {};
       
-      const existing = await pool.query(
-        'SELECT card_id FROM card_meanings WHERE user_id = $1 AND card_id = $2',
-        [userPayload.userId, cardId]
+      const result = await db.query(
+        `INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+         ON CONFLICT (user_id, card_id) DO UPDATE SET
+           name = $3, upright = $4, reversed = $5, pattern = $6, updated_at = NOW()
+         RETURNING EXTRACT(EPOCH FROM updated_at) * 1000 AS updated_at`,
+        [userPayload.userId, cardId, name || '', upright || '', reversed || '', pattern || '']
       );
-      
-      if (existing.rows.length > 0) {
-        await pool.query(
-          'UPDATE card_meanings SET name = $1, upright = $2, reversed = $3, pattern = $4, updated_at = NOW() WHERE user_id = $5 AND card_id = $6',
-          [name || '', upright || '', reversed || '', pattern || '', userPayload.userId, cardId]
-        );
-      } else {
-        await pool.query(
-          'INSERT INTO card_meanings (user_id, card_id, name, upright, reversed, pattern, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-          [userPayload.userId, cardId, name || '', upright || '', reversed || '', pattern || '']
-        );
-      }
-      
-      // 返回服务器当前的 updated_at 时间戳
-      const updated = await pool.query(
-        'SELECT EXTRACT(EPOCH FROM updated_at) * 1000 AS updated_at FROM card_meanings WHERE user_id = $1 AND card_id = $2',
-        [userPayload.userId, cardId]
-      );
-      const serverTimestamp = updated.rows[0]?.updated_at ? Number(updated.rows[0].updated_at) : Date.now();
+      const serverTimestamp = result.rows[0]?.updated_at ? Number(result.rows[0].updated_at) : Date.now();
       
       return res.json({ success: true, updated_at: serverTimestamp });
     }
     
-
-    
     // ==================== 训练系统：获取进度 ====================
     if (req.method === 'GET' && path === '/api/training/progress') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT card_id, orientation, progress, correct_count, error_count, "interval", ease_factor, EXTRACT(EPOCH FROM due_date)::bigint * 1000 as due_date FROM user_progress WHERE user_id = $1 ORDER BY card_id, orientation',
         [userPayload.userId]
       );
@@ -454,7 +444,7 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：更新进度 ====================
     if (req.method === 'POST' && path === '/api/training/progress') {
-      const { card_id, orientation, is_correct, interval, ease_factor, due_date, progress, correct_count, error_count } = req.body;
+      const { card_id, orientation, is_correct, interval, ease_factor, due_date, progress, correct_count, error_count } = req.body || {};
       
       if (!card_id || !orientation) {
         return res.status(400).json({ error: '缺少必要参数' });
@@ -468,7 +458,7 @@ module.exports = async (req, res) => {
       // 使用前端传递的progress值（已含答对+10/答错-15），如果没有则用服务端计算
       let newProgress = progress;
       if (newProgress === undefined) {
-        const curr = await pool.query(
+        const curr = await db.query(
           'SELECT progress FROM user_progress WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
           [userPayload.userId, card_id, orientation]
         );
@@ -484,7 +474,7 @@ module.exports = async (req, res) => {
       const newCorrectCount = correct_count !== undefined ? correct_count : 0;
       const newErrorCount = error_count !== undefined ? error_count : 0;
       
-      await pool.query(
+      await db.query(
         `INSERT INTO user_progress (user_id, card_id, orientation, progress, correct_count, error_count, last_time, "interval", ease_factor, due_date)
          VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7,$8,$9)
          ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
@@ -501,13 +491,13 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：删除进度 ====================
     if (req.method === 'DELETE' && path === '/api/training/progress') {
-      await pool.query('DELETE FROM user_progress WHERE user_id = $1', [userPayload.userId]);
+      await db.query('DELETE FROM user_progress WHERE user_id = $1', [userPayload.userId]);
       return res.json({ success: true });
     }
     
     // ==================== 训练系统：获取错题 ====================
     if (req.method === 'GET' && path === '/api/training/errors') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT card_id, orientation, error_count, continuous_correct, timeout FROM user_errors WHERE user_id = $1 ORDER BY error_count DESC',
         [userPayload.userId]
       );
@@ -516,7 +506,7 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：记录错题 ====================
     if (req.method === 'POST' && path === '/api/training/errors') {
-      const { card_id, orientation, is_correct, error_count, continuous_correct, timeout } = req.body;
+      const { card_id, orientation, is_correct, error_count, continuous_correct, timeout } = req.body || {};
       
       if (!card_id || !orientation) {
         return res.status(400).json({ error: '缺少必要参数' });
@@ -528,14 +518,14 @@ module.exports = async (req, res) => {
       
       // 连续答对5次 → 已掌握，自动删除错题记录
       if (newCc >= 5) {
-        await pool.query(
+        await db.query(
           'DELETE FROM user_errors WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
           [userPayload.userId, card_id, orientation]
         );
         return res.json({ success: true, deleted: true });
       }
       
-      await pool.query(
+      await db.query(
         `INSERT INTO user_errors (user_id, card_id, orientation, error_count, continuous_correct, last_error_time, timeout)
          VALUES ($1,$2,$3,$4,$5,NOW(),$6)
          ON CONFLICT (user_id, card_id, orientation) DO UPDATE SET
@@ -564,19 +554,19 @@ module.exports = async (req, res) => {
       }
       
       if (card_id && orientation) {
-        await pool.query(
+        await db.query(
           'DELETE FROM user_errors WHERE user_id = $1 AND card_id = $2 AND orientation = $3',
           [userPayload.userId, card_id, orientation]
         );
       } else {
-        await pool.query('DELETE FROM user_errors WHERE user_id = $1', [userPayload.userId]);
+        await db.query('DELETE FROM user_errors WHERE user_id = $1', [userPayload.userId]);
       }
       return res.json({ success: true });
     }
     
     // ==================== 训练系统：混淆错误记录 ====================
     if (req.method === 'GET' && path === '/api/training/confuse-errors') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT pair_key, error_count FROM user_confuse_errors WHERE user_id = $1',
         [userPayload.userId]
       );
@@ -584,10 +574,10 @@ module.exports = async (req, res) => {
     }
     
     if (req.method === 'POST' && path === '/api/training/confuse-errors') {
-      const { pair_key, error_count } = req.body;
+      const { pair_key, error_count } = req.body || {};
       if (!pair_key) return res.status(400).json({ error: '缺少 pair_key' });
       
-      await pool.query(
+      await db.query(
         `INSERT INTO user_confuse_errors (user_id, pair_key, error_count) 
          VALUES ($1, $2, $3)
          ON CONFLICT (user_id, pair_key) 
@@ -598,13 +588,13 @@ module.exports = async (req, res) => {
     }
     
     if (req.method === 'DELETE' && path === '/api/training/confuse-errors') {
-      await pool.query('DELETE FROM user_confuse_errors WHERE user_id = $1', [userPayload.userId]);
+      await db.query('DELETE FROM user_confuse_errors WHERE user_id = $1', [userPayload.userId]);
       return res.json({ success: true });
     }
     
     // ==================== 训练系统：获取考试记录 ====================
     if (req.method === 'GET' && path === '/api/training/exams') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT id, exam_time, total, score, correct_rate, duration, error_ids FROM user_exams WHERE user_id = $1 ORDER BY exam_time DESC LIMIT 200',
         [userPayload.userId]
       );
@@ -613,9 +603,9 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：保存考试记录 ====================
     if (req.method === 'POST' && path === '/api/training/exams') {
-      const { total, score, correct_rate, duration, error_ids } = req.body;
+      const { total, score, correct_rate, duration, error_ids } = req.body || {};
       
-      await pool.query(
+      await db.query(
         `INSERT INTO user_exams (user_id, exam_time, total, score, correct_rate, duration, error_ids)
          VALUES ($1, NOW(), $2, $3, $4, $5, $6)`,
         [userPayload.userId, total, score, correct_rate, duration, error_ids || '']
@@ -626,13 +616,13 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：删除考试记录 ====================
     if (req.method === 'DELETE' && path === '/api/training/exams') {
-      await pool.query('DELETE FROM user_exams WHERE user_id = $1', [userPayload.userId]);
+      await db.query('DELETE FROM user_exams WHERE user_id = $1', [userPayload.userId]);
       return res.json({ success: true });
     }
     
     // ==================== 训练系统：获取考试状态 ====================
     if (req.method === 'GET' && path === '/api/training/exam-state') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT exam_state FROM user_exam_states WHERE user_id = $1',
         [userPayload.userId]
       );
@@ -645,38 +635,33 @@ module.exports = async (req, res) => {
     
     // ==================== 训练系统：保存考试状态 ====================
     if (req.method === 'POST' && path === '/api/training/exam-state') {
-      const { exam_state } = req.body;
+      const { exam_state } = req.body || {};
       
-      const existing = await pool.query(
-        'SELECT id FROM user_exam_states WHERE user_id = $1',
-        [userPayload.userId]
+      await db.query(
+        `INSERT INTO user_exam_states (user_id, exam_state)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id) DO UPDATE SET exam_state = $2`,
+        [userPayload.userId, exam_state || '{}']
       );
-      
-      if (existing.rows.length > 0) {
-        await pool.query(
-          'UPDATE user_exam_states SET exam_state = $1 WHERE user_id = $2',
-          [exam_state || '{}', userPayload.userId]
-        );
-      } else {
-        await pool.query(
-          'INSERT INTO user_exam_states (user_id, exam_state) VALUES ($1, $2)',
-          [userPayload.userId, exam_state || '{}']
-        );
-      }
       
       return res.json({ success: true });
     }
     
     // ==================== 训练系统：增量答题同步（轻量） ====================
     if (req.method === 'POST' && path === '/api/training/exam-state/answer') {
-      const { currentIndex, answer } = req.body;
+      const { currentIndex, answer } = req.body || {};
       
       if (!answer) {
-        return res.json({ success: false, error: '缺少答案数据' });
+        return res.status(400).json({ error: '缺少答案数据' });
+      }
+      
+      // 限制 currentIndex 范围，防止稀疏数组攻击
+      if (currentIndex !== undefined && (currentIndex < 0 || currentIndex > 1000)) {
+        return res.status(400).json({ error: '无效的答题索引' });
       }
       
       // 读取现有考试状态
-      const existing = await pool.query(
+      const existing = await db.query(
         'SELECT exam_state FROM user_exam_states WHERE user_id = $1',
         [userPayload.userId]
       );
@@ -702,24 +687,19 @@ module.exports = async (req, res) => {
       
       const stateJson = JSON.stringify(state);
       
-      if (existing.rows.length > 0) {
-        await pool.query(
-          'UPDATE user_exam_states SET exam_state = $1 WHERE user_id = $2',
-          [stateJson, userPayload.userId]
-        );
-      } else {
-        await pool.query(
-          'INSERT INTO user_exam_states (user_id, exam_state) VALUES ($1, $2)',
-          [userPayload.userId, stateJson]
-        );
-      }
+      await db.query(
+        `INSERT INTO user_exam_states (user_id, exam_state)
+         VALUES ($1, $2)
+         ON CONFLICT (user_id) DO UPDATE SET exam_state = $2`,
+        [userPayload.userId, stateJson]
+      );
       
       return res.json({ success: true });
     }
     
     // ==================== 训练系统：清除考试状态 ====================
     if (req.method === 'DELETE' && path === '/api/training/exam-state') {
-      await pool.query('DELETE FROM user_exam_states WHERE user_id = $1', [userPayload.userId]);
+      await db.query('DELETE FROM user_exam_states WHERE user_id = $1', [userPayload.userId]);
       return res.json({ success: true });
     }
     
@@ -973,6 +953,6 @@ module.exports = async (req, res) => {
     
   } catch (e) {
     console.error('API 错误:', e);
-    return res.status(500).json({ error: '服务器错误: ' + e.message });
+    return res.status(500).json({ error: '服务器内部错误，请稍后重试' });
   }
 }
