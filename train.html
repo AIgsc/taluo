@@ -205,7 +205,6 @@ input:focus,select:focus{outline:none;border-color:#d4b87a}
   <div class="topbar">
     <span style="font-size:13px;color:#8a7a60" id="exam-info">考试中</span>
     <h1 id="exam-title">第 1/10 题</h1>
-    <button class="btn btn-sm btn-outline" onclick="submitExam()" id="submit-btn">交卷</button>
   </div>
 
   <div class="quiz-header">
@@ -448,14 +447,18 @@ function syncExamAnswerToServer(answerData, currentIndex) {
   }
 }
 
-// 刷新重试队列（网络恢复时调用）
+// 刷新重试队列（网络恢复时调用，每次处理最多 50 条）
 function flushSyncRetryQueue() {
   if (!navigator.onLine || syncRetryQueue.length === 0) return;
   if (syncRetryTimer) clearTimeout(syncRetryTimer);
   
-  const item = syncRetryQueue.shift();
-  if (item) {
-    syncExamAnswerToServer(item.answerData, item.currentIndex);
+  // 批量处理，每次最多 50 条
+  const batchSize = Math.min(50, syncRetryQueue.length);
+  for (let i = 0; i < batchSize; i++) {
+    const item = syncRetryQueue.shift();
+    if (item) {
+      syncExamAnswerToServer(item.answerData, item.currentIndex);
+    }
   }
   
   if (syncRetryQueue.length > 0) {
@@ -2680,6 +2683,10 @@ async function finishExam() {
   clearAllTimers(); // 清理所有定时器
   
   if (!currentExam) return;
+
+  // 交卷前立即同步考试状态（确保服务器有完整答案）
+  saveExamState();
+  await syncExamStateToServer();
   
   const validAnswers = (currentExam.answers || []).filter(a => a != null);
   const correctCount = validAnswers.filter(a => a.correct).length;
@@ -2737,61 +2744,11 @@ async function finishExam() {
   showScreen('result');
 }
 
-async function submitExam() {
-  // 按钮防抖
-  if (buttonLocks['submitExam']) return;
-  
-  // 清除待处理的图片观察计时器（交卷时不需要再等待）
-  clearAllTimers();
-  
-  buttonLocks['submitExam'] = true;
-  
-  if (!currentExam) {
-    buttonLocks['submitExam'] = false;
-    return;
-  }
-  
-  const updatedKeys = new Set();
-  while (currentExam.currentIndex < currentExam.totalCount) {
-    const q = currentExam.questions[currentExam.currentIndex];
-    const answerTime = 0; // 未答题标记为完全不会
-    currentExam.answers.push({ cardId: q.cardId, orientation: q.orientation, correct: false, timeout: true, answerTime });
-    updateProgress(q.cardId, q.orientation, false, answerTime, true);
-    recordError(q.cardId, q.orientation, false, true, true);
-    updatedKeys.add(buildProgressKey(q.cardId, q.orientation));
-    currentExam.currentIndex++;
-  }
-  // 批量同步进度和错题（只同步有变化的条目）
-  const progress = getProgress();
-  const errors = getErrors();
-  for (const key of updatedKeys) {
-    const p = progress[key];
-    if (p) {
-      const [cardId, orientation] = key.split('_');
-      syncProgressToServer(Number(cardId), orientation, false, p.interval, p.easeFactor, p.dueDate, p.progress, p.correctCount, p.errorCount);
-    }
-    const e = errors[key];
-    if (e) {
-      const [cardId, orientation] = key.split('_');
-      syncErrorToServer(Number(cardId), orientation, false, e.ec, e.cc, e.timeout);
-    }
-  }
-  // 交卷前立即同步考试状态
-  saveExamState();
-  await syncExamStateToServer();
-  finishExam();
-  
-  // 500ms后解锁按钮
-  setTimeout(() => {
-    buttonLocks['submitExam'] = false;
-  }, 500);
-}
-
 // ======================== 错题强化 ========================
 // 首页总掌握率更新（与 updateHomeMastery 联动）
 function updateHomeMastery() {
   const homeMastery = document.getElementById('home-mastery-info');
-  if (!homeMastery) return;
+  if (!homeMastery || !TAROT_CARDS || TAROT_CARDS.length === 0) return;
   const progress = getProgress();
   let total = 0, mastered = 0;
   TAROT_CARDS.forEach(card => {
