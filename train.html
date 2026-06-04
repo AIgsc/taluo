@@ -550,10 +550,10 @@ async function resumeExam() {
     return;
   }
   
-  // 计算暂停时间
-  let pausedTime = state.pausedTime || 0;
-  if (state.pauseStart) {
-    pausedTime += Date.now() - state.pauseStart;
+  // 计算暂停时间（防御：防止暂停时间为负值）
+  let pausedTime = Math.max(0, state.pausedTime || 0);
+  if (state.pauseStart && state.pauseStart <= Date.now()) {
+    pausedTime = Math.max(0, pausedTime + (Date.now() - state.pauseStart));
   }
   
   currentExam = {
@@ -2085,11 +2085,11 @@ function startExam() {
 
 function pauseExamFromVisibility() {
   if (!currentExam) return;
-  // 如果已经在暂停，就不重复处理
   if (currentExam.pauseStart) return;
   
-  // 记录暂停开始时间
-  currentExam.pauseStart = Date.now();
+  // 防御：确保 pauseStart 不会被设成未来时间
+  const now = Date.now();
+  currentExam.pauseStart = now;
   
   // 如果答题计时器正在运行，计算并保存剩余时间
   if (questionTimer && currentExam.questionStartTime) {
@@ -2133,8 +2133,12 @@ async function resumeExamFromVisibility() {
     }
   } catch (e) {}
   
-  // 计算暂停时间
-  currentExam.pausedTime = (currentExam.pausedTime || 0) + (Date.now() - currentExam.pauseStart);
+  // 计算暂停时间（防御：防止暂停时间为负值）
+  const now = Date.now();
+  const pauseDuration = currentExam.pauseStart && currentExam.pauseStart <= now 
+    ? Math.max(0, now - currentExam.pauseStart)
+    : 0;
+  currentExam.pausedTime = Math.max(0, (currentExam.pausedTime || 0) + pauseDuration);
   currentExam.pauseStart = null;
   
   saveExamState();
