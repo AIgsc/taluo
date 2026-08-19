@@ -82,6 +82,12 @@
     }
   }
 
+  // ==================== 获取页面版本号 ====================
+  function getPageVersion() {
+    var app = document.getElementById('app');
+    return app ? app.dataset.pageVersion || '1' : '1';
+  }
+
   // ==================== 收集所有可编辑内容 ====================
   function collectContent() {
     var data = {};
@@ -89,12 +95,15 @@
     elements.forEach(function(el) {
       data[el.dataset.edit] = el.innerHTML;
     });
+    // 附带当前页面版本号
+    data._version = getPageVersion();
     return data;
   }
 
   // ==================== 应用保存的内容到页面 ====================
   function applyContent(data) {
     Object.keys(data).forEach(function(key) {
+      if (key === '_version') return;
       var el = document.querySelector('[data-edit="' + key + '"]');
       if (el) {
         el.innerHTML = data[key];
@@ -109,6 +118,12 @@
       if (res.ok) {
         var result = await res.json();
         if (result.content && typeof result.content === 'object') {
+          var currentVersion = getPageVersion();
+          var savedVersion = result.content._version || '1';
+          if (savedVersion !== currentVersion) {
+            console.log('商业计划书：页面版本已更新（' + savedVersion + '→' + currentVersion + '），跳过旧内容');
+            return;
+          }
           applyContent(result.content);
           console.log('商业计划书：已加载保存的编辑内容');
         }
