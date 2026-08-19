@@ -2193,7 +2193,7 @@
       </style></head>
 <body>
 
-<div class="container" id="app" data-page-version="4">
+<div class="container" id="app" data-page-version="5">
 
   <!-- ==================== 封面 ==================== -->
   <div class="cover" id="page-cover" data-edit="cover">
@@ -2209,7 +2209,7 @@
       <strong>团队编制：</strong>48人<br>
       <strong>回本周期：</strong>12个月（含装修期+爬坡期，保守测算）
     </div>
-    <div class="version">版本 V9.0 · 全数据修正版</div>
+    <div class="version">版本 V10.0 · 设备12个月分摊+两套报表</div>
   </div>
 
   <!-- ==================== 目录 ==================== -->
@@ -2309,13 +2309,20 @@
       <div class="section-num">四</div>
       <h2>项目利润测算</h2>
     </div>
+    <p class="fs-085 color-gray" style="margin-bottom:8px;">以下为稳定月销180万场景，按经营考核口径（设备50万÷12个月分摊）计算。</p>
     <div class="data-grid">
       <div class="data-card"><div class="label">月度总营收</div><div class="value green">1,800,000元</div></div>
-      <div class="data-card"><div class="label">月度总支出</div><div class="value">1,237,000元</div></div>
+      <div class="data-card"><div class="label">经营口径月度总支出</div><div class="value">1,278,667元</div></div>
     </div>
     <div class="highlight-box green" style="text-align:center;">
-      <strong style="font-size:1.2rem;">月度经营毛利：563,000 元</strong>
-      <br><span style="font-size:0.85rem;color:#555;">（已含房租/人工/食材/水电/营销/杂费，未扣服务商及三方分成）</span>
+      <strong style="font-size:1.2rem;">经营口径月度利润：521,333 元</strong>
+      <br><span style="font-size:0.85rem;color:#555;">（含设备分摊41,667元/月，未扣服务商及三方分成；现金净利润为563,000元）</span>
+    </div>
+    <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
+      <strong>📌 利润口径说明：</strong><br>
+      • 经营口径利润 = 营收 − 房租 − 人工 − 食材 − 水电 − 营销 − 杂费 − 设备分摊<br>
+      • 设备分摊 = 500,000 ÷ 12 = 41,667元/月（仅第1-12个月，第13个月起归零，利润回升至563,000）<br>
+      • 现金净利润 = 563,000元（未扣设备分摊，因为设备全款已一次性在开业月支付）
     </div>
   </div>
 
@@ -2327,32 +2334,34 @@
     </div>
     <p class="fs-085 color-gray" style="margin-bottom:8px;">
       ⚠️ 以上为理想最优模型。以下模拟食材成本上升至48% + 增加营销推广后，真实利润大幅缩水。
+      所有数据均为经营考核口径（含设备分摊41,667元/月）。
     </p>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:55%;">项目</th><th style="width:45%;text-align:right;">金额（元）</th></tr></thead>
         <tbody>
           <tr><td>月营收（不变）</td><td style="text-align:right;">1,800,000</td></tr>
-          <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 悲观情景支出 ——</td></tr>
+          <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 悲观情景支出（经营考核口径） ——</td></tr>
           <tr><td>① 低保底房租</td><td style="text-align:right;">70,000</td></tr>
           <tr><td>② 全员人工工资</td><td style="text-align:right;">243,000</td></tr>
           <tr><td>③ ⚠️ 食材成本（上涨至48%：180万×48%）</td><td style="text-align:right;color:#c0392b;">864,000</td></tr>
           <tr><td>④ 水电燃气耗材维保</td><td style="text-align:right;">48,000</td></tr>
           <tr><td>⑤ 营销推广（营收3%）</td><td style="text-align:right;">54,000</td></tr>
           <tr><td>⑥ 运营杂费</td><td style="text-align:right;">12,000</td></tr>
-          <tr class="total-row"><td><strong>悲观情景月度总支出</strong></td><td style="text-align:right;color:#c0392b;"><strong>1,291,000</strong></td></tr>
-          <tr><td style="color:#888;">对比理想模型（1,237,000）</td><td style="text-align:right;color:#c0392b;">多支出 54,000</td></tr>
+          <tr><td>⑦ 🛠 设备月度分摊（50万÷12）</td><td style="text-align:right;">41,667</td></tr>
+          <tr class="total-row"><td><strong>悲观情境经营口径总支出</strong></td><td style="text-align:right;color:#c0392b;"><strong>1,332,667</strong></td></tr>
+          <tr><td style="color:#888;">对比理想经营口径（1,278,667）</td><td style="text-align:right;color:#c0392b;">多支出 54,000</td></tr>
         </tbody>
       </table>
     </div>
     <div class="data-grid" style="margin-top:12px;">
-      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">悲观经营毛利</div><div class="value" style="color:#c0392b;">509,000 元</div></div>
-      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">扣服务费后纯利</div><div class="value" style="color:#c0392b;">437,000 元</div></div>
-      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">运营方实得（三方分成后）</div><div class="value" style="color:#c0392b;">约 35.2 万</div></div>
+      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">悲观经营毛利</div><div class="value" style="color:#c0392b;">467,333 元</div></div>
+      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">扣服务费后纯利</div><div class="value" style="color:#c0392b;">395,333 元</div></div>
+      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">运营方实得（三方分成后）</div><div class="value" style="color:#c0392b;">约 31.7 万</div></div>
     </div>
     <div class="highlight-box" style="border-left:4px solid #c0392b;background:#fff5f5;">
-      <strong>⚠️ 悲观 vs 理想对比：</strong><br>
-      理想模型运营方月实得≈39.6万 → 悲观模型≈35.2万，<strong>每月少4.4万，年累计少53万</strong>。<br>
+      <strong>⚠️ 悲观 vs 理想对比（经营考核口径）：</strong><br>
+      理想模型运营方月实得≈36.2万 → 悲观模型≈31.7万，<strong>每月少4.5万，年累计少54万</strong>。<br>
       回本周期从12个月延长至约14-15个月。<br>
       <strong>建议：</strong>实际操作中应按悲观情景做预算预留，才能在真实经营中游刃有余。
     </div>
@@ -2366,9 +2375,9 @@
     </div>
     <div class="data-grid">
       <div class="data-card"><div class="label">总投资</div><div class="value">80万</div></div>
-      <div class="data-card"><div class="label">稳定后月度净利润</div><div class="value green">40万+</div></div>
+      <div class="data-card"><div class="label">稳定后运营方月实得</div><div class="value green">36.2万</div></div>
     </div>
-    <div class="sub-title-sm">回本推演时间线</div>
+    <div class="sub-title-sm">回本推演时间线（经营考核口径，含设备分摊）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:25%;">阶段</th><th style="width:35%;">时间</th><th style="width:40%;text-align:right;">累计净现金流</th></tr></thead>
@@ -2381,19 +2390,19 @@
       </table>
     </div>
     <div class="highlight-box orange">
-      <strong>回本周期说明：</strong><br>
+      <strong>回本周期说明（经营口径，含设备分摊41,667元/月）：</strong><br>
       • 装修施工期2个月：80万现金投入（装修50万+组建人工20万+预留食材10万），0营收<br>
-      • 试营业第1-2个月（第3-4月）：日均3-4万，月营收≈100万，食材成本约45万（45%），扣除房租7万+人工24.3万+水电4.8万+营销3万+杂费1.2万，月经营毛利≈14.7万，扣服务费4万后≈10.7万，微利运营<br>
-      • 试营业第3-4个月（第5-6月）：日均4-5万，月营收≈130万，食材成本约58.5万（45%），扣除房租7万+人工24.3万+水电4.8万+营销3.9万+杂费1.2万，月经营毛利≈30.3万，扣服务费5.2万后≈25.1万<br>
-      • 第7个月起：稳定日均6万+，月经营毛利56.3万，扣服务费7.2万后纯利49.1万，运营方实得约39.6万<br>
+      • 试营业第1-2个月（第3-4月）：日均3-4万，月营收≈100万，经营口径支出≈89.5万（含设备分摊4.17万），月经营纯利≈10.5万，扣服务费4万后≈6.5万<br>
+      • 试营业第3-4个月（第5-6月）：日均4-5万，月营收≈130万，经营口径支出≈103.9万（含设备分摊4.17万），月经营纯利≈26.1万，扣服务费5.2万后≈20.9万<br>
+      • 第7个月起：稳定日均6万+，经营口径月利润52.1万，扣服务费7.2万后纯利44.9万，运营方实得约36.2万<br>
       <strong>结论：从进场施工算起，整体回本周期12个月，含装修期+爬坡期+稳定期，稳妥可靠。</strong>
     </div>
-    <div class="highlight-box" style="border-left:4px solid #8e44ad;">
-      <strong>📌 重要说明：现金流回本 vs 会计账面利润</strong><br>
-      本计划书采用<b>现金流回本</b>口径（即实际收回现金的时间）。<br>
-      装修设备50万元按餐饮行业惯例，应分<b>36个月摊销</b>，每月折旧≈13,889元。<br>
-      若按<b>会计账面净利润</b>计算：稳定月经营毛利56.3万 − 设备折旧1.39万 = 账面月利润≈54.9万。<br>
-      <span style="color:#8e44ad;">回本周期12个月是保守的现金流口径，实际会计账面因折旧影响，净利润略低但回本逻辑不变。</span>
+    <div class="highlight-box" style="border-left:4px solid #2e86c1;">
+      <strong>📌 重要说明：业务考核口径，非会计折旧</strong><br>
+      本计划书采用<b>业务考核口径</b>：设备50万÷12个月平摊，每月分摊41,667元，用于评估门店月度经营能力。<br>
+      此口径≠会计折旧，设备实际使用寿命远超12个月，但按回本逻辑12个月全额摊完。<br>
+      第13个月起设备分摊结束，经营口径支出减少41,667元/月，运营方月实得上升至约39.6万。<br>
+      <span style="color:#2e86c1;">现金流水看"手上实际剩多少钱"（稳定月56.3万）；经营口径看"门店赚不赚钱"（含设备消耗）。</span>
     </div>
   </div>
 
@@ -2406,7 +2415,7 @@
     <ul class="info-list">
       <li><strong>投资风险低：</strong>总投资仅80万，无大额固定资产投入</li>
       <li><strong>房租风险低：</strong>低保底租金，盈利才分成，亏损无额外压力</li>
-      <li><strong>设备风险低：</strong>植物油火锅无电路隐患，设备简单、故障率极低</li>
+      <li><strong>设备风险低：</strong>植物油火锅无电路隐患，设备简单、故障率极低；设备按12个月分摊计入经营支出，提前损毁则剩余未分摊部分一次性计入当月</li>
       <li><strong>客源风险低：</strong>短视频同城引流+自驾团建刚需，不依赖自然客流</li>
       <li><strong>食材风险低 + 谨慎提示：</strong>农贸市场拿货，供应链短、损耗低、价格优势大。但海鲜自助客流波动大，客流低谷期食材损耗率会上升，建议按48%成本率做预算预留（详见悲观情景测算）</li>
       <li><strong>营销风险：</strong>短视频同城引流为主要获客渠道，每月需持续投入营收约3%做推广，不可中断</li>
@@ -2548,6 +2557,46 @@
       • 桌椅+小火锅从62,400降至58,000，合计50万严格封顶<br>
       • <strong>仅食材采购单独计算，其余所有开业前投入均已包含</strong>
     </div>
+
+    <!-- ========== 设备台账：12个月分摊 ========== -->
+    <div class="sub-title" style="margin-top:24px;border-top:2px solid #2e86c1;padding-top:16px;">★ 设备台账与12个月分摊表（业务考核口径）</div>
+    <p class="fs-085 color-gray" style="margin-bottom:8px;">
+      规则：全部硬件设备统一按<strong>12个月回本周期平摊</strong>计入经营支出，不考虑实际使用寿命、残值。
+      现金流水如实记录（设备全款在付款月一次性现金流出）；经营利润仅用于评估门店月度经营能力。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:20%;">设备类别</th>
+            <th style="width:15%;text-align:right;">采购总金额</th>
+            <th style="width:15%;text-align:right;">分摊月数</th>
+            <th style="width:20%;text-align:right;">月度分摊金额</th>
+            <th style="width:30%;">分摊周期</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>硬装改造类（①–⑥）</td><td style="text-align:right;">323,000</td><td style="text-align:right;">12</td><td style="text-align:right;">26,917</td><td>开业月 ～ 第11个月</td></tr>
+          <tr><td>设备家具类（⑦–⑨）</td><td style="text-align:right;">120,000</td><td style="text-align:right;">12</td><td style="text-align:right;">10,000</td><td>开业月 ～ 第11个月</td></tr>
+          <tr><td>开业配套采购类（⑩–⑭）</td><td style="text-align:right;">57,000</td><td style="text-align:right;">12</td><td style="text-align:right;">4,750</td><td>开业月 ～ 第11个月</td></tr>
+          <tr class="total-row">
+            <td><strong>合计（设备台账总金额）</strong></td>
+            <td style="text-align:right;"><strong>500,000</strong></td>
+            <td style="text-align:right;"><strong>12</strong></td>
+            <td style="text-align:right;color:#2e86c1;"><strong>41,667</strong></td>
+            <td>第12个月起分摊结束，经营支出不再含设备</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
+      <strong>📌 业务规则说明：</strong><br>
+      ① 所有硬件设备统一按<strong>12个月回本周期平摊</strong>计入经营支出，不考虑实际使用寿命、残值；<br>
+      ② 现金流水如实记录，设备全款在付款月一次性现金流出（50万开业月一次性支付）；<br>
+      ③ 经营利润仅用于评估门店月度经营能力，不等于手上实际赚到的现金；<br>
+      ④ 设备满12个月自动停止分摊；设备提前损毁报废，剩余未分摊部分一次性计入报废当月经营支出；<br>
+      ⑤ 单台设备累计已分摊金额 ≤ 采购总金额，12个月后剩余未分摊金额归零。
+    </div>
   </div>
 
 <!-- ==================== 十、整体落地执行计划 ==================== -->
@@ -2609,23 +2658,62 @@
   <div class="section" id="s7" data-edit="s7">
     <div class="section-header">
       <div class="section-num">十二</div>
-      <h2>月度全套运营成本</h2>
+      <h2>月度全套运营成本（两套口径）</h2>
     </div>
+    <p class="fs-085 color-gray" style="margin-bottom:8px;">
+      以下为稳定月销180万场景的两套独立核算报表。<br>
+      <strong>① 现金流水</strong>（看手上实际剩多少钱）— 设备全款只在付款月出现一次，其余月份为0。<br>
+      <strong>② 经营考核口径</strong>（评门店赚不赚钱）— 设备50万÷12个月，每月分摊41,667元，连续12个月，第13个月起归零。
+    </p>
+
+    <!-- 现金流水 -->
+    <div class="sub-title-sm">📋 ① 现金流水（稳定月，非设备付款月）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:60%;">项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
         <tbody>
-          <tr><td>月营收</td><td style="text-align:right;color:#1a8a3a;font-weight:700;">1,800,000</td></tr>
-          <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 月度支出 ——</td></tr>
-          <tr><td>① 低保底房租</td><td style="text-align:right;">70,000</td></tr>
-          <tr><td>② 全员人工工资</td><td style="text-align:right;">243,000</td></tr>
-          <tr><td>③ 食材采购总成本（含鲜榴莲·鲜活海鲜，成本率约45%）</td><td style="text-align:right;">810,000</td></tr>
-          <tr><td>④ 水电燃气耗材设备维保</td><td style="text-align:right;">48,000</td></tr>
-          <tr><td>⑤ 短视频推广+达人探店+直播投流（营收约3%）</td><td style="text-align:right;">54,000</td></tr>
-          <tr><td>⑥ 运营杂费（保洁/消杀/员工食宿/零星开支）</td><td style="text-align:right;">12,000</td></tr>
-          <tr class="total-row"><td><strong>月度总支出</strong></td><td style="text-align:right;"><strong>1,237,000</strong></td></tr>
+          <tr><td style="color:#1a8a3a;font-weight:700;">月度营业收入</td><td style="text-align:right;color:#1a8a3a;font-weight:700;">1,800,000</td></tr>
+          <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 现金真实流出 ——</td></tr>
+          <tr><td>① 人员工资实付</td><td style="text-align:right;">243,000</td></tr>
+          <tr><td>② 原材料采购实付</td><td style="text-align:right;">810,000</td></tr>
+          <tr><td>③ 房租水电实付</td><td style="text-align:right;">70,000</td></tr>
+          <tr><td>④ 营销推广实付</td><td style="text-align:right;">54,000</td></tr>
+          <tr><td>⑤ 其他运营杂费实付</td><td style="text-align:right;">60,000</td></tr>
+          <tr><td>⑥ 设备采购现金实付（仅付款月有，稳定月为0）</td><td style="text-align:right;color:#888;">0</td></tr>
+          <tr class="total-row"><td><strong>月度现金总支出</strong></td><td style="text-align:right;"><strong>1,237,000</strong></td></tr>
+          <tr style="background:#e8f8f5;"><td><strong>✅ 月度现金净利润</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong>563,000</strong></td></tr>
         </tbody>
       </table>
+    </div>
+    <p class="fs-085 color-gray" style="margin-bottom:12px;">
+      ⚡ 设备付款月（开业首个完整月）：现金总支出 = 1,237,000 + 500,000（设备全款）= <strong>1,737,000</strong>，现金净利润 = <strong>63,000</strong>。
+    </p>
+
+    <!-- 经营考核口径 -->
+    <div class="sub-title-sm">📊 ② 经营考核口径（稳定月，设备分摊中）</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th style="width:60%;">项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#1a8a3a;font-weight:700;">月度营业收入</td><td style="text-align:right;color:#1a8a3a;font-weight:700;">1,800,000</td></tr>
+          <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 经营考核支出（虚拟支出，非真实现金） ——</td></tr>
+          <tr><td>① 人员工资（同现金）</td><td style="text-align:right;">243,000</td></tr>
+          <tr><td>② 原材料成本（同现金）</td><td style="text-align:right;">810,000</td></tr>
+          <tr><td>③ 房租水电（同现金）</td><td style="text-align:right;">70,000</td></tr>
+          <tr><td>④ 营销推广（同现金）</td><td style="text-align:right;">54,000</td></tr>
+          <tr><td>⑤ 其他运营杂费（同现金）</td><td style="text-align:right;">60,000</td></tr>
+          <tr><td>⑥ 🛠 设备月度分摊支出（50万÷12个月）</td><td style="text-align:right;color:#2e86c1;font-weight:700;">41,667</td></tr>
+          <tr class="total-row"><td><strong>经营口径月度总支出</strong></td><td style="text-align:right;"><strong>1,278,667</strong></td></tr>
+          <tr style="background:#e8f8f5;"><td><strong>✅ 经营口径月度利润</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong>521,333</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
+      <strong>📌 两套口径差异说明：</strong><br>
+      • 现金净利润 563,000 &gt; 经营口径利润 521,333，差额 = 设备月度分摊 41,667。<br>
+      • 现金看的是"手上实际剩多少钱"；经营口径看的是"这个店每个月赚不赚钱"（含设备消耗）。<br>
+      • 第1-12个月：经营口径每月多一笔41,667的设备分摊支出；第13个月起分摊结束，经营口径利润回升至563,000。<br>
+      • <strong>三方分账以经营口径利润为基数</strong>（因为这才是真实的门店盈利能力）。
     </div>
   </div>
 
@@ -2635,7 +2723,7 @@
       <div class="section-num">十三</div>
       <h2>三方分账机制</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:12px;">最终合同定稿 · 无争议 · 法定结算顺序</p>
+    <p class="fs-085 color-gray" style="margin-bottom:12px;">最终合同定稿 · 无争议 · 法定结算顺序<br>⚠️ 以下分账基数使用<b>经营考核口径利润</b>（含设备分摊41,667元/月），非现金净利润。</p>
     <div class="sub-title-sm">分账顺序</div>
     <ol class="step-list">
       <li><strong>优先扣除：</strong>前端服务商 营业额4%流水抽成</li>
@@ -2643,25 +2731,26 @@
       <li><strong>房东仅分：</strong>月度纯利润超出3万部分的10%</li>
       <li><strong>剩余全部纯利：</strong>归项目运营方所有</li>
     </ol>
-    <div class="sub-title-sm">当月具体分账明细（月销180万稳定状态，含营销推广）</div>
+    <div class="sub-title-sm">当月具体分账明细（月销180万稳定状态，经营口径，含设备分摊）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:60%;">分账项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
         <tbody>
           <tr><td>① 服务商费用（180万×4%）</td><td style="text-align:right;">72,000</td></tr>
-          <tr><td>② 经营纯利（扣服务费后：563,000−72,000）</td><td style="text-align:right;color:#1a8a3a;font-weight:700;">491,000</td></tr>
+          <tr><td>② 经营纯利（扣服务费后：521,333−72,000）</td><td style="text-align:right;color:#1a8a3a;font-weight:700;">449,333</td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 三方分红 ——</td></tr>
-          <tr><td>③ 投资人分红（491,000×10%）</td><td style="text-align:right;">49,100</td></tr>
-          <tr><td>④ 房东超额分成（491,000−30,000）×10%</td><td style="text-align:right;">46,100</td></tr>
-          <tr class="total-row"><td><strong>⑤ 项目运营方月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong>395,800 元</strong></td></tr>
+          <tr><td>③ 投资人分红（449,333×10%）</td><td style="text-align:right;">44,933</td></tr>
+          <tr><td>④ 房东超额分成（449,333−30,000）×10%</td><td style="text-align:right;">41,933</td></tr>
+          <tr class="total-row"><td><strong>⑤ 项目运营方月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong>362,467 元</strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="highlight-box" style="border-left:4px solid #8e44ad;">
       <strong>📌 利润基数定义（写进合同）：</strong><br>
-      「经营纯利」= 总营业额 − 服务商费用(4%) − 房租 − 人工 − 食材 − 水电 − 营销 − 杂费 − 折旧摊销<br>
+      「经营纯利」= 总营业额 − 服务商费用(4%) − 房租 − 人工 − 食材 − 水电 − 营销 − 杂费 − 设备分摊（50万÷12个月，仅第1-12个月）<br>
       投资人分红基数 = 经营纯利；房东分红基数 = 经营纯利（非总营业额，非未扣服务商的毛利）。<br>
-      <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「经营纯利」定义，否则结算时各执一词，产生纠纷。</span>
+      <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「经营纯利」定义，否则结算时各执一词，产生纠纷。</span><br>
+      <span style="color:#2e86c1;">📌 第13个月起设备分摊结束，经营纯利=563,000−72,000=491,000，运营方月实得上升至395,800元。</span>
     </div>
   </div>
 
