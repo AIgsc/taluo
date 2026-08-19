@@ -124,6 +124,16 @@
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
 
+    // 调试：打印收集到的 keys
+    var keys = Object.keys(content);
+    console.log('准备保存，区块数:', keys.length, 'keys:', keys.join(', '));
+
+    if (keys.length === 0) {
+      status.textContent = '保存失败：未找到可编辑内容';
+      status.style.color = '#e74c3c';
+      return;
+    }
+
     saveBtn.disabled = true;
     saveBtn.textContent = '保存中...';
     status.textContent = '';
@@ -139,11 +149,15 @@
         hasChanges = false;
         status.textContent = '保存成功';
         status.style.color = '#27ae60';
+        console.log('保存成功');
       } else {
+        var errText = await res.text();
+        console.error('保存失败，状态码:', res.status, '响应:', errText);
         status.textContent = '保存失败，请重试';
         status.style.color = '#e74c3c';
       }
     } catch (e) {
+      console.error('保存网络错误:', e);
       status.textContent = '保存失败：网络错误';
       status.style.color = '#e74c3c';
     } finally {
