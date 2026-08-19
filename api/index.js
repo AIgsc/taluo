@@ -121,6 +121,14 @@ async function ensureTables() {
       UNIQUE(user_id, pair_key)
     )
   `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS business_plan_content (
+      id SERIAL PRIMARY KEY,
+      section_key VARCHAR(255) NOT NULL UNIQUE,
+      content TEXT NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
   tablesCreated = true;
   console.log('数据库表初始化完成');
 }
@@ -949,6 +957,44 @@ module.exports = async (req, res) => {
       return res.json(config);
     }
     
+    // ==================== 商业计划书内容 API ====================
+    // GET /api/business-plan - 加载所有已保存内容（无需登录）
+    if (req.method === 'GET' && path === '/api/business-plan') {
+      const result = await db.query(
+        'SELECT section_key, content FROM business_plan_content ORDER BY section_key'
+      );
+      const content = {};
+      result.rows.forEach(function(row) {
+        content[row.section_key] = row.content;
+      });
+      return res.json({ content: content });
+    }
+
+    // POST /api/business-plan - 保存/更新内容（无需登录）
+    if (req.method === 'POST' && path === '/api/business-plan') {
+      const { content } = req.body || {};
+      if (!content || typeof content !== 'object') {
+        return res.status(400).json({ error: '内容数据不能为空' });
+      }
+
+      const keys = Object.keys(content);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const val = content[key];
+        if (typeof val === 'string') {
+          await db.query(
+            `INSERT INTO business_plan_content (section_key, content, updated_at)
+             VALUES ($1, $2, NOW())
+             ON CONFLICT (section_key) DO UPDATE SET
+               content = $2, updated_at = NOW()`,
+            [key, val]
+          );
+        }
+      }
+
+      return res.json({ success: true, count: keys.length });
+    }
+
     return res.status(404).json({ error: 'Not Found' });
     
   } catch (e) {
