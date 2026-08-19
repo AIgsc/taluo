@@ -7,9 +7,8 @@
 (function() {
   'use strict';
 
-  // API 地址，可通过全局变量 BP_API_URL 自定义
-  // 默认指向独立服务器 http://localhost:3001
-  const API_URL = window.BP_API_URL || 'http://localhost:3001/api/business-plan';
+  // API 地址，通过 Vercel 同域部署，使用相对路径
+  const API_URL = window.BP_API_URL || '/api/business-plan';
   let editMode = false;
   let hasChanges = false;
 
