@@ -169,6 +169,11 @@
     }
   }
 
+  // ==================== 页面加载内容（含 bfcache 恢复） ====================
+  function loadPageContent() {
+    loadContent();
+  }
+
   // ==================== 初始化 ====================
   function init() {
     createToolbar();
@@ -181,7 +186,15 @@
     });
 
     // 从后端加载已保存的内容
-    loadContent();
+    loadPageContent();
+
+    // 处理 bfcache（浏览器后退/前进缓存）恢复场景
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) {
+        // 页面从 bfcache 恢复，重新加载保存的内容
+        loadPageContent();
+      }
+    });
   }
 
   // 页面加载完成后初始化
