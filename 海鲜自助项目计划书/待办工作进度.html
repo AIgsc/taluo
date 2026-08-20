@@ -59,6 +59,58 @@
     border-radius: 3px; transition: width 0.5s ease;
   }
 
+  /* Today's Focus */
+  .today-focus {
+    background: linear-gradient(135deg, rgba(46,134,193,0.08), rgba(26,138,58,0.05));
+    border: 1px solid rgba(46,134,193,0.2);
+    border-radius: 12px; margin-bottom: 16px; overflow: hidden;
+  }
+  .today-focus-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; cursor: pointer; user-select: none;
+  }
+  .today-focus-header .tf-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #3498db);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; flex-shrink: 0;
+  }
+  .today-focus-header .tf-title { flex: 1; font-weight: 600; font-size: 0.95rem; color: #fff; }
+  .today-focus-header .tf-count { font-size: 0.75rem; padding: 3px 10px; border-radius: 10px; background: var(--accent); color: #fff; }
+  .today-focus-header .tf-toggle { color: var(--text2); transition: transform 0.2s; font-size: 0.8rem; }
+  .today-focus-header .tf-toggle.open { transform: rotate(180deg); }
+  .today-focus-body { display: none; }
+  .today-focus-body.open { display: block; }
+  .today-focus-empty {
+    padding: 24px 16px; text-align: center; color: var(--text2); font-size: 0.85rem;
+  }
+  .today-focus-group {
+    border-top: 1px solid rgba(46,134,193,0.08);
+  }
+  .today-focus-group .tfg-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px 4px; font-size: 0.8rem; color: var(--text2); font-weight: 500;
+  }
+  .today-focus-group .tfg-header .tfg-icon { font-size: 0.85rem; }
+  .today-focus-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px 6px 24px; transition: background 0.15s;
+  }
+  .today-focus-item:hover { background: rgba(46,134,193,0.05); }
+  .today-focus-item .tfi-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .today-focus-item .tfi-status.pending { background: var(--text2); }
+  .today-focus-item .tfi-status.in-progress { background: var(--warn); }
+  .today-focus-item .tfi-status.blocked { background: var(--danger); }
+  .today-focus-item .tfi-title { flex: 1; font-size: 0.85rem; color: var(--text); }
+  .today-focus-item .tfi-title.done { text-decoration: line-through; color: var(--text2); }
+  .today-focus-item select.status-select { min-width: 76px; padding: 2px 20px 2px 8px; font-size: 0.72rem; }
+  @media (max-width: 600px) {
+    .today-focus-item { padding: 8px 12px 8px 20px; }
+    .today-focus-item select.status-select { min-width: 84px; padding: 4px 22px 4px 8px; font-size: 0.75rem; }
+    .today-focus-header { padding: 12px; }
+    .today-focus-group .tfg-header { padding: 6px 12px 2px; }
+  }
+
   /* Category */
   .category {
     background: var(--card);
@@ -519,6 +571,9 @@ var DEFAULT_DATA = {
       { id: 'it_14_6', title: '安排税务申报事项', desc: '了解增值税、企业所得税、个税等税种申报要求，确定申报时间表', status: 'pending', sort_order: 6, reports: [] },
       { id: 'it_14_7', title: '建立现金流管理台账', desc: '每日记录营收、支出、银行余额，确保现金流健康', status: 'pending', sort_order: 7, reports: [] },
       { id: 'it_14_8', title: '建立成本核算模板', desc: '按食材、人工、房租、水电、营销等分类核算成本，每月对比预算', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_14_9', title: '建立角色收益速览数据模板', desc: '按投资人12%分红、房东11%分成、运营方实得的模式，制作月度收益速览表，包含月均收益、年收益、3年总收益', status: 'pending', sort_order: 9, reports: [] },
+      { id: 'it_14_10', title: '设计月度分账执行流程', desc: '每月5日出报表→10日前完成分账结算→三方确认对账→打款，明确各环节负责人', status: 'pending', sort_order: 10, reports: [] },
+      { id: 'it_14_11', title: '制定投资人退出方案文档', desc: '按方案A(期满终止)/B(提前回购)/C(续约合作)三种退出方式，准备合同条款和测算数据', status: 'pending', sort_order: 11, reports: [] },
     ]},
     { id: 'cat_15', name: '经营数据分析系统', icon: '📊', sort_order: 15, items: [
       { id: 'it_15_1', title: '设计日报表模板', desc: '包含：当日营收、客流量、客单价、各平台订单数、好评率、差评分析', status: 'pending', sort_order: 1, reports: [] },
@@ -528,6 +583,8 @@ var DEFAULT_DATA = {
       { id: 'it_15_5', title: '设定关键业绩指标（KPI）', desc: '日营收目标、翻台率、好评率、食材成本率、员工流失率等核心指标', status: 'pending', sort_order: 5, reports: [] },
       { id: 'it_15_6', title: '搭建数据看板', desc: '使用Excel或BI工具搭建可视化数据看板，关键指标一目了然', status: 'pending', sort_order: 6, reports: [] },
       { id: 'it_15_7', title: '建立月度经营分析会制度', desc: '每月召开经营分析会，复盘数据、发现问题、制定改进方案', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_15_8', title: '每月生成角色收益速览报表', desc: '按投资人、房东、运营方三角色生成月度收益速览，包含当月收益、累计收益、回报率，用于三方沟通', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_15_9', title: '建立分账对账确认流程', desc: '每月分账后，投资人、房东、运营方三方签字确认，存档备查', status: 'pending', sort_order: 9, reports: [] },
     ]},
   ]
 };
@@ -548,6 +605,14 @@ function statusText(s) {
 function statusIcon(s) {
   return { pending: 'far fa-circle', 'in-progress': 'fas fa-play', completed: 'fas fa-check-circle', blocked: 'fas fa-exclamation-circle' }[s];
 }
+
+var statusOpts = [
+  { value: 'pending', label: '待办', icon: '◯' },
+  { value: 'in-progress', label: '进行中', icon: '▶' },
+  { value: 'completed', label: '已完成', icon: '✓' },
+  { value: 'blocked', label: '受阻', icon: '✕' }
+];
+var statusColors = { pending: '#8a9bb5', 'in-progress': '#f39c12', completed: '#1a8a3a', blocked: '#c0392b' };
 
 // ==================== 渲染 ====================
 function render() {
@@ -573,6 +638,50 @@ function render() {
   document.getElementById('progressFill').style.width = pct + '%';
 
   var html = '';
+
+  // ====== 今日待办 ======
+  var todayPending = [];
+  cats.forEach(function(cat) {
+    var activeItems = cat.items.filter(function(i) { return i.status === 'pending' || i.status === 'in-progress' || i.status === 'blocked'; });
+    if (activeItems.length > 0) {
+      todayPending.push({ cat: cat, items: activeItems });
+    }
+  });
+  var todayTotal = todayPending.reduce(function(sum, g) { return sum + g.items.length; }, 0);
+  html += '<div class="today-focus">';
+  html += '  <div class="today-focus-header" onclick="toggleTodayFocus(this)">';
+  html += '    <span class="tf-icon"><i class="fas fa-sun" style="color:#fff;"></i></span>';
+  html += '    <span class="tf-title">今日待办</span>';
+  html += '    <span class="tf-count">' + todayTotal + '项</span>';
+  html += '    <span class="tf-toggle open"><i class="fas fa-chevron-down"></i></span>';
+  html += '  </div>';
+  html += '  <div class="today-focus-body open">';
+  if (todayTotal === 0) {
+    html += '    <div class="today-focus-empty">🎉 所有任务已完成！</div>';
+  } else {
+    todayPending.forEach(function(group) {
+      html += '    <div class="today-focus-group">';
+      html += '      <div class="tfg-header"><span class="tfg-icon">' + group.cat.icon + '</span>' + group.cat.name + '</div>';
+      group.items.forEach(function(item) {
+        var doneCls = item.status === 'completed' ? 'done' : '';
+        html += '    <div class="today-focus-item">';
+        html += '      <span class="tfi-status ' + item.status + '"></span>';
+        html += '      <span class="tfi-title ' + doneCls + '">' + escHtml(item.title) + '</span>';
+        html += '      <select class="status-select ' + item.status + '" onchange="selectStatusToday(this)">';
+        statusOpts.forEach(function(opt) {
+          var selected = item.status === opt.value ? ' selected' : '';
+          var color = statusColors[opt.value] || '#8a9bb5';
+          html += '<option value="' + opt.value + '"' + selected + ' style="color:' + color + ';font-weight:500;">' + opt.icon + ' ' + opt.label + '</option>';
+        });
+        html += '</select>';
+        html += '    </div>';
+      });
+      html += '    </div>';
+    });
+  }
+  html += '  </div>';
+  html += '</div>';
+
   cats.forEach(function(cat, ci) {
     var catDone = cat.items.filter(function(i) { return i.status === 'completed'; }).length;
     var catTotal = cat.items.length;
@@ -595,14 +704,6 @@ function render() {
       if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
       html += '      <div class="item-meta">';
       html += '        <select class="status-select ' + item.status + '" onchange="selectStatus(this)">';
-      var statusOpts = [
-        { value: 'pending', label: '待办', icon: '◯' },
-        { value: 'in-progress', label: '进行中', icon: '▶' },
-        { value: 'completed', label: '已完成', icon: '✓' },
-        { value: 'blocked', label: '受阻', icon: '✕' }
-      ];
-      var statusColors = { pending: '#8a9bb5', 'in-progress': '#f39c12', completed: '#1a8a3a', blocked: '#c0392b' };
-      var statusEmojis = { pending: '◯', 'in-progress': '▶', completed: '✓', blocked: '✕' };
       statusOpts.forEach(function(opt) {
         var selected = item.status === opt.value ? ' selected' : '';
         var color = statusColors[opt.value] || '#8a9bb5';
@@ -637,6 +738,41 @@ function toggleCat(header) {
   var toggle = header.querySelector('.cat-toggle');
   body.classList.toggle('open');
   toggle.classList.toggle('open');
+}
+
+function toggleTodayFocus(header) {
+  var body = header.nextElementSibling;
+  var toggle = header.querySelector('.tf-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+// ==================== 今日待办状态变更 ====================
+function selectStatusToday(el) {
+  var itemEl = el.closest('.today-focus-item');
+  if (!itemEl) return;
+  // Find the item by title (since we don't have data-item-id in today-focus)
+  var titleEl = itemEl.querySelector('.tfi-title');
+  if (!titleEl) return;
+  var title = titleEl.textContent;
+  var newStatus = el.value;
+  // Find item by title across all categories
+  var found = false;
+  for (var ci = 0; ci < appData.categories.length; ci++) {
+    for (var ii = 0; ii < appData.categories[ci].items.length; ii++) {
+      if (appData.categories[ci].items[ii].title === title) {
+        appData.categories[ci].items[ii].status = newStatus;
+        found = true;
+        break;
+      }
+    }
+    if (found) break;
+  }
+  if (!found) return;
+  scheduleSave();
+  showToast('状态已更新：' + statusText(newStatus));
+  // Re-render to update today-focus list
+  render();
 }
 
 // ==================== 状态选择（原生 select 下拉） ====================
