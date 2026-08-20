@@ -124,7 +124,7 @@
     }
   }
 
-  // ==================== 保存内容到数据库 ====================
+  // ==================== 保存内容到数据库并同步到 GitHub ====================
   async function saveContent() {
     var content = collectContent();
     var saveBtn = document.getElementById('bp-save-btn');
@@ -144,7 +144,7 @@
     status.textContent = '';
 
     try {
-      var res = await fetch(API_URL, {
+      var res = await fetch(API_URL + '/save-and-deploy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: content })
@@ -152,9 +152,9 @@
 
       if (res.ok) {
         hasChanges = false;
-        status.textContent = '保存成功';
+        status.textContent = '保存成功，正在部署...';
         status.style.color = '#27ae60';
-        console.log('保存成功');
+        console.log('保存成功，已触发部署');
       } else {
         var errText = await res.text();
         console.error('保存失败，状态码:', res.status, '响应:', errText);

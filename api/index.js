@@ -292,6 +292,46 @@ module.exports = async (req, res) => {
       return res.json({ success: true, count: keys.length });
     }
 
+    // ==================== 商业计划书 - 保存并部署到 GitHub ====================
+    if (req.method === 'POST' && path === '/api/business-plan/save-and-deploy') {
+      const { content } = req.body || {};
+      if (!content || typeof content !== 'object') {
+        return res.status(400).json({ error: '内容数据不能为空' });
+      }
+
+      // 1. 保存到数据库
+      const keys = Object.keys(content);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const val = content[key];
+        if (typeof val === 'string') {
+          await db.query(
+            `INSERT INTO business_plan_content (section_key, content, updated_at)
+             VALUES ($1, $2, NOW())
+             ON CONFLICT (section_key) DO UPDATE SET
+               content = $2, updated_at = NOW()`,
+            [key, val]
+          );
+        }
+      }
+
+      // 2. 同步到 GitHub（触发 Vercel 自动部署）
+      const ghToken = process.env.GH_TOKEN;
+      if (ghToken) {
+        try {
+          await syncToGitHub(content, ghToken);
+          console.log('GitHub 同步成功');
+        } catch (e) {
+          console.error('GitHub 同步失败:', e.message);
+          // 不阻塞，DB 已保存成功
+        }
+      } else {
+        console.log('未配置 GH_TOKEN，跳过 GitHub 同步');
+      }
+
+      return res.json({ success: true, count: keys.length });
+    }
+
     // ==================== 验证用户身份 ====================
     const authHeader = req.headers.authorization;
     let userPayload = null;
@@ -999,4 +1039,123 @@ module.exports = async (req, res) => {
     console.error('API 错误:', e);
     return res.status(500).json({ error: '服务器内部错误，请稍后重试' });
   }
+}
+
+// ==================== GitHub 同步函数 ====================
+async function syncToGitHub(content, token) {
+  const owner = 'AIgsc';
+  const repo = 'taluo';
+  const filePath = '海鲜自助项目计划书/index.html';
+  const encodedPath = encodeURIComponent(filePath);
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
+  const commitMsg = '自动部署：更新商业计划书内容';
+
+  // 1. 获取当前文件信息（含 SHA）
+  const getRes = await fetch(apiUrl, {
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github.v3+json',
+      'User-Agent': 'taluo-api'
+    }
+  });
+
+  if (!getRes.ok) {
+    const errText = await getRes.text();
+    throw new Error('获取文件失败: ' + getRes.status + ' ' + errText);
+  }
+
+  const fileData = await getRes.json();
+  const sha = fileData.sha;
+  const currentContent = Buffer.from(fileData.content, 'base64').toString('utf-8');
+
+  // 2. 替换 data-edit 区块内容
+  let updatedHtml = currentContent;
+  const keys = Object.keys(content);
+  let updatedCount = 0;
+
+  for (const key of keys) {
+    const result = replaceDataEditContent(updatedHtml, key, content[key]);
+    if (result !== null) {
+      updatedHtml = result;
+      updatedCount++;
+    }
+  }
+
+  if (updatedCount === 0) {
+    console.log('没有匹配的 data-edit 区块，跳过 GitHub 提交');
+    return;
+  }
+
+  // 3. 提交更新到 GitHub
+  const newContent = Buffer.from(updatedHtml, 'utf-8').toString('base64');
+  const putRes = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github.v3+json',
+      'User-Agent': 'taluo-api',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: commitMsg,
+      content: newContent,
+      sha: sha,
+      branch: 'main'
+    })
+  });
+
+  if (!putRes.ok) {
+    const errText = await putRes.text();
+    throw new Error('提交失败: ' + putRes.status + ' ' + errText);
+  }
+
+  console.log('已提交 ' + updatedCount + ' 个区块到 GitHub');
+}
+
+// ==================== HTML 替换函数 ====================
+function replaceDataEditContent(html, key, newContent) {
+  const attr = 'data-edit="' + key + '"';
+  const attrIndex = html.indexOf(attr);
+
+  if (attrIndex === -1) return null;
+
+  const beforeAttr = html.substring(0, attrIndex);
+  const tagStart = beforeAttr.lastIndexOf('<');
+  if (tagStart === -1) return null;
+
+  const tagPart = html.substring(tagStart);
+  const tagNameMatch = tagPart.match(/^<(\w+)/);
+  if (!tagNameMatch) return null;
+  const tagName = tagNameMatch[1];
+
+  const afterAttr = html.substring(attrIndex + attr.length);
+  const openTagEndRel = afterAttr.indexOf('>');
+  if (openTagEndRel === -1) return null;
+
+  const contentStart = attrIndex + attr.length + openTagEndRel + 1;
+  const closingTag = '</' + tagName + '>';
+
+  let depth = 1;
+  let pos = contentStart;
+  const openTag = '<' + tagName;
+
+  while (depth > 0 && pos < html.length) {
+    const nextOpen = html.indexOf(openTag, pos);
+    const nextClose = html.indexOf(closingTag, pos);
+
+    if (nextClose === -1) return null;
+
+    if (nextOpen !== -1 && nextOpen < nextClose) {
+      depth++;
+      pos = nextOpen + openTag.length;
+    } else {
+      depth--;
+      pos = nextClose + closingTag.length;
+    }
+  }
+
+  if (depth !== 0) return null;
+
+  const contentEnd = pos - closingTag.length;
+  return html.substring(0, contentStart) + '\n' + newContent + '\n' + html.substring(contentEnd);
 }
