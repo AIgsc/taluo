@@ -3,6 +3,7 @@
  */
 
 const crypto = require('crypto');
+const https = require('https');
 const { Pool } = require('pg');
 
 // ==================== 数据库连接池（全局复用） ====================
@@ -1018,39 +1019,57 @@ module.exports = async (req, res) => {
 }
 
 // ==================== GitHub 同步函数 ====================
+function githubRequest(options, body) {
+  return new Promise(function(resolve, reject) {
+    var req = https.request(options, function(res) {
+      var data = '';
+      res.on('data', function(chunk) { data += chunk; });
+      res.on('end', function() {
+        var parsed;
+        try { parsed = JSON.parse(data); } catch (e) { parsed = { raw: data }; }
+        parsed._status = res.statusCode;
+        resolve(parsed);
+      });
+    });
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
 async function syncToGitHub(content, token) {
-  const owner = 'AIgsc';
-  const repo = 'taluo';
-  const filePath = '海鲜自助项目计划书/index.html';
-  const encodedPath = encodeURIComponent(filePath);
-  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${encodedPath}`;
-  const commitMsg = '自动部署：更新商业计划书内容';
+  var owner = 'AIgsc';
+  var repo = 'taluo';
+  var filePath = '海鲜自助项目计划书/index.html';
+  var encodedPath = encodeURIComponent(filePath);
+  var apiPath = '/repos/' + owner + '/' + repo + '/contents/' + encodedPath;
 
   // 1. 获取当前文件信息（含 SHA）
-  const getRes = await fetch(apiUrl, {
+  var getRes = await githubRequest({
+    hostname: 'api.github.com',
+    path: apiPath,
+    method: 'GET',
     headers: {
       Authorization: 'Bearer ' + token,
-      Accept: 'application/vnd.github.v3+json',
-      'User-Agent': 'taluo-api'
+      'User-Agent': 'taluo-api',
+      Accept: 'application/vnd.github.v3+json'
     }
   });
 
-  if (!getRes.ok) {
-    const errText = await getRes.text();
-    throw new Error('获取文件失败: ' + getRes.status + ' ' + errText);
+  if (getRes._status !== 200) {
+    throw new Error('获取文件失败: ' + getRes._status + ' ' + JSON.stringify(getRes));
   }
 
-  const fileData = await getRes.json();
-  const sha = fileData.sha;
-  const currentContent = Buffer.from(fileData.content, 'base64').toString('utf-8');
+  var sha = getRes.sha;
+  var currentContent = Buffer.from(getRes.content, 'base64').toString('utf-8');
 
   // 2. 替换 data-edit 区块内容
-  let updatedHtml = currentContent;
-  const keys = Object.keys(content);
-  let updatedCount = 0;
+  var updatedHtml = currentContent;
+  var keys = Object.keys(content);
+  var updatedCount = 0;
 
-  for (const key of keys) {
-    const result = replaceDataEditContent(updatedHtml, key, content[key]);
+  for (var i = 0; i < keys.length; i++) {
+    var result = replaceDataEditContent(updatedHtml, keys[i], content[keys[i]]);
     if (result !== null) {
       updatedHtml = result;
       updatedCount++;
@@ -1063,26 +1082,26 @@ async function syncToGitHub(content, token) {
   }
 
   // 3. 提交更新到 GitHub
-  const newContent = Buffer.from(updatedHtml, 'utf-8').toString('base64');
-  const putRes = await fetch(apiUrl, {
+  var newContent = Buffer.from(updatedHtml, 'utf-8').toString('base64');
+  var putRes = await githubRequest({
+    hostname: 'api.github.com',
+    path: apiPath,
     method: 'PUT',
     headers: {
       Authorization: 'Bearer ' + token,
-      Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'taluo-api',
+      Accept: 'application/vnd.github.v3+json',
       'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      message: commitMsg,
-      content: newContent,
-      sha: sha,
-      branch: 'main'
-    })
-  });
+    }
+  }, JSON.stringify({
+    message: '自动部署：更新商业计划书内容',
+    content: newContent,
+    sha: sha,
+    branch: 'main'
+  }));
 
-  if (!putRes.ok) {
-    const errText = await putRes.text();
-    throw new Error('提交失败: ' + putRes.status + ' ' + errText);
+  if (putRes._status !== 200 && putRes._status !== 201) {
+    throw new Error('提交失败: ' + putRes._status + ' ' + JSON.stringify(putRes));
   }
 
   console.log('已提交 ' + updatedCount + ' 个区块到 GitHub');
