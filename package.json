@@ -2,7 +2,6 @@
   "name": "taluo",
   "version": "1.0.0",
   "scripts": {
-    "build": "node scripts/sync-content-to-db.js && node scripts/sync-default-model.js",
     "sync:content": "node scripts/sync-content-to-db.js",
     "sync:model": "node scripts/sync-default-model.js",
     "sync:all": "node scripts/sync-content-to-db.js && node scripts/sync-default-model.js",
