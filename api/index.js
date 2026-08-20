@@ -347,6 +347,24 @@ module.exports = async (req, res) => {
       return res.json({ success: true, count: keys.length, github: ghResult });
     }
 
+    // ==================== 商业计划书 - 同步代码默认变量到数据库（无需文本内容） ====================
+    if (req.method === 'POST' && path === '/api/business-plan/sync-inputs') {
+      const { model } = req.body || {};
+      if (!model || typeof model !== 'object') {
+        return res.status(400).json({ error: '模型输入变量不能为空' });
+      }
+
+      await db.query(
+        `INSERT INTO business_plan_model (model_key, value, updated_at)
+         VALUES ($1, $2, NOW())
+         ON CONFLICT (model_key) DO UPDATE SET
+           value = $2, updated_at = NOW()`,
+        ['model_inputs', JSON.stringify(model)]
+      );
+
+      return res.json({ success: true, model: model });
+    }
+
     // ==================== 调试：检查 GH_TOKEN 状态 ====================
     if (req.method === 'GET' && path === '/api/debug/github-token') {
       const token = process.env.GH_TOKEN;

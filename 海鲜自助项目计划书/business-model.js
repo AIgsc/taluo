@@ -449,7 +449,15 @@
 
   // ==================== 服务端计算引擎（Node.js 版本） ====================
   if (typeof module !== 'undefined' && module.exports) {
+    // 导出默认输入变量，供同步脚本使用
+    var defaultInputs = {};
+    var inputKeys = Object.keys(BusinessModel.inputs);
+    for (var di = 0; di < inputKeys.length; di++) {
+      defaultInputs[inputKeys[di]] = BusinessModel.inputs[inputKeys[di]];
+    }
+
     module.exports = {
+      defaultInputs: defaultInputs,
       calculate: function(inputs) {
         // 复制一份计算逻辑供服务端使用
         var i = Object.assign({

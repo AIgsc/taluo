@@ -336,7 +336,7 @@
           status.textContent = '保存成功，但 GitHub 同步失败: ' + (result.github.reason || '未知错误');
           status.style.color = '#e67e22';
         } else {
-          status.textContent = '保存成功，正在部署...';
+          status.textContent = '✅ 保存成功！已同步到数据库和 GitHub';
           status.style.color = '#27ae60';
         }
         // 关闭变量编辑弹窗
