@@ -325,20 +325,20 @@
         if (result.content && typeof result.content === 'object' && result.source === 'db') {
           console.log('[同步] source=db，正在应用数据库内容覆盖 HTML...');
           applyContent(result.content);
+          // 同时加载数据库的模型变量
+          if (result.model && typeof result.model === 'object') {
+            var dbModel = window.BusinessModel;
+            if (dbModel) {
+              console.log('[同步] source=db，加载数据库模型变量');
+              dbModel.setInputs(result.model);
+            }
+          }
         } else {
           console.log('[同步] source=' + result.source + '，保留 HTML 内容，不覆盖');
-        }
-        // 哈希不匹配 → 代码推送更新了 → 前端保留 HTML，并同步到数据库
-        if (result.sync_needed) {
-          console.log('[同步] sync_needed=true，开始后台同步 HTML 到数据库...');
-          syncHtmlToDb();
-        }
-        // 加载模型输入变量
-        if (result.model && typeof result.model === 'object') {
-          var model = window.BusinessModel;
-          if (model) {
-            console.log('[同步] 加载模型变量，keys:', Object.keys(result.model).length);
-            model.setInputs(result.model);
+          // 哈希不匹配 → 代码推送更新了 → 前端保留 HTML，并同步到数据库
+          if (result.sync_needed) {
+            console.log('[同步] sync_needed=true，开始后台同步 HTML 到数据库...');
+            syncHtmlToDb();
           }
         }
       } else {
