@@ -558,7 +558,7 @@ function selectStatus(el) {
   var newStatus = el.value;
   if (item.status === newStatus) return;
   item.status = newStatus;
-  render();
+  // 不调用 render()，避免 select 被销毁重建导致下拉异常
   scheduleSave();
   showToast('状态已更新：' + statusText(newStatus));
 }
