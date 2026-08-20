@@ -32,7 +32,7 @@
 
       // 成本参数
       foodCostPct: 45,          // 食材成本率 %
-      rent: 70000,              // 房租 元/月
+      rent: 0,                  // 房租 元/月（房东无固定租金，改为利润分成）
       laborCost: 243000,        // 人工成本 元/月
       marketingPct: 3,          // 营销费率 %
       miscCost: 60000,          // 杂费 元/月
@@ -41,8 +41,8 @@
       serviceFeePct: 4,         // 服务商抽成（成交额%）%
       operationPct: 4,          // 运营部门分成（成交额%）%
       investorPct: 12,          // 投资人分红 %
-      landlordThreshold: 30000, // 房东超额分成门槛
-      landlordPct: 10,          // 房东超额分成率 %
+      landlordThreshold: 0,     // 房东利润分成门槛（无门槛，直接按比例）
+      landlordPct: 11,          // 房东利润分成率 %（纯利润分成，无固定租金）
       paybackMonths: 12,        // 硬件分摊月数
       partnerTermMonths: 36,    // 投资人合伙期限（月）
 
@@ -96,7 +96,7 @@
       var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
       var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
       var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
-      var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * i.investorPct / 100) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
+      var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * i.investorPct / 100) - Math.round(Math.max(0, pessimisticProfitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
 
       // 回本相关（老板不投钱，无需计算回本周期）
 
@@ -514,9 +514,9 @@
         var i = Object.assign({
           area: 2000, price: 169, dailyRevenue: 60000,
           totalInvestment: 800000, equipmentInvestment: 500000,
-          foodCostPct: 45, rent: 70000, laborCost: 243000,
+          foodCostPct: 45, rent: 0, laborCost: 243000,
           marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
-          operationPct: 4, investorPct: 18, landlordThreshold: 30000, landlordPct: 10,
+          operationPct: 4, investorPct: 12, landlordThreshold: 0, landlordPct: 11,
           paybackMonths: 12,
           tableCount: 120, seatsPerTable: 2.8, staffCount: 48,
           utilityCost: 48000, kitchenStaff: 28, kitchenCost: 139000,
@@ -546,7 +546,7 @@
         var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
         var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
         var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
-        var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * i.investorPct / 100) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
+        var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * i.investorPct / 100) - Math.round(Math.max(0, pessimisticProfitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
 
         // 周度营收
         var monThuDaily = Math.round(i.dailyRevenue * 0.583);
