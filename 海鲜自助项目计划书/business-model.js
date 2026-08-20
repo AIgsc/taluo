@@ -38,7 +38,8 @@
       miscCost: 60000,          // 杂费 元/月
 
       // 分账参数
-      serviceFeePct: 4,         // 服务商抽成 %
+      serviceFeePct: 4,         // 服务商抽成（成交额%）%
+      operationPct: 4,          // 运营部门分成（成交额%）%
       investorPct: 10,          // 投资人分红 %
       landlordThreshold: 30000, // 房东超额分成门槛
       landlordPct: 10,          // 房东超额分成率 %
@@ -81,18 +82,20 @@
       var operatingProfit = monthlyRevenue - totalExpense;
       var cashNetProfit = operatingProfit + equipmentAmort;
       var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
-      var profitAfterService = operatingProfit - serviceFee;
-      var investorDividend = Math.round(profitAfterService * i.investorPct / 100);
-      var landlordDividend = Math.round(Math.max(0, profitAfterService - i.landlordThreshold) * i.landlordPct / 100);
-      var operatorIncome = profitAfterService - investorDividend - landlordDividend;
+      var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
+      var totalFee = serviceFee + operationFee;
+      var profitAfterFees = operatingProfit - totalFee;
+      var investorDividend = Math.round(profitAfterFees * i.investorPct / 100);
+      var landlordDividend = Math.round(Math.max(0, profitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
+      var operatorIncome = profitAfterFees - investorDividend - landlordDividend;
 
       // 悲观情景：食材涨至48%
       var pessimisticFoodCost = Math.round(monthlyRevenue * 0.48);
       var pessimisticTotalExpense = i.laborCost + pessimisticFoodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
       var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
-      var pessimisticServiceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
-      var pessimisticProfitAfterService = pessimisticOperatingProfit - pessimisticServiceFee;
-      var pessimisticOperatorIncome = pessimisticProfitAfterService - Math.round(pessimisticProfitAfterService * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterService - 30000) * 0.1);
+      var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
+      var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
+      var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
 
       // 回本相关
       var avgMonthlyIncome = Math.round(operatorIncome * 0.7 + (operatorIncome * 0.5) * 0.3);
@@ -134,14 +137,14 @@
       var trial1MonthlyRev = Math.round(monthlyRevenue * 0.55);
       var trial1Expense = Math.round(trial1MonthlyRev * 0.895);
       var trial1Profit = trial1MonthlyRev - trial1Expense;
-      var trial1ServiceFee = Math.round(trial1MonthlyRev * i.serviceFeePct / 100);
-      var trial1AfterService = trial1Profit - trial1ServiceFee;
+      var trial1Fee = Math.round(trial1MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
+      var trial1AfterFees = trial1Profit - trial1Fee;
 
       var trial2MonthlyRev = Math.round(monthlyRevenue * 0.72);
       var trial2Expense = Math.round(trial2MonthlyRev * 0.799);
       var trial2Profit = trial2MonthlyRev - trial2Expense;
-      var trial2ServiceFee = Math.round(trial2MonthlyRev * i.serviceFeePct / 100);
-      var trial2AfterService = trial2Profit - trial2ServiceFee;
+      var trial2Fee = Math.round(trial2MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
+      var trial2AfterFees = trial2Profit - trial2Fee;
 
       // ========== 现金流水 ==========
       var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
@@ -151,10 +154,10 @@
       // ========== 第13个月起（设备分摊结束） ==========
       var postAmortTotalExpense = totalExpense - equipmentAmort;
       var postAmortOperatingProfit = monthlyRevenue - postAmortTotalExpense;
-      var postAmortProfitAfterService = postAmortOperatingProfit - serviceFee;
-      var postAmortInvestorDividend = Math.round(postAmortProfitAfterService * i.investorPct / 100);
-      var postAmortLandlordDividend = Math.round(Math.max(0, postAmortProfitAfterService - i.landlordThreshold) * i.landlordPct / 100);
-      var postAmortOperatorIncome = postAmortProfitAfterService - postAmortInvestorDividend - postAmortLandlordDividend;
+      var postAmortProfitAfterFees = postAmortOperatingProfit - totalFee;
+      var postAmortInvestorDividend = Math.round(postAmortProfitAfterFees * i.investorPct / 100);
+      var postAmortLandlordDividend = Math.round(Math.max(0, postAmortProfitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
+      var postAmortOperatorIncome = postAmortProfitAfterFees - postAmortInvestorDividend - postAmortLandlordDividend;
 
       // ========== 悲观 vs 理想对比 ==========
       var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
@@ -299,8 +302,13 @@
         service_fee: formatNum(serviceFee) + '元',
         service_fee_num: serviceFee,
         service_fee_pct: i.serviceFeePct + '%',
-        profit_after_service_fee: formatNum(profitAfterService) + '元',
-        profit_after_service_fee_num: profitAfterService,
+        operation_fee: formatNum(operationFee) + '元',
+        operation_fee_num: operationFee,
+        operation_pct: i.operationPct + '%',
+        total_fee: formatNum(totalFee) + '元',
+        total_fee_num: totalFee,
+        profit_after_fees: formatNum(profitAfterFees) + '元',
+        profit_after_fees_num: profitAfterFees,
         investor_dividend: formatNum(investorDividend) + '元',
         investor_dividend_num: investorDividend,
         investor_pct: i.investorPct + '%',
@@ -321,7 +329,7 @@
         pessimistic_total_expense_num: pessimisticTotalExpense,
         pessimistic_operating_profit: formatNum(pessimisticOperatingProfit) + '元',
         pessimistic_operating_profit_num: pessimisticOperatingProfit,
-        pessimistic_profit_after_service: formatNum(pessimisticProfitAfterService) + '元',
+        pessimistic_profit_after_fees: formatNum(pessimisticProfitAfterFees) + '元',
         pessimistic_operator_income: '约 ' + (pessimisticOperatorIncome / 10000).toFixed(1) + ' 万',
         pessimistic_operator_income_wan: (pessimisticOperatorIncome / 10000).toFixed(1) + '万',
         pessimistic_operator_income_plain: pessimisticOperatorIncome,
@@ -342,10 +350,10 @@
         trial1_expense_plain: trial1Expense,
         trial1_profit_wan: (trial1Profit / 10000).toFixed(1) + '万',
         trial1_profit_plain: trial1Profit,
-        trial1_service_fee_wan: (trial1ServiceFee / 10000).toFixed(1) + '万',
-        trial1_service_fee_plain: trial1ServiceFee,
-        trial1_after_service_wan: (trial1AfterService / 10000).toFixed(1) + '万',
-        trial1_after_service_plain: trial1AfterService,
+        trial1_fee_wan: (trial1Fee / 10000).toFixed(1) + '万',
+        trial1_fee_plain: trial1Fee,
+        trial1_after_fees_wan: (trial1AfterFees / 10000).toFixed(1) + '万',
+        trial1_after_fees_plain: trial1AfterFees,
 
         trial2_revenue_wan: formatWan(trial2MonthlyRev),
         trial2_revenue_plain: trial2MonthlyRev,
@@ -353,15 +361,15 @@
         trial2_expense_plain: trial2Expense,
         trial2_profit_wan: (trial2Profit / 10000).toFixed(1) + '万',
         trial2_profit_plain: trial2Profit,
-        trial2_service_fee_wan: (trial2ServiceFee / 10000).toFixed(1) + '万',
-        trial2_service_fee_plain: trial2ServiceFee,
-        trial2_after_service_wan: (trial2AfterService / 10000).toFixed(1) + '万',
-        trial2_after_service_plain: trial2AfterService,
+        trial2_fee_wan: (trial2Fee / 10000).toFixed(1) + '万',
+        trial2_fee_plain: trial2Fee,
+        trial2_after_fees_wan: (trial2AfterFees / 10000).toFixed(1) + '万',
+        trial2_after_fees_plain: trial2AfterFees,
 
         // 稳定期
         stable_profit_wan: (operatingProfit / 10000).toFixed(1) + '万',
-        stable_service_fee_wan: (serviceFee / 10000).toFixed(1) + '万',
-        stable_after_service_wan: (profitAfterService / 10000).toFixed(1) + '万',
+        stable_total_fee_wan: (totalFee / 10000).toFixed(1) + '万',
+        stable_after_fees_wan: (profitAfterFees / 10000).toFixed(1) + '万',
         stable_operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
 
         // ===== 12. 现金流水 =====
@@ -376,8 +384,8 @@
         post_amort_profit: formatNum(postAmortOperatingProfit) + '元',
         post_amort_profit_plain: postAmortOperatingProfit,
         post_amort_profit_wan: (postAmortOperatingProfit / 10000).toFixed(0) + '万',
-        post_amort_after_service: formatNum(postAmortProfitAfterService) + '元',
-        post_amort_after_service_plain: postAmortProfitAfterService,
+        post_amort_profit_after_fees: formatNum(postAmortProfitAfterFees) + '元',
+        post_amort_profit_after_fees_plain: postAmortProfitAfterFees,
         post_amort_operator_income: formatNum(postAmortOperatorIncome) + '元',
         post_amort_operator_income_plain: postAmortOperatorIncome,
         post_amort_operator_income_wan: (postAmortOperatorIncome / 10000).toFixed(1) + '万',
@@ -465,7 +473,7 @@
           totalInvestment: 800000, equipmentInvestment: 500000,
           foodCostPct: 45, rent: 70000, laborCost: 243000,
           marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
-          investorPct: 10, landlordThreshold: 30000, landlordPct: 10,
+          operationPct: 4, investorPct: 10, landlordThreshold: 30000, landlordPct: 10,
           paybackMonths: 12,
           tableCount: 120, seatsPerTable: 2.8, staffCount: 48,
           utilityCost: 48000, kitchenStaff: 28, kitchenCost: 139000,
@@ -482,18 +490,20 @@
         var operatingProfit = monthlyRevenue - totalExpense;
         var cashNetProfit = operatingProfit + equipmentAmort;
         var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
-        var profitAfterService = operatingProfit - serviceFee;
-        var investorDividend = Math.round(profitAfterService * i.investorPct / 100);
-        var landlordDividend = Math.round(Math.max(0, profitAfterService - i.landlordThreshold) * i.landlordPct / 100);
-        var operatorIncome = profitAfterService - investorDividend - landlordDividend;
+        var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
+        var totalFee = serviceFee + operationFee;
+        var profitAfterFees = operatingProfit - totalFee;
+        var investorDividend = Math.round(profitAfterFees * i.investorPct / 100);
+        var landlordDividend = Math.round(Math.max(0, profitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
+        var operatorIncome = profitAfterFees - investorDividend - landlordDividend;
 
         // 悲观情景
         var pessimisticFoodCost = Math.round(monthlyRevenue * 0.48);
         var pessimisticTotalExpense = i.laborCost + pessimisticFoodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
         var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
-        var pessimisticServiceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
-        var pessimisticProfitAfterService = pessimisticOperatingProfit - pessimisticServiceFee;
-        var pessimisticOperatorIncome = pessimisticProfitAfterService - Math.round(pessimisticProfitAfterService * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterService - 30000) * 0.1);
+        var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
+        var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
+        var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
 
         // 周度营收
         var monThuDaily = Math.round(i.dailyRevenue * 0.583);
@@ -512,14 +522,14 @@
         var trial1MonthlyRev = Math.round(monthlyRevenue * 0.55);
         var trial1Expense = Math.round(trial1MonthlyRev * 0.895);
         var trial1Profit = trial1MonthlyRev - trial1Expense;
-        var trial1ServiceFee = Math.round(trial1MonthlyRev * i.serviceFeePct / 100);
-        var trial1AfterService = trial1Profit - trial1ServiceFee;
+        var trial1Fee = Math.round(trial1MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
+        var trial1AfterFees = trial1Profit - trial1Fee;
 
         var trial2MonthlyRev = Math.round(monthlyRevenue * 0.72);
         var trial2Expense = Math.round(trial2MonthlyRev * 0.799);
         var trial2Profit = trial2MonthlyRev - trial2Expense;
-        var trial2ServiceFee = Math.round(trial2MonthlyRev * i.serviceFeePct / 100);
-        var trial2AfterService = trial2Profit - trial2ServiceFee;
+        var trial2Fee = Math.round(trial2MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
+        var trial2AfterFees = trial2Profit - trial2Fee;
 
         // 现金流水
         var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
@@ -529,8 +539,10 @@
         // 第13个月起
         var postAmortTotalExpense = totalExpense - equipmentAmort;
         var postAmortOperatingProfit = monthlyRevenue - postAmortTotalExpense;
-        var postAmortProfitAfterService = postAmortOperatingProfit - serviceFee;
-        var postAmortOperatorIncome = postAmortProfitAfterService - Math.round(postAmortProfitAfterService * i.investorPct / 100) - Math.round(Math.max(0, postAmortProfitAfterService - i.landlordThreshold) * i.landlordPct / 100);
+        var postAmortProfitAfterFees = postAmortOperatingProfit - totalFee;
+        var postAmortInvestorDividend = Math.round(postAmortProfitAfterFees * i.investorPct / 100);
+        var postAmortLandlordDividend = Math.round(Math.max(0, postAmortProfitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
+        var postAmortOperatorIncome = postAmortProfitAfterFees - postAmortInvestorDividend - postAmortLandlordDividend;
 
         // 设备分摊明细
         var hardAsset = Math.round(i.equipmentInvestment * 0.646);
@@ -555,7 +567,11 @@
           operatingProfit: operatingProfit,
           cashNetProfit: cashNetProfit,
           serviceFee: serviceFee,
-          profitAfterService: profitAfterService,
+          service_fee: serviceFee,
+          operation_fee: operationFee,
+          operation_pct: i.operationPct,
+          total_fee: totalFee,
+          profit_after_fees: profitAfterFees,
           investorDividend: investorDividend,
           landlordDividend: landlordDividend,
           operatorIncome: operatorIncome,
