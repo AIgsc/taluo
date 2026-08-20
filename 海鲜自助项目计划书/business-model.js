@@ -367,6 +367,24 @@
         investor_total_3y: formatWan(investorTotalReturn3y),
         investor_total_3y_wan: (investorTotalReturn3y / 10000).toFixed(0) + '万',
         investor_roi_3y: investorROI + '%',
+        investor_monthly_avg: formatWan(investorDividend) + '（第1年）/ ' + formatWan(postAmortInvestorDividend) + '（第2-3年）',
+        investor_monthly_avg_wan: '第1年' + formatWan(investorDividend) + '，第2-3年' + formatWan(postAmortInvestorDividend),
+
+        // ===== 房东收益汇总 =====
+        landlord_monthly_income: formatNum(i.rent + landlordDividend) + '元',
+        landlord_monthly_income_wan: ((i.rent + landlordDividend) / 10000).toFixed(1) + '万',
+        landlord_monthly_post_amort_wan: ((i.rent + postAmortLandlordDividend) / 10000).toFixed(1) + '万',
+        landlord_year1_total: formatWan(i.rent * 12 + landlordDividend * 12),
+        landlord_year1_total_wan: ((i.rent * 12 + landlordDividend * 12) / 10000).toFixed(0) + '万',
+        landlord_total_3y: formatWan(i.rent * 36 + landlordDividend * 12 + postAmortLandlordDividend * 24),
+        landlord_total_3y_wan: ((i.rent * 36 + landlordDividend * 12 + postAmortLandlordDividend * 24) / 10000).toFixed(0) + '万',
+        landlord_rent_share_wan: ((i.rent * 36) / 10000).toFixed(0) + '万',
+        landlord_dividend_share_wan: ((landlordDividend * 12 + postAmortLandlordDividend * 24) / 10000).toFixed(0) + '万',
+
+        // ===== 运营方（老板）收益汇总 =====
+        operator_total_3y: formatWan(operatorIncome * 12 + postAmortOperatorIncome * 24),
+        operator_total_3y_wan: ((operatorIncome * 12 + postAmortOperatorIncome * 24) / 10000).toFixed(0) + '万',
+        operator_monthly_avg_wan: (operatorIncome / 10000).toFixed(1) + '万（第1年）/ ' + (postAmortOperatorIncome / 10000).toFixed(1) + '万（第2-3年）',
 
         // 试营业推演
         trial1_revenue_wan: formatWan(trial1MonthlyRev),

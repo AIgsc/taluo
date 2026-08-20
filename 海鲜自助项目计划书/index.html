@@ -264,6 +264,81 @@
 
   .page-number { text-align: center; color: #a8d8ea; font-size: 0.75rem; padding: 20px 0 8px; letter-spacing: 1px; }
 
+  /* ===== 角色收益速览 ===== */
+  .role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  @media (max-width: 768px) {
+    .role-grid { grid-template-columns: 1fr; }
+  }
+  .role-card {
+    border-radius: 16px;
+    padding: 24px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .role-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+  .role-card .role-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    opacity: 0.9;
+  }
+  .role-card .role-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .role-card .role-sub {
+    font-size: 0.8rem;
+    opacity: 0.85;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  .role-card .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.85rem;
+  }
+  .role-card .metric .label { opacity: 0.85; }
+  .role-card .metric .value {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .role-card .metric .value.large { font-size: 1.15rem; }
+  .role-card .metric .highlight { color: #ffd700; }
+  .role-card .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    margin: 8px 0;
+  }
+  .role-card .tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    margin-top: 4px;
+  }
+  .role-card.investor {
+    background: linear-gradient(135deg, #1a3a5c, #2e6da4);
+    color: #fff;
+  }
+  .role-card.landlord {
+    background: linear-gradient(135deg, #5c3a1a, #a47a2e);
+    color: #fff;
+  }
+  .role-card.operator {
+    background: linear-gradient(135deg, #1a5c3a, #2ea47a);
+    color: #fff;
+  }
+
   @media print {
     body { background: #fff; padding: 0; }
     .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -2234,6 +2309,7 @@
       <li><a href="#s5"><span class="num">十一</span><span class="title">人员架构与月度人工成本</span><span class="page">→</span></a></li>
       <li><a href="#s7"><span class="num">十二</span><span class="title">月度全套运营成本</span><span class="page">→</span></a></li>
       <li><a href="#s9"><span class="num">十三</span><span class="title">三方分账机制</span><span class="page">→</span></a></li>
+      <li><a href="#s14"><span class="num">十四</span><span class="title">角色收益速览</span><span class="page">→</span></a></li>
     </ul>
   
 </div>
@@ -2848,6 +2924,129 @@
 
 
 
+  <!-- ==================== 十四、角色收益速览 ==================== -->
+  <div class="section" id="s14" data-edit="s14">
+    <div class="section-header">
+      <div class="section-num">十四</div>
+      <h2>角色收益速览</h2>
+    </div>
+
+    <p style="margin-bottom:16px;font-size:0.9rem;color:#555;"><strong>三组核心数据，快速决策。</strong>投资人看回报率，房东看综合收益，老板看运营利润——各取所需，一目了然。</p>
+
+    <div class="role-grid">
+
+      <!-- 投资人卡片 -->
+      <div class="role-card investor">
+        <div class="role-icon">💰</div>
+        <div class="role-title">投资人</div>
+        <div class="role-sub">出资80万 · 财务合伙人 · 12%分红</div>
+
+        <div class="metric">
+          <span class="label">月均分红</span>
+          <span class="value">第1年 <span data-model="investor_dividend_num">45,280</span>元</span>
+        </div>
+        <div class="metric">
+          <span class="label"></span>
+          <span class="value">第2-3年 ≈50,280元</span>
+        </div>
+        <div class="divider"></div>
+        <div class="metric">
+          <span class="label">第1年分红</span>
+          <span class="value"><span data-model="investor_year1_dividend_wan">约54万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">3年总分红</span>
+          <span class="value large"><span data-model="investor_total_3y_wan">约175万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">投资回报率</span>
+          <span class="value large" style="color:#ffd700;"><span data-model="investor_roi_3y">219%</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">回本周期</span>
+          <span class="value"><span data-model="investor_payback">18个月</span></span>
+        </div>
+        <div class="tag">无需参与日常经营</div>
+      </div>
+
+      <!-- 房东卡片 -->
+      <div class="role-card landlord">
+        <div class="role-icon">🏠</div>
+        <div class="role-title">房东</div>
+        <div class="role-sub">提供场地 · 固定租金+超额分成</div>
+
+        <div class="metric">
+          <span class="label">月固定租金</span>
+          <span class="value"><span data-model="rent">70,000</span>元</span>
+        </div>
+        <div class="metric">
+          <span class="label">月均超额分成</span>
+          <span class="value">第1年 <span data-model="landlord_dividend_num">34,733</span>元</span>
+        </div>
+        <div class="metric">
+          <span class="label"></span>
+          <span class="value">第2-3年 ≈37,500元</span>
+        </div>
+        <div class="divider"></div>
+        <div class="metric">
+          <span class="label">月总收入（含租金）</span>
+          <span class="value large"><span data-model="landlord_monthly_income_wan">10.5万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">3年租金收入</span>
+          <span class="value"><span data-model="landlord_rent_share_wan">252万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">3年超额分成</span>
+          <span class="value"><span data-model="landlord_dividend_share_wan">约132万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">3年总收入</span>
+          <span class="value large" style="color:#ffd700;"><span data-model="landlord_total_3y_wan">约384万</span></span>
+        </div>
+        <div class="tag">零风险 · 旱涝保收</div>
+      </div>
+
+      <!-- 老板卡片 -->
+      <div class="role-card operator">
+        <div class="role-icon">👑</div>
+        <div class="role-title">老板（项目组织者）</div>
+        <div class="role-sub">不投钱 · 纯运营管理 · 全权决策</div>
+
+        <div class="metric">
+          <span class="label">月均纯利</span>
+          <span class="value large">第1年 <span data-model="operator_income_wan">29.7万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label"></span>
+          <span class="value large">第2-3年 ≈<span data-model="post_amort_operator_income_wan">33.8万</span></span>
+        </div>
+        <div class="divider"></div>
+        <div class="metric">
+          <span class="label">第1年纯利</span>
+          <span class="value"><span data-model="operator_year1_wan">约357万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">3年总纯利</span>
+          <span class="value large" style="color:#ffd700;"><span data-model="operator_total_3y_wan">约1,149万</span></span>
+        </div>
+        <div class="metric">
+          <span class="label">投资回报</span>
+          <span class="value" style="color:#ffd700;">无需出资，纯收益</span>
+        </div>
+        <div class="tag">全权负责 · 承担经营风险</div>
+      </div>
+
+    </div>
+
+    <div class="highlight-box" style="margin-top:20px;background:#f0f8fc;">
+      <strong>📌 快速决策参考：</strong><br>
+      • <strong>投资人视角：</strong>80万投入，3年回报约<span data-model="investor_total_3y_wan">175万</span>，年化回报率约73%。适合追求中高收益、能接受18个月回本等待期的财务投资人。<br>
+      • <strong>房东视角：</strong>零风险提供场地，月均稳收<span data-model="landlord_monthly_income_wan">10.5万</span>以上。适合持有商业物业、寻求稳定现金流的资产方。<br>
+      • <strong>老板视角：</strong>无需出资，3年可获纯利约<span data-model="operator_total_3y_wan">1,149万</span>。适合有餐饮运营经验、能调动资源的项目组织者。
+    </div>
+  </div>
+
   <div class="page-number">— 全文完 —</div>
 
 </div>
@@ -2856,7 +3055,7 @@
 <script>
 // 代码版本号：每次修改 HTML/JS 代码后递增此版本号
 // 用于判断代码是否比数据库更新，实现双向同步
-window.CODE_VERSION = '20260820-009';
+window.CODE_VERSION = '20260820-010';
 </script>
 <script src="business-model.js"></script>
 <script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>
