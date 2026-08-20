@@ -1,14 +1,14 @@
 /**
  * 海鲜自助项目计划书 - 在线编辑功能
- * 支持所有文字内容点击编辑，自动保存到后端数据库
- * 首次访问自动建表，后续不再重复创建
+ * 支持所有文字内容点击编辑，保存到本地 JSON 文件
+ * 运行 sync-html.js 将编辑内容写入 HTML 文件
  */
 
 (function() {
   'use strict';
 
-  // API 地址，通过 Vercel 同域部署，使用相对路径
-  const API_URL = window.BP_API_URL || '/api/business-plan';
+  // 本地保存服务器地址（修改为你的实际地址）
+  const SAVE_URL = window.BP_SAVE_URL || 'http://localhost:3456';
   let editMode = false;
   let hasChanges = false;
 
@@ -88,12 +88,6 @@
     }
   }
 
-  // ==================== 获取页面版本号 ====================
-  function getPageVersion() {
-    var app = document.getElementById('app');
-    return app ? app.dataset.pageVersion || '1' : '1';
-  }
-
   // ==================== 收集所有可编辑内容 ====================
   function collectContent() {
     var data = {};
@@ -101,45 +95,10 @@
     elements.forEach(function(el) {
       data[el.dataset.edit] = el.innerHTML;
     });
-    // 附带当前页面版本号
-    data._version = getPageVersion();
     return data;
   }
 
-  // ==================== 应用保存的内容到页面 ====================
-  function applyContent(data) {
-    Object.keys(data).forEach(function(key) {
-      if (key === '_version') return;
-      var el = document.querySelector('[data-edit="' + key + '"]');
-      if (el) {
-        el.innerHTML = data[key];
-      }
-    });
-  }
-
-  // ==================== 从后端加载内容 ====================
-  async function loadContent() {
-    try {
-      var res = await fetch(API_URL);
-      if (res.ok) {
-        var result = await res.json();
-        if (result.content && typeof result.content === 'object') {
-          var currentVersion = getPageVersion();
-          var savedVersion = result.content._version || '1';
-          if (savedVersion !== currentVersion) {
-            console.log('商业计划书：页面版本已更新（' + savedVersion + '→' + currentVersion + '），跳过旧内容');
-            return;
-          }
-          applyContent(result.content);
-          console.log('商业计划书：已加载保存的编辑内容');
-        }
-      }
-    } catch (e) {
-      console.log('商业计划书：首次加载，使用默认内容');
-    }
-  }
-
-  // ==================== 保存内容到后端 ====================
+  // ==================== 保存内容到本地 JSON 文件 ====================
   async function saveContent() {
     var content = collectContent();
     var saveBtn = document.getElementById('bp-save-btn');
@@ -160,7 +119,7 @@
     status.textContent = '';
 
     try {
-      var res = await fetch(API_URL, {
+      var res = await fetch(SAVE_URL + '/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: content })
@@ -168,7 +127,7 @@
 
       if (res.ok) {
         hasChanges = false;
-        status.textContent = '保存成功';
+        status.textContent = '保存成功！运行 sync-html.js 同步到 HTML';
         status.style.color = '#27ae60';
         console.log('保存成功');
       } else {
@@ -179,7 +138,7 @@
       }
     } catch (e) {
       console.error('保存网络错误:', e);
-      status.textContent = '保存失败：网络错误';
+      status.textContent = '保存失败：请先启动 save-server.js';
       status.style.color = '#e74c3c';
     } finally {
       saveBtn.disabled = false;
@@ -190,11 +149,6 @@
     }
   }
 
-  // ==================== 页面加载内容（含 bfcache 恢复） ====================
-  function loadPageContent() {
-    loadContent();
-  }
-
   // ==================== 初始化 ====================
   function init() {
     createToolbar();
@@ -203,17 +157,6 @@
     document.addEventListener('input', function(e) {
       if (e.target.closest && e.target.closest('[data-edit]')) {
         markModified();
-      }
-    });
-
-    // 从后端加载已保存的内容
-    loadPageContent();
-
-    // 处理 bfcache（浏览器后退/前进缓存）恢复场景
-    window.addEventListener('pageshow', function(e) {
-      if (e.persisted) {
-        // 页面从 bfcache 恢复，重新加载保存的内容
-        loadPageContent();
       }
     });
   }
