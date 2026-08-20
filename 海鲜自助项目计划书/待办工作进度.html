@@ -241,10 +241,21 @@
   .report-item {
     background: var(--bg2); border-radius: 8px;
     padding: 10px 12px; margin-bottom: 8px;
+    position: relative;
   }
+  .report-item .r-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .report-item .r-header .r-info { flex: 1; }
   .report-item .r-date { font-size: 0.72rem; color: var(--text2); }
   .report-item .r-content { font-size: 0.85rem; color: var(--text); margin-top: 4px; white-space: pre-wrap; }
   .report-item .r-author { font-size: 0.72rem; color: var(--accent); margin-top: 4px; }
+  .report-item .r-delete {
+    background: none; border: none; color: var(--text2);
+    cursor: pointer; font-size: 0.75rem; padding: 4px 6px;
+    border-radius: 4px; transition: all 0.15s; flex-shrink: 0;
+    opacity: 0;
+  }
+  .report-item:hover .r-delete { opacity: 1; }
+  .report-item .r-delete:hover { background: rgba(192,57,43,0.2); color: var(--danger); }
   .no-reports { font-size: 0.8rem; color: var(--text2); text-align: center; padding: 20px 0; }
 
   /* Sortable ghost */
@@ -604,9 +615,14 @@ function renderReports() {
     var d = new Date(r.created_at);
     var dateStr = d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
     html += '<div class="report-item">';
-    html += '  <div class="r-date">' + dateStr + '</div>';
-    html += '  <div class="r-content">' + escHtml(r.content) + '</div>';
-    if (r.author) html += '  <div class="r-author">— ' + escHtml(r.author) + '</div>';
+    html += '  <div class="r-header">';
+    html += '    <div class="r-info">';
+    html += '      <div class="r-date">' + dateStr + '</div>';
+    html += '      <div class="r-content">' + escHtml(r.content) + '</div>';
+    if (r.author) html += '      <div class="r-author">— ' + escHtml(r.author) + '</div>';
+    html += '    </div>';
+    html += '    <button class="r-delete" onclick="deleteReport(\'' + r.id + '\')" title="删除报告">✕</button>';
+    html += '  </div>';
     html += '</div>';
   });
   list.innerHTML = html;
@@ -628,6 +644,16 @@ function saveReport() {
   render();
   scheduleSave();
   showToast('报告已保存');
+}
+
+function deleteReport(reportId) {
+  if (!currentReportItem || !currentReportItem.reports) return;
+  if (!confirm('确定删除这条报告吗？')) return;
+  currentReportItem.reports = currentReportItem.reports.filter(function(r) { return r.id !== reportId; });
+  renderReports();
+  render();
+  scheduleSave();
+  showToast('报告已删除');
 }
 
 // ==================== 拖拽排序 ====================
