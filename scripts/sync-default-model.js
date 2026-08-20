@@ -23,7 +23,19 @@ async function main() {
   console.log('=== 同步本地默认输入变量到数据库 ===');
   console.log('');
   
+  console.log('本地代码默认变量，共 ' + Object.keys(BusinessModel.defaultInputs).length + ' 个输入项：');
+  console.log(JSON.stringify(BusinessModel.defaultInputs, null, 2));
+  console.log('');
+
+  if (dryRun) {
+    console.log('✅ 干运行模式完成，模型变量读取正常。');
+    console.log('（未连接数据库，仅展示本地内容）');
+    await pool.end();
+    return;
+  }
+  
   // 读取当前数据库中的模型
+  console.log('正在连接数据库...');
   const result = await pool.query(
     'SELECT value FROM business_plan_model WHERE model_key = $1',
     ['model_inputs']
@@ -42,9 +54,6 @@ async function main() {
     console.log('数据库中没有模型数据，将创建新记录');
   }
   
-  console.log('');
-  console.log('本地代码默认变量，共 ' + Object.keys(BusinessModel.defaultInputs).length + ' 个输入项：');
-  console.log(JSON.stringify(BusinessModel.defaultInputs, null, 2));
   console.log('');
   
   if (currentModel) {
@@ -80,26 +89,18 @@ async function main() {
     console.log('');
   }
   
-  if (!dryRun) {
-    console.log('正在保存到数据库...');
-    
-    await pool.query(
-      `INSERT INTO business_plan_model (model_key, value, updated_at)
-       VALUES ($1, $2, NOW())
-       ON CONFLICT (model_key) DO UPDATE SET
-         value = $2, updated_at = NOW()`,
-      ['model_inputs', JSON.stringify(BusinessModel.defaultInputs)]
-    );
-    
-    console.log('');
-    console.log('✅ 保存成功！');
-    console.log('');
-    console.log('下一步：');
-    console.log('  1. 本地推送代码到 GitHub');
-    console.log('  2. Vercel 自动部署后，网页使用最新数据');
-  } else {
-    console.log('干运行模式，未实际保存');
-  }
+  console.log('正在保存到数据库...');
+  
+  await pool.query(
+    `INSERT INTO business_plan_model (model_key, value, updated_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (model_key) DO UPDATE SET
+       value = $2, updated_at = NOW()`,
+    ['model_inputs', JSON.stringify(BusinessModel.defaultInputs)]
+  );
+  
+  console.log('✅ 保存成功！');
+  console.log('数据库中的模型变量已与本地代码一致。');
   
   await pool.end();
 }

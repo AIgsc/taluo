@@ -71,8 +71,16 @@ async function main() {
     console.log('  ' + key + ' → "' + preview + (localContent[key].length > 60 ? '...' : '') + '"');
   });
   console.log('');
-  
+
+  if (dryRun) {
+    console.log('✅ 干运行模式完成，HTML 内容读取正常。');
+    console.log('（未连接数据库，仅展示本地内容）');
+    await pool.end();
+    return;
+  }
+
   // 3. 读取数据库现有内容，对比差异
+  console.log('正在连接数据库...');
   const result = await pool.query(
     'SELECT section_key, content FROM business_plan_content ORDER BY section_key'
   );
@@ -110,32 +118,28 @@ async function main() {
   console.log('');
   
   // 5. 保存到数据库
-  if (!dryRun) {
-    if (changed === 0) {
-      console.log('无变更，无需保存。');
-    } else {
-      console.log('正在保存到数据库...');
-      
-      for (const key of keys) {
-        const val = localContent[key].trim();
-        if (val) {
-          await pool.query(
-            `INSERT INTO business_plan_content (section_key, content, updated_at)
-             VALUES ($1, $2, NOW())
-             ON CONFLICT (section_key) DO UPDATE SET
-               content = $2, updated_at = NOW()`,
-            [key, val]
-          );
-        }
-      }
-      
-      console.log('✅ 保存成功！共更新 ' + changed + ' 个区块。');
-      console.log('');
-      console.log('现在数据库中的文字内容已与本地 HTML 一致。');
-      console.log('推送代码后，Vercel 部署的页面加载时将使用最新内容。');
-    }
+  if (changed === 0) {
+    console.log('无变更，无需保存。');
   } else {
-    console.log('干运行模式，未实际保存。使用 --dry-run 移除可执行保存。');
+    console.log('正在保存到数据库...');
+    
+    for (const key of keys) {
+      const val = localContent[key].trim();
+      if (val) {
+        await pool.query(
+          `INSERT INTO business_plan_content (section_key, content, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (section_key) DO UPDATE SET
+             content = $2, updated_at = NOW()`,
+          [key, val]
+        );
+      }
+    }
+    
+    console.log('✅ 保存成功！共更新 ' + changed + ' 个区块。');
+    console.log('');
+    console.log('现在数据库中的文字内容已与本地 HTML 一致。');
+    console.log('推送代码后，Vercel 部署的页面加载时将使用最新内容。');
   }
   
   await pool.end();
