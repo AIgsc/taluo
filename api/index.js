@@ -1031,8 +1031,24 @@ module.exports = async (req, res) => {
 }
 
 // ==================== GitHub 同步函数 ====================
-function githubRequest(options, body) {
+function githubRequest(method, path, token, body) {
   return new Promise(function(resolve, reject) {
+    var options = {
+      hostname: 'api.github.com',
+      port: 443,
+      path: path,
+      method: method,
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'User-Agent': 'taluo-api',
+        Accept: 'application/vnd.github.v3+json'
+      },
+      timeout: 15000
+    };
+    if (body) {
+      options.headers['Content-Type'] = 'application/json';
+    }
+
     var req = https.request(options, function(res) {
       var data = '';
       res.on('data', function(chunk) { data += chunk; });
@@ -1044,6 +1060,7 @@ function githubRequest(options, body) {
       });
     });
     req.on('error', reject);
+    req.on('timeout', function() { req.destroy(); reject(new Error('请求超时')); });
     if (body) req.write(body);
     req.end();
   });
@@ -1057,16 +1074,7 @@ async function syncToGitHub(content, token) {
   var apiPath = '/repos/' + owner + '/' + repo + '/contents/' + encodedPath;
 
   // 1. 获取当前文件信息（含 SHA）
-  var getRes = await githubRequest({
-    hostname: 'api.github.com',
-    path: apiPath,
-    method: 'GET',
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'User-Agent': 'taluo-api',
-      Accept: 'application/vnd.github.v3+json'
-    }
-  });
+  var getRes = await githubRequest('GET', apiPath, token);
 
   if (getRes._status !== 200) {
     throw new Error('获取文件失败: ' + getRes._status + ' ' + JSON.stringify(getRes));
@@ -1081,6 +1089,7 @@ async function syncToGitHub(content, token) {
   var updatedCount = 0;
 
   for (var i = 0; i < keys.length; i++) {
+    if (keys[i] === '_version') continue; // 跳过版本号
     var result = replaceDataEditContent(updatedHtml, keys[i], content[keys[i]]);
     if (result !== null) {
       updatedHtml = result;
@@ -1095,17 +1104,7 @@ async function syncToGitHub(content, token) {
 
   // 3. 提交更新到 GitHub
   var newContent = Buffer.from(updatedHtml, 'utf-8').toString('base64');
-  var putRes = await githubRequest({
-    hostname: 'api.github.com',
-    path: apiPath,
-    method: 'PUT',
-    headers: {
-      Authorization: 'Bearer ' + token,
-      'User-Agent': 'taluo-api',
-      Accept: 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json'
-    }
-  }, JSON.stringify({
+  var putRes = await githubRequest('PUT', apiPath, token, JSON.stringify({
     message: '自动部署：更新商业计划书内容',
     content: newContent,
     sha: sha,
