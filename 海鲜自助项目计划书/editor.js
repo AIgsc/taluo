@@ -166,8 +166,7 @@
         '<div class="bp-var-group"><label>服务商抽成（%）</label><input type="number" id="var-serviceFeePct" value="' + inputs.serviceFeePct + '"></div>' +
         '<div class="bp-var-group"><label>运营部门分成（%）</label><input type="number" id="var-operationPct" value="' + inputs.operationPct + '"></div>' +
         '<div class="bp-var-group"><label>投资人分红（%）</label><input type="number" id="var-investorPct" value="' + inputs.investorPct + '"></div>' +
-        '<div class="bp-var-group"><label>房东超额分成门槛（元）</label><input type="number" id="var-landlordThreshold" value="' + inputs.landlordThreshold + '"></div>' +
-        '<div class="bp-var-group"><label>房东超额分成率（%）</label><input type="number" id="var-landlordPct" value="' + inputs.landlordPct + '"></div>' +
+        '<div class="bp-var-group"><label>房东利润分成比例（%）（无固定租金）</label><input type="number" id="var-landlordPct" value="' + inputs.landlordPct + '"></div>' +
       '</div>' +
       '<div class="bp-modal-actions">' +
         '<button class="bp-btn-cancel" onclick="closeVarModal()">取消</button>' +
@@ -234,7 +233,6 @@
       serviceFeePct: Number(document.getElementById('var-serviceFeePct').value) || 4,
       operationPct: Number(document.getElementById('var-operationPct').value) || 4,
       investorPct: Number(document.getElementById('var-investorPct').value) || 10,
-      landlordThreshold: Number(document.getElementById('var-landlordThreshold').value) || 30000,
       landlordPct: Number(document.getElementById('var-landlordPct').value) || 10,
     };
 
