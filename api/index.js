@@ -294,19 +294,31 @@ module.exports = async (req, res) => {
 
       // 2. 同步到 GitHub（触发 Vercel 自动部署）
       const ghToken = process.env.GH_TOKEN;
+      let ghResult = { synced: false, reason: 'token_not_found' };
       if (ghToken) {
         try {
           await syncToGitHub(content, ghToken);
+          ghResult = { synced: true };
           console.log('GitHub 同步成功');
         } catch (e) {
+          ghResult = { synced: false, reason: e.message };
           console.error('GitHub 同步失败:', e.message);
-          // 不阻塞，DB 已保存成功
         }
       } else {
         console.log('未配置 GH_TOKEN，跳过 GitHub 同步');
       }
 
-      return res.json({ success: true, count: keys.length });
+      return res.json({ success: true, count: keys.length, github: ghResult });
+    }
+
+    // ==================== 调试：检查 GH_TOKEN 状态 ====================
+    if (req.method === 'GET' && path === '/api/debug/github-token') {
+      const token = process.env.GH_TOKEN;
+      return res.json({
+        hasToken: !!token,
+        tokenPrefix: token ? token.substring(0, 6) + '...' : null,
+        tokenLength: token ? token.length : 0
+      });
     }
 
     // ==================== 验证用户身份 ====================
