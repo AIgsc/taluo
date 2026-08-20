@@ -439,7 +439,7 @@
 <script>
 // ==================== 数据定义 ====================
 var DEFAULT_DATA = {
-  schema_version: 1,
+  schema_version: 2,
   categories: [
     { id: 'cat_1', name: '房东洽谈', icon: '🏠', sort_order: 1, items: [
       { id: 'it_1_1', title: '通过中介/线上平台寻找合适场地', desc: '在58同城、安居客、本地中介等渠道寻找2000㎡左右适合做餐饮的场地，关注位置、人流、停车条件', status: 'pending', sort_order: 1, reports: [] },
@@ -588,6 +588,7 @@ var DEFAULT_DATA = {
     ]},
   ]
 };
+var DATA_VERSION = 2; // 增: 版本2=房东合作模式改为纯利润分成 + 新增角色收益速览任务
 
 // ==================== 状态管理 ====================
 var API_URL = '/api/todo';
@@ -1028,15 +1029,26 @@ function loadData() {
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (res.data && res.data.categories && res.data.categories.length > 0) {
-        appData = res.data;
+        // 检查数据版本，版本不一致时强制使用 DEFAULT_DATA
+        if (res.data.data_version === DATA_VERSION) {
+          appData = res.data;
+        } else {
+          console.log('数据版本不一致，使用最新 DEFAULT_DATA (v' + DATA_VERSION + ')');
+          appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+          appData.data_version = DATA_VERSION;
+          saveToServer(); // 立即保存新数据到数据库
+        }
       } else {
         appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        appData.data_version = DATA_VERSION;
+        saveToServer();
       }
       render();
     })
     .catch(function(e) {
       console.log('Load failed, using default:', e);
       appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      appData.data_version = DATA_VERSION;
       render();
     });
 }
