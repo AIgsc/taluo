@@ -624,6 +624,8 @@
     };
   }
 
-  // 导出到全局
-  window.BusinessModel = BusinessModel;
+  // 导出到全局（兼容 Node.js 环境）
+  if (typeof window !== 'undefined') {
+    window.BusinessModel = BusinessModel;
+  }
 })();
