@@ -40,7 +40,7 @@
       // 分账参数
       serviceFeePct: 4,         // 服务商抽成（成交额%）%
       operationPct: 4,          // 运营部门分成（成交额%）%
-      investorPct: 10,          // 投资人分红 %
+      investorPct: 18,          // 投资人分红 %
       landlordThreshold: 30000, // 房东超额分成门槛
       landlordPct: 10,          // 房东超额分成率 %
       paybackMonths: 12,        // 硬件分摊月数
@@ -95,7 +95,7 @@
       var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
       var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
       var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
-      var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
+      var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * i.investorPct / 100) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
 
       // 回本相关
       var avgMonthlyIncome = Math.round(operatorIncome * 0.7 + (operatorIncome * 0.5) * 0.3);
@@ -342,6 +342,8 @@
         payback_months: i.paybackMonths,
         payback_result: paybackPeriod + '个月',
         payback_result_plain: paybackPeriod,
+        investor_payback: Math.ceil(i.totalInvestment / Math.max(1, investorDividend)) + '个月',
+        investor_payback_plain: Math.ceil(i.totalInvestment / Math.max(1, investorDividend)),
 
         // 试营业推演
         trial1_revenue_wan: formatWan(trial1MonthlyRev),
@@ -473,7 +475,7 @@
           totalInvestment: 800000, equipmentInvestment: 500000,
           foodCostPct: 45, rent: 70000, laborCost: 243000,
           marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
-          operationPct: 4, investorPct: 10, landlordThreshold: 30000, landlordPct: 10,
+          operationPct: 4, investorPct: 18, landlordThreshold: 30000, landlordPct: 10,
           paybackMonths: 12,
           tableCount: 120, seatsPerTable: 2.8, staffCount: 48,
           utilityCost: 48000, kitchenStaff: 28, kitchenCost: 139000,
@@ -503,7 +505,7 @@
         var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
         var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
         var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
-        var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
+        var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * i.investorPct / 100) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
 
         // 周度营收
         var monThuDaily = Math.round(i.dailyRevenue * 0.583);

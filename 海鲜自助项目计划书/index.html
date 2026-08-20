@@ -2208,7 +2208,8 @@
       <strong>总现金投入：</strong><span style="color:#ffd700;font-size:1.1rem;"><span data-model="total_investment">80万</span>元</span><br>
       <strong>目标营业：</strong>日销<span data-model="daily_revenue">6万</span> · 月销<span data-model="monthly_revenue">180万</span><br>
       <strong>团队编制：</strong>48人<br>
-      <strong>回本周期：</strong><span data-model="payback_result">12个月</span>（含装修期+爬坡期，保守测算）
+      <strong>回本周期：</strong><span data-model="payback_result">4个月</span>（运营方回本，含爬坡期）<br>
+      <strong>投资人回本：</strong><span data-model="investor_payback">12个月</span>（分红<span data-model="investor_pct">18%</span>，年化收益超100%）
     </div>
     <div class="version">版本 V10.0 · 设备12个月分摊+两套报表</div>
   
@@ -2373,7 +2374,7 @@
     </div>
     <div class="highlight-box" style="border-left:4px solid #c0392b;background:#fff5f5;">
       <strong>⚠️ 悲观 vs 理想对比（经营考核口径）：</strong><br>
-      理想模型运营方月实得≈<span data-model="operator_income_wan">36.2万</span> → 悲观模型≈<span data-model="pessimistic_operator_income_wan">31.7万</span>，<strong>每月少<span data-model="pessimistic_vs_ideal_diff">4.5万</span>，年累计少<span data-model="pessimistic_vs_ideal_annual">54万</span></strong>。<br>
+      理想模型运营方月实得≈<span data-model="operator_income_wan">27.5万</span> → 悲观模型≈<span data-model="pessimistic_operator_income_wan">31.7万</span>，<strong>每月少<span data-model="pessimistic_vs_ideal_diff">4.5万</span>，年累计少<span data-model="pessimistic_vs_ideal_annual">54万</span></strong>。<br>
       回本周期从<span data-model="payback_result">12个月</span>延长至<span data-model="pessimistic_payback">约14-15个月</span>。<br>
       <strong>建议：</strong>实际操作中应按悲观情景做预算预留，才能在真实经营中游刃有余。
     </div>
@@ -2388,7 +2389,7 @@
     </div>
     <div class="data-grid">
       <div class="data-card"><div class="label">总投资</div><div class="value"><span data-model="total_investment">80万</span></div></div>
-      <div class="data-card"><div class="label">稳定后运营方月实得</div><div class="value green"><span data-model="operator_income_wan">36.2万</span></div></div>
+      <div class="data-card"><div class="label">稳定后运营方月实得</div><div class="value green"><span data-model="operator_income_wan">27.5万</span></div></div>
     </div>
     <div class="sub-title-sm">回本推演时间线（经营考核口径，含硬件分摊）</div>
     <div class="table-wrap">
@@ -2398,23 +2399,23 @@
           <tr><td>装修施工期</td><td>第1–2月</td><td style="text-align:right;color:#c0392b;">-80万（投入）</td></tr>
           <tr><td>试营业爬坡期</td><td>第3–6月</td><td style="text-align:right;color:#c0392b;">-80万～-50万</td></tr>
           <tr><td>稳定盈利期</td><td>第7–10月</td><td style="text-align:right;color:#1a8a3a;">-50万～-15万</td></tr>
-          <tr><td>全面回本</td><td>第12个月</td><td style="text-align:right;color:#1a8a3a;font-weight:700;">完成回本</td></tr>
+          <tr><td>运营方回本</td><td><strong>第12个月</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;">运营方回本</td></tr>
         </tbody>
       </table>
     </div>
     <div class="highlight-box orange">
       <strong>回本周期说明（经营口径，含硬件分摊<span data-model="equipment_amortization_short">41,667</span>元/月）：</strong><br>
       • 装修施工期2个月：<span data-model="total_investment">80万</span>现金投入（装修<span data-model="equipment_investment">50万</span>+组建人工<span data-model="staff_initial_cost_wan">20万</span>+预留食材<span data-model="food_initial_cost_wan">10万</span>），0营收<br>
-      • 试营业第1-2个月（第3-4月）：日均3-4万，月营收≈<span data-model="trial1_revenue_wan">100万</span>，经营口径支出≈<span data-model="trial1_expense_wan">89.5万</span>（含硬件分摊4.17万），月经营纯利≈<span data-model="trial1_profit_wan">10.5万</span>，扣两费<span data-model="trial1_fee_wan">8万</span>后≈<span data-model="trial1_after_fees_wan">2.5万</span><br>
-      • 试营业第3-4个月（第5-6月）：日均4-5万，月营收≈<span data-model="trial2_revenue_wan">130万</span>，经营口径支出≈<span data-model="trial2_expense_wan">103.9万</span>（含硬件分摊4.17万），月经营纯利≈<span data-model="trial2_profit_wan">26.1万</span>，扣两费<span data-model="trial2_fee_wan">10.4万</span>后≈<span data-model="trial2_after_fees_wan">15.7万</span><br>
-      • 第7个月起：稳定日均6万+，经营口径月利润<span data-model="stable_profit_wan">52.1万</span>，扣两费<span data-model="stable_total_fee_wan">14.4万</span>后纯利<span data-model="stable_after_fees_wan">37.7万</span>，运营方实得约<span data-model="stable_operator_income_wan">23.4万</span><br>
-      <strong>结论：从进场施工算起，整体回本周期12个月，含装修期+爬坡期+稳定期，稳妥可靠。</strong>
+      • 试营业第1-2个月（第3-4月）：日均3-4万，月营收≈<span data-model="trial1_revenue_wan">100万</span>，经营口径支出≈<span data-model="trial1_expense_wan">89.5万</span>（含硬件分摊4.17万），扣两费后≈<span data-model="trial1_after_fees_wan">2.5万</span><br>
+      • 试营业第3-4个月（第5-6月）：日均4-5万，月营收≈<span data-model="trial2_revenue_wan">130万</span>，经营口径支出≈<span data-model="trial2_expense_wan">103.9万</span>，扣两费后≈<span data-model="trial2_after_fees_wan">15.7万</span><br>
+      • 第7个月起：稳定日均6万+，月纯利<span data-model="stable_after_fees_wan">37.7万</span>，运营方实得约<span data-model="stable_operator_income_wan">27.5万</span><br>
+      <strong>结论：运营方从进场到回本约12个月，企业整体运营健康。</strong>
     </div>
     <div class="highlight-box" style="border-left:4px solid #2e86c1;">
-      <strong>📌 重要说明：业务考核口径，非会计折旧</strong><br>
-      本计划书采用<b>业务考核口径</b>：设备<span data-model="equipment_investment_wan">50万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月平摊，每月分摊<span data-model="equipment_amortization_short">41,667</span>元，用于评估门店月度经营能力。<br>
-      此口径≠会计折旧，设备实际使用寿命远超12个月，但按回本逻辑12个月全额摊完。<br>
-      第13个月起硬件分摊结束，经营口径支出减少<span data-model="equipment_amortization_short">41,667</span>元/月，运营方月实得上升至约<span data-model="post_amort_operator_income_wan">39.6万</span>。<br>
+      <strong>📌 投资人分红回本分析</strong><br>
+      投资人按纯利<span data-model="investor_pct">18%</span>分红，月均<span data-model="investor_dividend">67,920元</span>，年化收益率超100%。<br>
+      <strong>投资人回本周期：<span data-model="investor_payback">12个月</span>（80万 ÷ 6.8万/月 ≈ 12个月）</strong><br>
+      第13个月起硬件分摊结束，纯利上升至<span data-model="cash_net_profit_num">563,000</span>−<span data-model="total_fee_num">144,000</span>=<span data-model="post_amort_profit_after_fees_plain">419,000</span>，投资人分红增至<span data-model="post_amort_profit_after_fees_plain">419,000</span>×<span data-model="investor_pct">18%</span>≈75,420元/月，回本后纯收益。<br>
       <span style="color:#2e86c1;">现金流水看"手上实际剩多少钱"（稳定月<span data-model="cash_net_profit_display">56.3万</span>）；经营口径看"门店赚不赚钱"（含设备消耗）。</span>
     </div>
   
@@ -2757,7 +2758,7 @@
     <div class="sub-title-sm">分账顺序</div>
     <ol class="step-list">
       <li><strong>优先扣除：</strong>前端服务商 营业额4%流水抽成</li>
-      <li><strong>核算当月完整纯利后：</strong>投资人分纯利10%</li>
+      <li><strong>核算当月完整纯利后：</strong>投资人分纯利<span data-model="investor_pct">18%</span></li>
       <li><strong>房东仅分：</strong>月度纯利润超出3万部分的10%</li>
       <li><strong>剩余全部纯利：</strong>归项目运营方所有</li>
     </ol>
@@ -2781,7 +2782,7 @@
       「经营纯利」= 总营业额 − 服务商费用(<span data-model="service_fee_pct">4%</span>) − 运营部门费用(<span data-model="operation_pct">4%</span>) − 房租 − 人工 − 食材 − 水电 − 营销 − 杂费 − 硬件分摊（<span data-model="equipment_investment_wan">50万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月，仅第1-12个月）<br>
       投资人分红基数 = 经营纯利；房东分红基数 = 经营纯利（非总营业额，非未扣服务费的毛利）。<br>
       <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「经营纯利」定义，否则结算时各执一词，产生纠纷。</span><br>
-      <span style="color:#2e86c1;">📌 第13个月起硬件分摊结束，经营纯利=<span data-model="cash_net_profit_num">563,000</span>−<span data-model="total_fee_num">144,000</span>=<span data-model="post_amort_profit_after_fees_plain">419,000</span>，运营方月实得上升至<span data-model="post_amort_operator_income">338,200元</span>。</span>
+      <span style="color:#2e86c1;">📌 第13个月起硬件分摊结束，经营纯利=<span data-model="cash_net_profit_num">563,000</span>−<span data-model="total_fee_num">144,000</span>=<span data-model="post_amort_profit_after_fees_plain">419,000</span>，投资分红<span data-model="investor_pct">18%</span>≈75,420元，运营方月实得上升至约<span data-model="post_amort_operator_income">338,200元</span>。</span>
     </div>
   
 </div>
@@ -2796,7 +2797,7 @@
 <script>
 // 代码版本号：每次修改 HTML/JS 代码后递增此版本号
 // 用于判断代码是否比数据库更新，实现双向同步
-window.CODE_VERSION = '20260820-003';
+window.CODE_VERSION = '20260820-004';
 </script>
 <script src="business-model.js"></script>
 <script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>
