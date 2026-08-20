@@ -593,19 +593,19 @@
           pessimisticFoodCost: pessimisticFoodCost,
           pessimisticTotalExpense: pessimisticTotalExpense,
           pessimisticOperatingProfit: pessimisticOperatingProfit,
-          pessimisticServiceFee: pessimisticServiceFee,
-          pessimisticProfitAfterService: pessimisticProfitAfterService,
+          pessimisticFee: pessimisticFee,
+          pessimisticProfitAfterFees: pessimisticProfitAfterFees,
           pessimisticOperatorIncome: pessimisticOperatorIncome,
           pessimisticVsIdealMonthly: pessimisticVsIdealMonthly,
           pessimisticVsIdealAnnual: pessimisticVsIdealAnnual,
 
           // 试营业
           trial1MonthlyRev: trial1MonthlyRev, trial1Expense: trial1Expense,
-          trial1Profit: trial1Profit, trial1ServiceFee: trial1ServiceFee,
-          trial1AfterService: trial1AfterService,
+          trial1Profit: trial1Profit, trial1Fee: trial1Fee,
+          trial1AfterFees: trial1AfterFees,
           trial2MonthlyRev: trial2MonthlyRev, trial2Expense: trial2Expense,
-          trial2Profit: trial2Profit, trial2ServiceFee: trial2ServiceFee,
-          trial2AfterService: trial2AfterService,
+          trial2Profit: trial2Profit, trial2Fee: trial2Fee,
+          trial2AfterFees: trial2AfterFees,
 
           // 现金流水
           cashTotalExpense: cashTotalExpense,
@@ -614,7 +614,9 @@
 
           // 第13个月起
           postAmortOperatingProfit: postAmortOperatingProfit,
-          postAmortProfitAfterService: postAmortProfitAfterService,
+          postAmortProfitAfterFees: postAmortProfitAfterFees,
+          postAmortInvestorDividend: postAmortInvestorDividend,
+          postAmortLandlordDividend: postAmortLandlordDividend,
           postAmortOperatorIncome: postAmortOperatorIncome,
 
           // 设备明细
