@@ -275,7 +275,8 @@
       var res = await fetch(API_URL);
       if (res.ok) {
         var result = await res.json();
-        if (result.content && typeof result.content === 'object') {
+        // 只有 content 来源是 db（前端保存的）才覆盖 HTML，避免代码内容被旧数据覆盖
+        if (result.content && typeof result.content === 'object' && result.source === 'db') {
           applyContent(result.content);
         }
         // 加载模型输入变量

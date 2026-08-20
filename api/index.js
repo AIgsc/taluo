@@ -271,10 +271,15 @@ module.exports = async (req, res) => {
     if (req.method === 'GET' && path === '/api/business-plan') {
 
       // 1. 读取本地 HTML 文件，提取 data-edit 内容
-      const htmlFile = path.join(__dirname, '..', '海鲜自助项目计划书', 'index.html');
+      // 尝试多个路径（兼容 Vercel 和本地环境）
+      const possiblePaths = [
+        path.join(__dirname, '..', '海鲜自助项目计划书', 'index.html'),
+        path.join(process.cwd(), '海鲜自助项目计划书', 'index.html')
+      ];
+      const htmlFile = possiblePaths.find(function(p) { return fs.existsSync(p); });
       let htmlContent = null;
       let htmlHash = null;
-      if (fs.existsSync(htmlFile)) {
+      if (htmlFile) {
         const html = fs.readFileSync(htmlFile, 'utf-8');
         const extracted = {};
         const regex = /<(\w+)[^>]*\sdata-edit="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/gi;
@@ -306,6 +311,7 @@ module.exports = async (req, res) => {
 
       // 4. 如果 HTML 有内容且哈希值与上次不同，同步到数据库
       let content;
+      let source = 'db';
       if (htmlContent && htmlHash && htmlHash !== lastSyncedHash) {
         console.log('检测到 HTML 内容变更，同步到数据库...');
         const keys = Object.keys(htmlContent);
@@ -331,15 +337,18 @@ module.exports = async (req, res) => {
           ['html_content_hash', htmlHash]
         );
         console.log('HTML 内容同步完成，共 ' + keys.length + ' 个区块');
-        // 使用 HTML 内容（已同步到 DB，直接返回 HTML 内容）
         content = htmlContent;
+        source = 'html';
       } else {
-        // 使用数据库内容
         content = dbContent;
       }
 
       // 5. 同步模型输入变量（如果代码中的默认值变更了）
-      const modelFile = path.join(__dirname, '..', '海鲜自助项目计划书', 'business-model.js');
+      const modelPossiblePaths = [
+        path.join(__dirname, '..', '海鲜自助项目计划书', 'business-model.js'),
+        path.join(process.cwd(), '海鲜自助项目计划书', 'business-model.js')
+      ];
+      const modelFile = modelPossiblePaths.find(function(p) { return fs.existsSync(p); });
 
       // 先从数据库加载
       let model = null;
@@ -358,7 +367,7 @@ module.exports = async (req, res) => {
       // 读取代码中的默认值
       let codeModel = null;
       let modelHash = null;
-      if (fs.existsSync(modelFile)) {
+      if (modelFile) {
         try {
           const modelModule = require(modelFile);
           if (modelModule.defaultInputs) {
@@ -378,6 +387,7 @@ module.exports = async (req, res) => {
       const lastModelHash = modelHashResult.rows.length > 0 ? modelHashResult.rows[0].value : null;
 
       // 如果代码中的模型变量有变更，同步到数据库
+      let modelSource = 'db';
       if (codeModel && modelHash && modelHash !== lastModelHash) {
         console.log('检测到模型变量变更，同步到数据库...');
         await db.query(
@@ -396,12 +406,12 @@ module.exports = async (req, res) => {
         );
         console.log('模型变量同步完成');
         model = codeModel;
+        modelSource = 'html';
       } else if (!model && codeModel) {
-        // 数据库无模型数据，使用代码中的默认值
         model = codeModel;
       }
 
-      return res.json({ content: content, model: model });
+      return res.json({ content: content, model: model, source: source, modelSource: modelSource });
     }
 
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================
