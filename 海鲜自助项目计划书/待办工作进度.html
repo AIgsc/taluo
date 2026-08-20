@@ -550,7 +550,7 @@ function render() {
       var doneText = item.status === 'completed' ? 'done-text' : '';
       html += '  <div class="todo-item" data-item-id="' + item.id + '">';
       html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
-      html += '    <div class="item-check ' + item.status + '" onclick="showStatusMenu(event,\'' + item.id + '\')"></div>';
+      html += '    <div class="item-check ' + item.status + '"></div>';
       html += '    <div class="item-body">';
       html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
       if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
@@ -571,6 +571,7 @@ function render() {
 
   document.getElementById('categoryList').innerHTML = html;
   initSortable();
+  initStatusMenu();
 }
 
 function escHtml(s) {
@@ -585,7 +586,7 @@ function toggleCat(header) {
   toggle.classList.toggle('open');
 }
 
-// ==================== 状态切换 ====================
+// ==================== 状态切换（事件委托） ====================
 var STATUS_OPTIONS = [
   { value: 'pending', label: '待办', dotClass: 'pending' },
   { value: 'in-progress', label: '进行中', dotClass: 'in-progress' },
@@ -593,14 +594,28 @@ var STATUS_OPTIONS = [
   { value: 'blocked', label: '受阻', dotClass: 'blocked' }
 ];
 
-function showStatusMenu(event, itemId) {
-  event.stopPropagation();
+function initStatusMenu() {
+  document.getElementById('categoryList').addEventListener('click', function(e) {
+    var check = e.target.closest('.item-check');
+    if (!check) {
+      // 点击菜单选项时不要关闭
+      if (e.target.closest('.status-menu')) return;
+      closeStatusMenu();
+      return;
+    }
+    var itemEl = check.closest('.todo-item');
+    if (!itemEl) return;
+    var itemId = itemEl.getAttribute('data-item-id');
+    showStatusMenu(check, itemId);
+  });
+}
+
+function showStatusMenu(checkEl, itemId) {
   closeStatusMenu();
 
   var item = findItem(itemId);
   if (!item) return;
 
-  var checkEl = event.currentTarget;
   var rect = checkEl.getBoundingClientRect();
 
   var menu = document.createElement('div');
@@ -614,8 +629,7 @@ function showStatusMenu(event, itemId) {
     var option = document.createElement('div');
     option.className = 'status-option' + (isActive ? ' active' : '');
     option.innerHTML = '<span class="dot ' + opt.dotClass + '"></span>' + opt.label;
-    option.onclick = function(e) {
-      e.stopPropagation();
+    option.onclick = function() {
       selectStatus(itemId, opt.value);
       closeStatusMenu();
     };
@@ -623,11 +637,6 @@ function showStatusMenu(event, itemId) {
   });
 
   document.body.appendChild(menu);
-
-  // 点击其他地方关闭
-  setTimeout(function() {
-    document.addEventListener('click', closeStatusMenu, { once: true });
-  }, 0);
 }
 
 function closeStatusMenu() {
