@@ -269,17 +269,47 @@
     });
   }
 
+  // ==================== 简单哈希函数 ====================
+  function simpleHash(str) {
+    if (!str) return '';
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      var char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  // ==================== 计算当前 HTML 内容的哈希值 ====================
+  function computeHtmlHash() {
+    var elements = document.querySelectorAll('[data-edit]');
+    var data = {};
+    elements.forEach(function(el) {
+      data[el.getAttribute('data-edit')] = el.innerHTML.trim();
+    });
+    return simpleHash(JSON.stringify(data));
+  }
+
+  function computeModelHash() {
+    var model = window.BusinessModel;
+    if (!model || !model.inputs) return '';
+    return simpleHash(JSON.stringify(Object.keys(model.inputs).map(function(k) { return model.inputs[k]; })));
+  }
+
   // ==================== 从数据库加载内容 ====================
   async function loadContent() {
     try {
-      var res = await fetch(API_URL);
+      var htmlHash = computeHtmlHash();
+      var url = API_URL + '?html_hash=' + encodeURIComponent(htmlHash);
+      var res = await fetch(url);
       if (res.ok) {
         var result = await res.json();
         // 只有 content 来源是 db（前端保存的）才覆盖 HTML，避免代码内容被旧数据覆盖
         if (result.content && typeof result.content === 'object' && result.source === 'db') {
           applyContent(result.content);
         }
-        // 加载模型输入变量
+        // 加载模型输入变量（始终从数据库加载，DB 是最新的）
         if (result.model && typeof result.model === 'object') {
           var model = window.BusinessModel;
           if (model) {
