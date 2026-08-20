@@ -292,12 +292,39 @@
   }
   .toast.show { opacity: 1; }
 
+  /* Floating Add Button */
+  .fab-add {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: #fff; border: none;
+    font-size: 1.4rem; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(46,134,193,0.4);
+    transition: all 0.25s ease; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fab-add:hover { background: #3498db; transform: scale(1.1); box-shadow: 0 6px 20px rgba(46,134,193,0.5); }
+  .fab-add:active { transform: scale(0.95); }
+  @media (min-width: 601px) { .fab-add { display: none; } }
+
   /* Responsive */
   @media (max-width: 600px) {
-    .container { padding: 12px 10px 40px; }
+    .container { padding: 12px 10px 80px; }
     .header h1 { font-size: 1.2rem; }
-    .todo-item { padding: 8px 12px 8px 14px; }
-    .category-header { padding: 10px 12px; }
+    .header .stats { flex-wrap: wrap; gap: 6px 14px; font-size: 0.75rem; }
+    .todo-item { padding: 12px 12px 12px 14px; }
+    .category-header { padding: 12px 12px; }
+    .todo-item .item-actions button { padding: 8px 10px; font-size: 0.9rem; }
+    .todo-item .item-actions .report-count { padding: 6px 10px; font-size: 0.8rem; }
+    select.status-select { min-width: 90px; padding: 6px 24px 6px 10px; font-size: 0.8rem; }
+    .add-item-btn { padding: 14px 16px; font-size: 0.85rem; }
+    .modal { padding: 20px 16px; max-height: 90vh; border-radius: 12px 12px 0 0; margin-top: auto; }
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal .btn { padding: 12px 24px; font-size: 0.9rem; min-width: 80px; }
+    .modal .btn-row { gap: 12px; }
+    .report-item .r-delete { opacity: 1; padding: 8px 10px; }
+    .category-header .cat-icon { width: 32px; height: 32px; font-size: 0.9rem; }
+    .todo-item .item-drag { padding: 8px 4px; }
+    .todo-item .item-drag i { font-size: 0.85rem !important; }
   }
 </style>
 </head>
@@ -320,6 +347,7 @@
   <div id="categoryList"></div>
 
   <div class="toast" id="toast"></div>
+  <button class="fab-add" onclick="openAddTodoModal()" title="新增待办"><i class="fas fa-plus"></i></button>
 </div>
 
 <!-- Report Modal -->
@@ -341,7 +369,9 @@
 <div class="modal-overlay" id="addTodoModal">
   <div class="modal">
     <h3>新增待办事项</h3>
-    <div class="modal-sub" id="addTodoSub">在「<span id="addTodoCatName"></span>」中添加新任务</div>
+    <div class="modal-sub" id="addTodoSub">在下方填写新任务信息</div>
+    <label for="addTodoCat">所属分类</label>
+    <select id="addTodoCat" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;margin-bottom:12px;outline:none;cursor:pointer;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></select>
     <label for="addTodoTitle">任务标题 <span style="color:var(--danger);">*</span></label>
     <input id="addTodoTitle" type="text" placeholder="输入任务标题…" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;margin-bottom:12px;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
     <label for="addTodoDesc">任务描述</label>
@@ -643,29 +673,35 @@ function selectStatus(el) {
 }
 
 // ==================== 新增待办 ====================
-var addTodoTargetCatId = null;
-
 function openAddTodoModal(catId) {
-  addTodoTargetCatId = catId;
-  var cat = appData.categories.find(function(c) { return c.id === catId; });
-  if (!cat) return;
-  document.getElementById('addTodoCatName').textContent = cat.name;
+  var catSelect = document.getElementById('addTodoCat');
+  // 填充分类下拉
+  catSelect.innerHTML = '';
+  appData.categories.forEach(function(cat) {
+    var opt = document.createElement('option');
+    opt.value = cat.id;
+    opt.textContent = cat.icon + ' ' + cat.name;
+    if (catId && cat.id === catId) opt.selected = true;
+    catSelect.appendChild(opt);
+  });
   document.getElementById('addTodoTitle').value = '';
   document.getElementById('addTodoDesc').value = '';
   document.getElementById('addTodoModal').classList.add('show');
-  setTimeout(function() { document.getElementById('addTodoTitle').focus(); }, 100);
+  setTimeout(function() { document.getElementById('addTodoTitle').focus(); }, 300);
 }
 
 function closeAddTodoModal() {
   document.getElementById('addTodoModal').classList.remove('show');
-  addTodoTargetCatId = null;
 }
 
 function saveAddTodo() {
+  var catSelect = document.getElementById('addTodoCat');
+  var catId = catSelect.value;
+  if (!catId) { showToast('请选择所属分类'); return; }
   var title = document.getElementById('addTodoTitle').value.trim();
   if (!title) { showToast('请输入任务标题'); document.getElementById('addTodoTitle').focus(); return; }
   var desc = document.getElementById('addTodoDesc').value.trim();
-  var cat = appData.categories.find(function(c) { return c.id === addTodoTargetCatId; });
+  var cat = appData.categories.find(function(c) { return c.id === catId; });
   if (!cat) return;
   var maxOrder = 0;
   cat.items.forEach(function(i) { if (i.sort_order > maxOrder) maxOrder = i.sort_order; });
@@ -880,17 +916,13 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('addTodoModal').addEventListener('click', function(e) {
     if (e.target === this) closeAddTodoModal();
   });
-  // Ctrl+Enter to submit report
+  // Ctrl+Enter to submit report (desktop only)
   document.getElementById('reportContent').addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 'Enter') { saveReport(); }
   });
-  // Enter in add-todo title field to save
+  // Enter in add-todo title: move focus to description (mobile-friendly)
   document.getElementById('addTodoTitle').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); saveAddTodo(); }
-  });
-  // Escape to close add-todo modal
-  document.getElementById('addTodoDesc').addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { closeAddTodoModal(); }
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTodoDesc').focus(); }
   });
 });
 </script>
