@@ -4,6 +4,8 @@
 
 const crypto = require('crypto');
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 const { Pool } = require('pg');
 
 // ==================== 数据库连接池（全局复用） ====================
@@ -267,15 +269,79 @@ module.exports = async (req, res) => {
     
     // ==================== 商业计划书内容 API（无需登录） ====================
     if (req.method === 'GET' && path === '/api/business-plan') {
+
+      // 1. 读取本地 HTML 文件，提取 data-edit 内容
+      const htmlFile = path.join(__dirname, '..', '海鲜自助项目计划书', 'index.html');
+      let htmlContent = null;
+      let htmlHash = null;
+      if (fs.existsSync(htmlFile)) {
+        const html = fs.readFileSync(htmlFile, 'utf-8');
+        const extracted = {};
+        const regex = /<(\w+)[^>]*\sdata-edit="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/gi;
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+          extracted[match[2]] = match[3].trim();
+        }
+        if (Object.keys(extracted).length > 0) {
+          htmlContent = extracted;
+          htmlHash = crypto.createHash('md5').update(JSON.stringify(extracted)).digest('hex');
+        }
+      }
+
+      // 2. 查询数据库中的内容
       const result = await db.query(
         'SELECT section_key, content FROM business_plan_content ORDER BY section_key'
       );
-      const content = {};
+      const dbContent = {};
       result.rows.forEach(function(row) {
-        content[row.section_key] = row.content;
+        dbContent[row.section_key] = row.content;
       });
 
-      // 加载模型输入变量
+      // 3. 查询上次同步的 HTML 哈希值
+      const hashResult = await db.query(
+        'SELECT value FROM business_plan_model WHERE model_key = $1',
+        ['html_content_hash']
+      );
+      const lastSyncedHash = hashResult.rows.length > 0 ? hashResult.rows[0].value : null;
+
+      // 4. 如果 HTML 有内容且哈希值与上次不同，同步到数据库
+      let content;
+      if (htmlContent && htmlHash && htmlHash !== lastSyncedHash) {
+        console.log('检测到 HTML 内容变更，同步到数据库...');
+        const keys = Object.keys(htmlContent);
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i];
+          const val = htmlContent[key];
+          if (val) {
+            await db.query(
+              `INSERT INTO business_plan_content (section_key, content, updated_at)
+               VALUES ($1, $2, NOW())
+               ON CONFLICT (section_key) DO UPDATE SET
+                 content = $2, updated_at = NOW()`,
+              [key, val]
+            );
+          }
+        }
+        // 更新哈希值
+        await db.query(
+          `INSERT INTO business_plan_model (model_key, value, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (model_key) DO UPDATE SET
+             value = $2, updated_at = NOW()`,
+          ['html_content_hash', htmlHash]
+        );
+        console.log('HTML 内容同步完成，共 ' + keys.length + ' 个区块');
+        // 使用 HTML 内容（已同步到 DB，直接返回 HTML 内容）
+        content = htmlContent;
+      } else {
+        // 使用数据库内容
+        content = dbContent;
+      }
+
+      // 5. 同步模型输入变量（如果代码中的默认值变更了）
+      const modelFile = path.join(__dirname, '..', '海鲜自助项目计划书', 'business-model.js');
+
+      // 先从数据库加载
       let model = null;
       const modelResult = await db.query(
         'SELECT value FROM business_plan_model WHERE model_key = $1',
@@ -287,6 +353,52 @@ module.exports = async (req, res) => {
         } catch (e) {
           model = null;
         }
+      }
+
+      // 读取代码中的默认值
+      let codeModel = null;
+      let modelHash = null;
+      if (fs.existsSync(modelFile)) {
+        try {
+          const modelModule = require(modelFile);
+          if (modelModule.defaultInputs) {
+            codeModel = modelModule.defaultInputs;
+            modelHash = crypto.createHash('md5').update(JSON.stringify(codeModel)).digest('hex');
+          }
+        } catch (e) {
+          console.log('读取模型变量失败:', e.message);
+        }
+      }
+
+      // 查询上次同步的模型哈希值
+      const modelHashResult = await db.query(
+        'SELECT value FROM business_plan_model WHERE model_key = $1',
+        ['model_inputs_hash']
+      );
+      const lastModelHash = modelHashResult.rows.length > 0 ? modelHashResult.rows[0].value : null;
+
+      // 如果代码中的模型变量有变更，同步到数据库
+      if (codeModel && modelHash && modelHash !== lastModelHash) {
+        console.log('检测到模型变量变更，同步到数据库...');
+        await db.query(
+          `INSERT INTO business_plan_model (model_key, value, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (model_key) DO UPDATE SET
+             value = $2, updated_at = NOW()`,
+          ['model_inputs', JSON.stringify(codeModel)]
+        );
+        await db.query(
+          `INSERT INTO business_plan_model (model_key, value, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (model_key) DO UPDATE SET
+             value = $2, updated_at = NOW()`,
+          ['model_inputs_hash', modelHash]
+        );
+        console.log('模型变量同步完成');
+        model = codeModel;
+      } else if (!model && codeModel) {
+        // 数据库无模型数据，使用代码中的默认值
+        model = codeModel;
       }
 
       return res.json({ content: content, model: model });
