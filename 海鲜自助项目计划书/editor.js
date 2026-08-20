@@ -119,6 +119,16 @@
       '<div class="bp-var-section">' +
         '<div class="section-title">🏠 场地</div>' +
         '<div class="bp-var-group"><label>总面积（㎡）</label><input type="number" id="var-area" value="' + inputs.area + '"></div>' +
+        '<div class="bp-var-group"><label>桌数</label><input type="number" id="var-tableCount" value="' + inputs.tableCount + '"></div>' +
+        '<div class="bp-var-group"><label>每桌平均人数</label><input type="number" step="0.1" id="var-seatsPerTable" value="' + inputs.seatsPerTable + '"></div>' +
+      '</div>' +
+      '<div class="bp-var-section">' +
+        '<div class="section-title">👥 人员架构</div>' +
+        '<div class="bp-var-group"><label>总编制人数</label><input type="number" id="var-staffCount" value="' + inputs.staffCount + '"></div>' +
+        '<div class="bp-var-group"><label>后厨人数</label><input type="number" id="var-kitchenStaff" value="' + inputs.kitchenStaff + '"></div>' +
+        '<div class="bp-var-group"><label>后厨月度总成本（元）</label><input type="number" id="var-kitchenCost" value="' + inputs.kitchenCost + '"></div>' +
+        '<div class="bp-var-group"><label>前厅人数</label><input type="number" id="var-frontStaff" value="' + inputs.frontStaff + '"></div>' +
+        '<div class="bp-var-group"><label>前厅月度总成本（元）</label><input type="number" id="var-frontCost" value="' + inputs.frontCost + '"></div>' +
       '</div>' +
       '<div class="bp-var-section">' +
         '<div class="section-title">💰 营收</div>' +
@@ -133,7 +143,13 @@
         '<div class="bp-var-group"><label>设备分摊月数</label><input type="number" id="var-paybackMonths" value="' + inputs.paybackMonths + '"></div>' +
         '<div class="bp-var-group"><label>月人工成本（元）</label><input type="number" id="var-laborCost" value="' + inputs.laborCost + '"></div>' +
         '<div class="bp-var-group"><label>月房租（元）</label><input type="number" id="var-rent" value="' + inputs.rent + '"></div>' +
-        '<div class="bp-var-group"><label>月杂费（元）</label><input type="number" id="var-miscCost" value="' + inputs.miscCost + '"></div>' +
+        '<div class="bp-var-group"><label>水电燃气杂费（元/月）</label><input type="number" id="var-utilityCost" value="' + inputs.utilityCost + '"></div>' +
+        '<div class="bp-var-group"><label>其他杂费（元/月）</label><input type="number" id="var-miscCost" value="' + inputs.miscCost + '"></div>' +
+      '</div>' +
+      '<div class="bp-var-section">' +
+        '<div class="section-title">💴 前期一次性投入</div>' +
+        '<div class="bp-var-group"><label>组建人工费用（元）</label><input type="number" id="var-staffInitialCost" value="' + inputs.staffInitialCost + '"></div>' +
+        '<div class="bp-var-group"><label>首批食材备货（元）</label><input type="number" id="var-foodInitialCost" value="' + inputs.foodInitialCost + '"></div>' +
       '</div>' +
       '<div class="bp-var-section">' +
         '<div class="section-title">📈 分成比例</div>' +
@@ -186,6 +202,13 @@
 
     var inputs = {
       area: Number(document.getElementById('var-area').value) || 2000,
+      tableCount: Number(document.getElementById('var-tableCount').value) || 120,
+      seatsPerTable: Number(document.getElementById('var-seatsPerTable').value) || 2.8,
+      staffCount: Number(document.getElementById('var-staffCount').value) || 48,
+      kitchenStaff: Number(document.getElementById('var-kitchenStaff').value) || 28,
+      kitchenCost: Number(document.getElementById('var-kitchenCost').value) || 139000,
+      frontStaff: Number(document.getElementById('var-frontStaff').value) || 20,
+      frontCost: Number(document.getElementById('var-frontCost').value) || 104000,
       price: Number(document.getElementById('var-price').value) || 169,
       dailyRevenue: Number(document.getElementById('var-dailyRevenue').value) || 60000,
       foodCostPct: Number(document.getElementById('var-foodCostPct').value) || 45,
@@ -194,7 +217,10 @@
       paybackMonths: Number(document.getElementById('var-paybackMonths').value) || 12,
       laborCost: Number(document.getElementById('var-laborCost').value) || 243000,
       rent: Number(document.getElementById('var-rent').value) || 70000,
+      utilityCost: Number(document.getElementById('var-utilityCost').value) || 48000,
       miscCost: Number(document.getElementById('var-miscCost').value) || 60000,
+      staffInitialCost: Number(document.getElementById('var-staffInitialCost').value) || 200000,
+      foodInitialCost: Number(document.getElementById('var-foodInitialCost').value) || 100000,
       marketingPct: Number(document.getElementById('var-marketingPct').value) || 3,
       serviceFeePct: Number(document.getElementById('var-serviceFeePct').value) || 4,
       investorPct: Number(document.getElementById('var-investorPct').value) || 10,

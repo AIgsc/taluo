@@ -1169,7 +1169,11 @@ function calculateModel(inputs) {
     foodCostPct: 45, rent: 70000, laborCost: 243000,
     marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
     investorPct: 10, landlordThreshold: 30000, landlordPct: 10,
-    paybackMonths: 12
+    paybackMonths: 12,
+    tableCount: 120, seatsPerTable: 2.8, staffCount: 48,
+    utilityCost: 48000, kitchenStaff: 28, kitchenCost: 139000,
+    frontStaff: 20, frontCost: 104000,
+    staffInitialCost: 200000, foodInitialCost: 100000
   }, inputs || {});
 
   function formatNum(n) {
@@ -1196,55 +1200,274 @@ function calculateModel(inputs) {
   var pessimisticFoodCost = Math.round(monthlyRevenue * 0.48);
   var pessimisticTotalExpense = i.laborCost + pessimisticFoodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
   var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
-  var pessimisticProfitAfterService = pessimisticOperatingProfit - serviceFee;
+  var pessimisticServiceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
+  var pessimisticProfitAfterService = pessimisticOperatingProfit - pessimisticServiceFee;
   var pessimisticOperatorIncome = pessimisticProfitAfterService - Math.round(pessimisticProfitAfterService * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterService - 30000) * 0.1);
 
   var avgMonthlyIncome = Math.round(operatorIncome * 0.7 + (operatorIncome * 0.5) * 0.3);
   var paybackPeriod = Math.ceil(i.totalInvestment / Math.max(1, avgMonthlyIncome));
 
+  // 周度营收
+  var monThuDaily = Math.round(i.dailyRevenue * 0.583);
+  var friDaily = i.dailyRevenue;
+  var satDaily = Math.round(i.dailyRevenue * 2);
+  var sunDaily = Math.round(i.dailyRevenue * 1.667);
+  var weeklyTotal = monThuDaily * 4 + friDaily + satDaily + sunDaily;
+  var monThuCustomers = Math.round(monThuDaily / i.price);
+  var friCustomers = Math.round(friDaily / i.price);
+  var satCustomers = Math.round(satDaily / i.price);
+  var sunCustomers = Math.round(sunDaily / i.price);
+  var weeklyCustomers = monThuCustomers * 4 + friCustomers + satCustomers + sunCustomers;
+  var tableCapacity = i.tableCount * i.seatsPerTable;
+
+  // 试营业推演
+  var trial1MonthlyRev = Math.round(monthlyRevenue * 0.55);
+  var trial1Expense = Math.round(trial1MonthlyRev * 0.895);
+  var trial1Profit = trial1MonthlyRev - trial1Expense;
+  var trial1ServiceFee = Math.round(trial1MonthlyRev * i.serviceFeePct / 100);
+  var trial1AfterService = trial1Profit - trial1ServiceFee;
+
+  var trial2MonthlyRev = Math.round(monthlyRevenue * 0.72);
+  var trial2Expense = Math.round(trial2MonthlyRev * 0.799);
+  var trial2Profit = trial2MonthlyRev - trial2Expense;
+  var trial2ServiceFee = Math.round(trial2MonthlyRev * i.serviceFeePct / 100);
+  var trial2AfterService = trial2Profit - trial2ServiceFee;
+
+  // 现金流水
+  var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
+  var equipmentMonthExpense = cashTotalExpense + i.equipmentInvestment;
+  var equipmentMonthProfit = monthlyRevenue - equipmentMonthExpense;
+
+  // 设备分摊明细
+  var hardAsset = Math.round(i.equipmentInvestment * 0.646);
+  var furnitureAsset = Math.round(i.equipmentInvestment * 0.24);
+  var suppliesAsset = i.equipmentInvestment - hardAsset - furnitureAsset;
+  var hardAmort = Math.round(hardAsset / i.paybackMonths);
+  var furnitureAmort = Math.round(furnitureAsset / i.paybackMonths);
+  var suppliesAmort = Math.round(suppliesAsset / i.paybackMonths);
+
+  // 第13个月起
+  var postAmortTotalExpense = totalExpense - equipmentAmort;
+  var postAmortOperatingProfit = monthlyRevenue - postAmortTotalExpense;
+  var postAmortProfitAfterService = postAmortOperatingProfit - serviceFee;
+  var postAmortInvestorDividend = Math.round(postAmortProfitAfterService * i.investorPct / 100);
+  var postAmortLandlordDividend = Math.round(Math.max(0, postAmortProfitAfterService - i.landlordThreshold) * i.landlordPct / 100);
+  var postAmortOperatorIncome = postAmortProfitAfterService - postAmortInvestorDividend - postAmortLandlordDividend;
+
+  // 悲观对比
+  var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
+  var pessimisticVsIdealAnnual = pessimisticVsIdealMonthly * 12;
+  var pessimisticPaybackPeriod = Math.ceil(paybackPeriod * 1.25);
+  var workingCapital = i.totalInvestment - i.equipmentInvestment;
+  var avgSalary = Math.round(i.laborCost / i.staffCount);
+  var diningArea = Math.round(i.area * 0.475);
+  var maxCapacity = Math.round(i.tableCount * 4);
+
   // 与前端 BusinessModel.values 完全一致
   return {
     area: i.area + '㎡',
-    area_dining: Math.round(i.area * 0.475) + '㎡（' + (47.5) + '%）',
-    area_serving: Math.round(i.area * 0.15) + '㎡（' + (15) + '%）',
-    area_kitchen: Math.round(i.area * 0.2) + '㎡（' + (20) + '%）',
-    area_storage: Math.round(i.area * 0.1) + '㎡（' + (10) + '%）',
-    area_lobby: Math.round(i.area * 0.04) + '㎡（' + (4) + '%）',
-    area_restroom: Math.round(i.area * 0.035) + '㎡（' + (3.5) + '%）',
+    area_plain: i.area,
+    area_dining: diningArea + '㎡（47.5%）',
+    area_serving: Math.round(i.area * 0.15) + '㎡（15%）',
+    area_kitchen: Math.round(i.area * 0.2) + '㎡（20%）',
+    area_storage: Math.round(i.area * 0.1) + '㎡（10%）',
+    area_lobby: Math.round(i.area * 0.04) + '㎡（4%）',
+    area_restroom: Math.round(i.area * 0.035) + '㎡（3.5%）',
+    area_dining_plain: diningArea,
+    table_count: i.tableCount + '张桌',
+    table_count_plain: i.tableCount,
+    table_area: (Math.round(diningArea / i.tableCount * 10) / 10) + '㎡/桌',
+    max_capacity: maxCapacity + '人',
+    max_capacity_plain: maxCapacity,
 
     price: i.price + '元/位',
+    price_plain: i.price,
 
     daily_revenue: formatWan(i.dailyRevenue),
+    daily_revenue_plain: i.dailyRevenue,
     monthly_revenue: formatWan(monthlyRevenue),
     monthly_revenue_num: formatNum(monthlyRevenue) + '元',
+    monthly_revenue_raw: monthlyRevenue,
+    weekly_revenue: formatWan(Math.round(monthlyRevenue / 4.3)),
+
+    mon_thu_wan: (monThuDaily / 10000).toFixed(1) + '万',
+    mon_thu_plain: monThuDaily,
+    fri_wan: (friDaily / 10000).toFixed(1) + '万',
+    fri_plain: friDaily,
+    sat_wan: (satDaily / 10000).toFixed(1) + '万',
+    sat_plain: satDaily,
+    sun_wan: (sunDaily / 10000).toFixed(1) + '万',
+    sun_plain: sunDaily,
+    mon_thu_customers: formatNum(monThuCustomers) + '人',
+    mon_thu_customers_plain: monThuCustomers,
+    fri_customers: formatNum(friCustomers) + '人',
+    fri_customers_plain: friCustomers,
+    sat_customers: formatNum(satCustomers) + '人',
+    sat_customers_plain: satCustomers,
+    sun_customers: formatNum(sunCustomers) + '人',
+    sun_customers_plain: sunCustomers,
+    weekly_customers: formatNum(weeklyCustomers) + '人',
+    weekly_customers_plain: weeklyCustomers,
+    mon_thu_turnover: (monThuCustomers / tableCapacity).toFixed(2) + '次',
+    fri_turnover: (friCustomers / tableCapacity).toFixed(2) + '次',
+    sat_turnover: (satCustomers / tableCapacity).toFixed(2) + '次',
+    sun_turnover: (sunCustomers / tableCapacity).toFixed(2) + '次',
+    weekly_total_wan: formatWan(weeklyTotal),
+    weekly_total_plain: weeklyTotal,
+    monthly_summary: '月均4.3周 × ' + formatWan(weeklyTotal) + '/周 ≈ ' + formatWan(monthlyRevenue) + '/月（日均约' + formatWan(i.dailyRevenue) + '）',
 
     total_investment: formatWan(i.totalInvestment),
+    total_investment_wan: (i.totalInvestment / 10000) + '万',
+    total_investment_raw: i.totalInvestment,
     equipment_investment: formatWan(i.equipmentInvestment),
+    equipment_investment_plain: i.equipmentInvestment,
+    equipment_investment_wan: (i.equipmentInvestment / 10000) + '万',
+    working_capital_wan: formatWan(workingCapital),
+    working_capital_plain: workingCapital,
+    staff_initial_cost_wan: formatWan(i.staffInitialCost),
+    food_initial_cost_wan: formatWan(i.foodInitialCost),
 
-    equipment_amortization: formatNum(equipmentAmort),
+    equipment_amortization: formatNum(equipmentAmort) + '元/月',
+    equipment_amortization_num: equipmentAmort,
     equipment_amortization_short: formatNum(equipmentAmort),
+    equipment_amortization_months: i.paybackMonths + '个月',
+    equipment_amortization_months_plain: i.paybackMonths,
 
-    food_cost: formatNum(foodCost),
-    labor_cost: formatNum(i.laborCost),
-    rent: formatNum(i.rent),
-    marketing_cost: formatNum(marketingCost),
-    misc_cost: formatNum(i.miscCost),
-    total_operating_expense: formatNum(totalExpense),
+    hard_asset: formatNum(hardAsset) + '元',
+    hard_asset_plain: hardAsset,
+    hard_amort_amount: formatNum(hardAmort) + '元/月',
+    hard_amort_plain: hardAmort,
+    furniture_asset: formatNum(furnitureAsset) + '元',
+    furniture_asset_plain: furnitureAsset,
+    furniture_amort_amount: formatNum(furnitureAmort) + '元/月',
+    furniture_amort_plain: furnitureAmort,
+    supplies_asset: formatNum(suppliesAsset) + '元',
+    supplies_asset_plain: suppliesAsset,
+    supplies_amort_amount: formatNum(suppliesAmort) + '元/月',
+    supplies_amort_plain: suppliesAmort,
 
-    operating_profit: formatNum(operatingProfit),
+    food_cost: formatNum(foodCost) + '元',
+    food_cost_num: foodCost,
+    food_cost_pct: i.foodCostPct + '%',
+    rent: formatNum(i.rent) + '元',
+    rent_plain: i.rent,
+    labor_cost: formatNum(i.laborCost) + '元',
+    labor_cost_plain: i.laborCost,
+    marketing_cost: formatNum(marketingCost) + '元',
+    marketing_cost_num: marketingCost,
+    marketing_cost_pct: i.marketingPct + '%',
+    misc_cost: formatNum(i.miscCost) + '元',
+    misc_cost_plain: i.miscCost,
+    utility_cost: formatNum(i.utilityCost) + '元',
+    utility_cost_plain: i.utilityCost,
+
+    total_operating_expense: formatNum(totalExpense) + '元',
+    total_operating_expense_num: totalExpense,
+
+    operating_profit: formatNum(operatingProfit) + '元',
+    operating_profit_num: operatingProfit,
     operating_profit_display: formatNum(operatingProfit),
+    cash_net_profit: formatNum(cashNetProfit) + '元',
+    cash_net_profit_num: cashNetProfit,
     cash_net_profit_display: formatNum(cashNetProfit),
 
     service_fee: formatNum(serviceFee) + '元',
+    service_fee_num: serviceFee,
+    service_fee_pct: i.serviceFeePct + '%',
     profit_after_service_fee: formatNum(profitAfterService) + '元',
+    profit_after_service_fee_num: profitAfterService,
     investor_dividend: formatNum(investorDividend) + '元',
+    investor_dividend_num: investorDividend,
+    investor_pct: i.investorPct + '%',
     landlord_dividend: formatNum(landlordDividend) + '元',
+    landlord_dividend_num: landlordDividend,
+    landlord_threshold: formatNum(i.landlordThreshold),
+    landlord_pct: i.landlordPct + '%',
     operator_income: formatNum(operatorIncome) + '元',
+    operator_income_num: operatorIncome,
     operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
+    operator_income_wan_display: (operatorIncome / 10000).toFixed(1) + '万',
 
-    pessimistic_food_cost: formatNum(pessimisticFoodCost),
+    pessimistic_food_cost: formatNum(pessimisticFoodCost) + '元',
+    pessimistic_food_cost_num: pessimisticFoodCost,
+    pessimistic_food_cost_pct: '48%',
+    pessimistic_total_expense: formatNum(pessimisticTotalExpense) + '元',
+    pessimistic_total_expense_num: pessimisticTotalExpense,
+    pessimistic_operating_profit: formatNum(pessimisticOperatingProfit) + '元',
+    pessimistic_operating_profit_num: pessimisticOperatingProfit,
+    pessimistic_profit_after_service: formatNum(pessimisticProfitAfterService) + '元',
+    pessimistic_operator_income: '约 ' + (pessimisticOperatorIncome / 10000).toFixed(1) + ' 万',
+    pessimistic_operator_income_wan: (pessimisticOperatorIncome / 10000).toFixed(1) + '万',
+    pessimistic_operator_income_plain: pessimisticOperatorIncome,
+    pessimistic_vs_ideal_diff: (pessimisticVsIdealMonthly / 10000).toFixed(1) + '万',
+    pessimistic_vs_ideal_diff_plain: pessimisticVsIdealMonthly,
+    pessimistic_vs_ideal_annual: (pessimisticVsIdealAnnual / 10000).toFixed(0) + '万',
+    pessimistic_payback: '约 ' + pessimisticPaybackPeriod + '-' + (pessimisticPaybackPeriod + 1) + ' 个月',
 
-    payback_result: i.paybackMonths + '个月',
+    payback_months: i.paybackMonths,
+    payback_result: paybackPeriod + '个月',
+    payback_result_plain: paybackPeriod,
+
+    trial1_revenue_wan: formatWan(trial1MonthlyRev),
+    trial1_revenue_plain: trial1MonthlyRev,
+    trial1_expense_wan: (trial1Expense / 10000).toFixed(1) + '万',
+    trial1_expense_plain: trial1Expense,
+    trial1_profit_wan: (trial1Profit / 10000).toFixed(1) + '万',
+    trial1_profit_plain: trial1Profit,
+    trial1_service_fee_wan: (trial1ServiceFee / 10000).toFixed(1) + '万',
+    trial1_service_fee_plain: trial1ServiceFee,
+    trial1_after_service_wan: (trial1AfterService / 10000).toFixed(1) + '万',
+    trial1_after_service_plain: trial1AfterService,
+    trial2_revenue_wan: formatWan(trial2MonthlyRev),
+    trial2_revenue_plain: trial2MonthlyRev,
+    trial2_expense_wan: (trial2Expense / 10000).toFixed(1) + '万',
+    trial2_expense_plain: trial2Expense,
+    trial2_profit_wan: (trial2Profit / 10000).toFixed(1) + '万',
+    trial2_profit_plain: trial2Profit,
+    trial2_service_fee_wan: (trial2ServiceFee / 10000).toFixed(1) + '万',
+    trial2_service_fee_plain: trial2ServiceFee,
+    trial2_after_service_wan: (trial2AfterService / 10000).toFixed(1) + '万',
+    trial2_after_service_plain: trial2AfterService,
+
+    stable_profit_wan: (operatingProfit / 10000).toFixed(1) + '万',
+    stable_service_fee_wan: (serviceFee / 10000).toFixed(1) + '万',
+    stable_after_service_wan: (profitAfterService / 10000).toFixed(1) + '万',
+    stable_operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
+
+    cash_total_expense: formatNum(cashTotalExpense) + '元',
+    cash_total_expense_num: cashTotalExpense,
+    equipment_month_expense: formatNum(equipmentMonthExpense) + '元',
+    equipment_month_expense_num: equipmentMonthExpense,
+    equipment_month_profit: formatNum(equipmentMonthProfit) + '元',
+    equipment_month_profit_num: equipmentMonthProfit,
+
+    post_amort_profit: formatNum(postAmortOperatingProfit) + '元',
+    post_amort_profit_plain: postAmortOperatingProfit,
+    post_amort_profit_wan: (postAmortOperatingProfit / 10000).toFixed(0) + '万',
+    post_amort_after_service: formatNum(postAmortProfitAfterService) + '元',
+    post_amort_after_service_plain: postAmortProfitAfterService,
+    post_amort_operator_income: formatNum(postAmortOperatorIncome) + '元',
+    post_amort_operator_income_plain: postAmortOperatorIncome,
+    post_amort_operator_income_wan: (postAmortOperatorIncome / 10000).toFixed(1) + '万',
+
+    staff_count: i.staffCount + '人',
+    staff_count_plain: i.staffCount,
+    avg_salary: '≈' + formatNum(avgSalary) + '元',
+    avg_salary_plain: avgSalary,
+    kitchen_staff: i.kitchenStaff + '人',
+    kitchen_staff_plain: i.kitchenStaff,
+    kitchen_cost: formatNum(i.kitchenCost) + '元',
+    kitchen_cost_plain: i.kitchenCost,
+    front_staff: i.frontStaff + '人',
+    front_staff_plain: i.frontStaff,
+    front_cost: formatNum(i.frontCost) + '元',
+    front_cost_plain: i.frontCost,
+
+    total_investment_detail: '总投资' + formatWan(i.equipmentInvestment) + '万元（装修/门脸/设备/餐具/办公/工具，商务风装修 · 二手设备 · 全部包含）',
+    equipment_investment_detail: '装修投入' + formatWan(i.equipmentInvestment),
+    staff_initial_investment: '组建前厅后厨人工' + formatWan(i.staffInitialCost),
+    food_initial_investment: '预留' + formatWan(i.foodInitialCost) + '采购食材',
+    total_investment_summary: '共' + formatWan(i.totalInvestment),
   };
 }
 
