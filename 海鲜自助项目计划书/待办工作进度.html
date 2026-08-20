@@ -109,8 +109,13 @@
     border-top: 1px solid var(--border);
     gap: 10px;
     transition: background 0.15s;
+    border-left: 3px solid transparent;
   }
   .todo-item:hover { background: var(--card-hover); }
+  .todo-item.status-pending { border-left-color: rgba(138,155,181,0.3); }
+  .todo-item.status-in-progress { border-left-color: var(--warn); }
+  .todo-item.status-completed { border-left-color: var(--accent2); }
+  .todo-item.status-blocked { border-left-color: var(--danger); }
   .todo-item .item-drag {
     cursor: grab; color: var(--text2); font-size: 0.85rem;
     padding: 4px 2px; flex-shrink: 0; margin-top: 2px;
@@ -138,12 +143,34 @@
   .badge.blocked { background: rgba(192,57,43,0.15); color: var(--danger); }
 
   select.status-select {
-    background: var(--bg2); color: var(--text2); border: 1px solid var(--border);
-    border-radius: 6px; padding: 2px 8px; font-size: 0.75rem;
-    cursor: pointer; outline: none; max-width: 90px;
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    padding: 3px 22px 3px 10px; font-size: 0.75rem; font-weight: 500;
+    border-radius: 6px; cursor: pointer; outline: none;
+    min-width: 82px; transition: all 0.25s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a9bb5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 6px center; background-size: 10px 6px;
   }
-  select.status-select:hover { border-color: var(--accent); }
-  select.status-select option { background: var(--card); color: var(--text); }
+  select.status-select:hover { box-shadow: 0 0 0 1px var(--accent); }
+  select.status-select:focus { box-shadow: 0 0 0 2px rgba(46,134,193,0.3); }
+  select.status-select option {
+    padding: 6px 10px; font-size: 0.8rem;
+  }
+  select.status-select.pending {
+    background-color: rgba(138,155,181,0.08); color: var(--text2); border: 1px solid rgba(138,155,181,0.25);
+  }
+  select.status-select.pending:hover { background-color: rgba(138,155,181,0.15); border-color: var(--text2); }
+  select.status-select.in-progress {
+    background-color: rgba(243,156,18,0.1); color: var(--warn); border: 1px solid rgba(243,156,18,0.35);
+  }
+  select.status-select.in-progress:hover { background-color: rgba(243,156,18,0.18); border-color: var(--warn); }
+  select.status-select.completed {
+    background-color: rgba(26,138,58,0.1); color: var(--accent2); border: 1px solid rgba(26,138,58,0.35);
+  }
+  select.status-select.completed:hover { background-color: rgba(26,138,58,0.18); border-color: var(--accent2); }
+  select.status-select.blocked {
+    background-color: rgba(192,57,43,0.1); color: var(--danger); border: 1px solid rgba(192,57,43,0.35);
+  }
+  select.status-select.blocked:hover { background-color: rgba(192,57,43,0.18); border-color: var(--danger); }
 
   .todo-item .item-actions {
     display: flex; align-items: center; gap: 4px; flex-shrink: 0;
@@ -271,8 +298,9 @@
     <p>海鲜火锅自助 · 黄辛庄农贸市场店 · 从0到1全流程</p>
     <div class="stats" id="statsBar">
       <span>总任务: <strong id="totalCount">0</strong></span>
-      <span>已完成: <strong id="doneCount" style="color:var(--accent2);">0</strong></span>
-      <span>进行中: <strong id="progressCount" style="color:var(--warn);">0</strong></span>
+      <span><span style="color:var(--accent2);">●</span> 已完成: <strong id="doneCount" style="color:var(--accent2);">0</strong></span>
+      <span><span style="color:var(--warn);">●</span> 进行中: <strong id="progressCount" style="color:var(--warn);">0</strong></span>
+      <span><span style="color:var(--danger);">●</span> 受阻: <strong id="blockedCount" style="color:var(--danger);">0</strong></span>
       <span>进度: <strong id="pctDisplay" style="color:var(--accent);">0%</strong></span>
     </div>
     <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
@@ -468,19 +496,21 @@ function statusIcon(s) {
 function render() {
   if (!appData) return;
   var cats = appData.categories;
-  var total = 0, done = 0, progress = 0;
+  var total = 0, done = 0, progress = 0, blocked = 0;
 
   cats.forEach(function(cat) {
     cat.items.forEach(function(item) {
       total++;
       if (item.status === 'completed') done++;
       if (item.status === 'in-progress') progress++;
+      if (item.status === 'blocked') blocked++;
     });
   });
 
   document.getElementById('totalCount').textContent = total;
   document.getElementById('doneCount').textContent = done;
   document.getElementById('progressCount').textContent = progress;
+  document.getElementById('blockedCount').textContent = blocked;
   var pct = total > 0 ? Math.round(done / total * 100) : 0;
   document.getElementById('pctDisplay').textContent = pct + '%';
   document.getElementById('progressFill').style.width = pct + '%';
@@ -501,22 +531,25 @@ function render() {
     cat.items.forEach(function(item) {
       var doneCls = item.status === 'completed' ? 'done' : '';
       var doneText = item.status === 'completed' ? 'done-text' : '';
-      html += '  <div class="todo-item" data-item-id="' + item.id + '">';
+      html += '  <div class="todo-item status-' + item.status + '" data-item-id="' + item.id + '">';
       html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
       html += '    <div class="item-body">';
       html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
       if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
       html += '      <div class="item-meta">';
-      html += '        <select class="status-select" onchange="selectStatus(this)">';
+      html += '        <select class="status-select ' + item.status + '" onchange="selectStatus(this)">';
       var statusOpts = [
-        { value: 'pending', label: '待办' },
-        { value: 'in-progress', label: '进行中' },
-        { value: 'completed', label: '已完成' },
-        { value: 'blocked', label: '受阻' }
+        { value: 'pending', label: '待办', icon: '◯' },
+        { value: 'in-progress', label: '进行中', icon: '▶' },
+        { value: 'completed', label: '已完成', icon: '✓' },
+        { value: 'blocked', label: '受阻', icon: '✕' }
       ];
+      var statusColors = { pending: '#8a9bb5', 'in-progress': '#f39c12', completed: '#1a8a3a', blocked: '#c0392b' };
+      var statusEmojis = { pending: '◯', 'in-progress': '▶', completed: '✓', blocked: '✕' };
       statusOpts.forEach(function(opt) {
         var selected = item.status === opt.value ? ' selected' : '';
-        html += '<option value="' + opt.value + '"' + selected + '>' + opt.label + '</option>';
+        var color = statusColors[opt.value] || '#8a9bb5';
+        html += '<option value="' + opt.value + '"' + selected + ' style="color:' + color + ';font-weight:500;">' + opt.icon + ' ' + opt.label + '</option>';
       });
       html += '</select>';
       html += '      </div>';
@@ -557,7 +590,25 @@ function selectStatus(el) {
   if (!item) return;
   var newStatus = el.value;
   if (item.status === newStatus) return;
+  var oldStatus = item.status;
   item.status = newStatus;
+  // Update select class and bg for visual feedback
+  el.className = 'status-select ' + newStatus;
+  // Update item left border color
+  itemEl.className = 'todo-item status-' + newStatus;
+  // Update title strikethrough for completed
+  var titleEl = itemEl.querySelector('.item-title');
+  if (titleEl) {
+    titleEl.classList.toggle('done-text', newStatus === 'completed');
+  }
+  // Flash effect on select
+  el.style.transition = 'all 0.15s ease';
+  el.style.transform = 'scale(1.05)';
+  el.style.boxShadow = '0 0 12px rgba(46,134,193,0.4)';
+  setTimeout(function() {
+    el.style.transform = 'scale(1)';
+    el.style.boxShadow = 'none';
+  }, 200);
   // 不调用 render()，避免 select 被销毁重建导致下拉异常
   scheduleSave();
   showToast('状态已更新：' + statusText(newStatus));
