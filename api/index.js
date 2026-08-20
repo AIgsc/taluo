@@ -138,6 +138,19 @@ async function ensureTables() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS todo_progress (
+      id SERIAL PRIMARY KEY,
+      data JSONB NOT NULL DEFAULT '{}',
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  // 确保初始数据存在
+  const todoCheck = await db.query('SELECT id FROM todo_progress LIMIT 1');
+  if (todoCheck.rows.length === 0) {
+    await db.query('INSERT INTO todo_progress (data) VALUES (\'{"schema_version":1,"categories":[]}\'::jsonb)');
+    console.log('todo_progress 初始数据已创建');
+  }
   tablesCreated = true;
   console.log('数据库表初始化完成');
 }
@@ -445,6 +458,29 @@ module.exports = async (req, res) => {
       );
 
       return res.json({ success: true, model: model });
+    }
+
+    // ==================== 待办工作进度 ====================
+    if (req.method === 'GET' && path === '/api/todo') {
+      const result = await db.query('SELECT data FROM todo_progress ORDER BY id DESC LIMIT 1');
+      if (result.rows.length > 0) {
+        return res.json({ data: result.rows[0].data });
+      }
+      return res.json({ data: { schema_version: 1, categories: [] } });
+    }
+
+    if (req.method === 'POST' && path === '/api/todo/save') {
+      const { data } = req.body || {};
+      if (!data || typeof data !== 'object') {
+        return res.status(400).json({ error: '数据不能为空' });
+      }
+      // 确保 schema_version 存在
+      if (!data.schema_version) data.schema_version = 1;
+      await db.query(
+        'UPDATE todo_progress SET data = $1::jsonb, updated_at = NOW() WHERE id = (SELECT id FROM todo_progress ORDER BY id DESC LIMIT 1)',
+        [JSON.stringify(data)]
+      );
+      return res.json({ success: true });
     }
 
     // ==================== 调试：检查 GH_TOKEN 状态 ====================

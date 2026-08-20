@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>海鲜自助项目 · 待办工作进度</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  :root[data-widget-theme="dark"], :root[data-theme="dark"] {
+    --bg: #0f1923;
+    --bg2: #162230;
+    --bg3: #1a2d3d;
+    --card: #1e3348;
+    --card-hover: #243c52;
+    --text: #e0e8f0;
+    --text2: #8a9bb5;
+    --border: #2a4055;
+    --accent: #2e86c1;
+    --accent2: #1a8a3a;
+    --warn: #f39c12;
+    --danger: #c0392b;
+    --purple: #8e44ad;
+    --orange: #e67e22;
+  }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  .container { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .header h1 { font-size: 1.5rem; color: #fff; }
+  .header p { font-size: 0.85rem; color: var(--text2); margin-top: 4px; }
+  .header .stats {
+    display: flex; justify-content: center; gap: 20px;
+    margin-top: 12px; font-size: 0.8rem;
+  }
+  .header .stats span { color: var(--text2); }
+  .header .stats strong { color: #fff; }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 6px; background: var(--border); border-radius: 3px;
+    margin: 12px 0 0; overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent2), #2ecc71);
+    border-radius: 3px; transition: width 0.5s ease;
+  }
+
+  /* Category */
+  .category {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .category:hover { border-color: var(--accent); }
+  .category-header {
+    display: flex; align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    gap: 10px;
+  }
+  .category-header .drag-handle {
+    cursor: grab; color: var(--text2); font-size: 1rem;
+    padding: 4px; flex-shrink: 0;
+  }
+  .category-header .drag-handle:active { cursor: grabbing; }
+  .category-header .cat-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; flex-shrink: 0;
+  }
+  .category-header .cat-name {
+    flex: 1; font-weight: 600; font-size: 0.95rem; color: #fff;
+  }
+  .category-header .cat-count {
+    font-size: 0.75rem; color: var(--text2);
+    padding: 2px 8px; background: var(--bg2); border-radius: 10px;
+  }
+  .category-header .cat-toggle {
+    color: var(--text2); transition: transform 0.2s;
+    font-size: 0.8rem;
+  }
+  .category-header .cat-toggle.open { transform: rotate(180deg); }
+
+  .category-body { display: none; }
+  .category-body.open { display: block; }
+
+  /* Item */
+  .todo-item {
+    display: flex; align-items: flex-start;
+    padding: 10px 16px 10px 20px;
+    border-top: 1px solid var(--border);
+    gap: 10px;
+    transition: background 0.15s;
+  }
+  .todo-item:hover { background: var(--card-hover); }
+  .todo-item .item-drag {
+    cursor: grab; color: var(--text2); font-size: 0.85rem;
+    padding: 4px 2px; flex-shrink: 0; margin-top: 2px;
+  }
+  .todo-item .item-drag:active { cursor: grabbing; }
+  .todo-item .item-check {
+    flex-shrink: 0; margin-top: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--text2); background: transparent;
+    cursor: pointer; position: relative; transition: all 0.2s;
+  }
+  .todo-item .item-check:hover { border-color: var(--accent2); }
+  .todo-item .item-check.done {
+    background: var(--accent2); border-color: var(--accent2);
+  }
+  .todo-item .item-check.done::after {
+    content: '✓'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); color: #fff; font-size: 0.7rem;
+  }
+  .todo-item .item-check.blocked {
+    border-color: var(--danger);
+  }
+  .todo-item .item-check.blocked::after {
+    content: '!'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); color: var(--danger); font-size: 0.8rem; font-weight: bold;
+  }
+  .todo-item .item-check.in-progress {
+    border-color: var(--warn); animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(243,156,18,0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(243,156,18,0.1); }
+  }
+  .todo-item .item-check.in-progress::after {
+    content: '▶'; position: absolute; top: 50%; left: 55%;
+    transform: translate(-50%, -50%); color: var(--warn); font-size: 0.6rem;
+  }
+
+  .todo-item .item-body { flex: 1; min-width: 0; }
+  .todo-item .item-title {
+    font-size: 0.9rem; color: #fff; font-weight: 500;
+  }
+  .todo-item .item-title.done-text { text-decoration: line-through; color: var(--text2); }
+  .todo-item .item-desc {
+    font-size: 0.78rem; color: var(--text2);
+    margin-top: 2px; line-height: 1.5;
+  }
+  .todo-item .item-meta {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 6px; flex-wrap: wrap;
+  }
+  .todo-item .item-meta .badge {
+    font-size: 0.68rem; padding: 1px 8px; border-radius: 8px;
+  }
+  .badge.pending { background: var(--bg2); color: var(--text2); }
+  .badge.in-progress { background: rgba(243,156,18,0.15); color: var(--warn); }
+  .badge.completed { background: rgba(26,138,58,0.15); color: var(--accent2); }
+  .badge.blocked { background: rgba(192,57,43,0.15); color: var(--danger); }
+
+  .todo-item .item-actions {
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  }
+  .todo-item .item-actions button {
+    background: none; border: none; color: var(--text2);
+    cursor: pointer; padding: 4px 6px; border-radius: 4px;
+    font-size: 0.8rem; transition: all 0.15s;
+  }
+  .todo-item .item-actions button:hover {
+    background: var(--bg2); color: #fff;
+  }
+  .todo-item .item-actions .report-count {
+    font-size: 0.75rem; color: var(--accent);
+    padding: 2px 6px; background: rgba(46,134,193,0.1);
+    border-radius: 8px; cursor: pointer;
+  }
+  .todo-item .item-actions .report-count:hover { background: rgba(46,134,193,0.2); }
+
+  /* Status quick menu */
+  .status-menu {
+    display: none; position: absolute; z-index: 10;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    min-width: 120px;
+  }
+  .status-menu.show { display: block; }
+  .status-menu .opt {
+    padding: 6px 12px; cursor: pointer; border-radius: 4px;
+    font-size: 0.8rem; color: var(--text); transition: background 0.1s;
+  }
+  .status-menu .opt:hover { background: var(--card-hover); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; max-width: 520px; width: 100%;
+    max-height: 80vh; overflow-y: auto;
+    padding: 24px;
+  }
+  .modal h3 { font-size: 1rem; color: #fff; margin-bottom: 4px; }
+  .modal .modal-sub { font-size: 0.8rem; color: var(--text2); margin-bottom: 16px; }
+  .modal label { display: block; font-size: 0.85rem; color: var(--text2); margin-bottom: 4px; }
+  .modal textarea {
+    width: 100%; min-height: 100px; padding: 10px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; color: #fff; font-size: 0.85rem;
+    font-family: inherit; resize: vertical; margin-bottom: 12px;
+  }
+  .modal textarea:focus { outline: none; border-color: var(--accent); }
+  .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal .btn {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.85rem; transition: all 0.15s;
+  }
+  .modal .btn-primary { background: var(--accent); color: #fff; }
+  .modal .btn-primary:hover { background: #3498db; }
+  .modal .btn-cancel { background: var(--bg2); color: var(--text2); }
+  .modal .btn-cancel:hover { background: var(--border); color: #fff; }
+
+  /* Reports list in modal */
+  .report-list { margin-bottom: 16px; }
+  .report-item {
+    background: var(--bg2); border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 8px;
+  }
+  .report-item .r-date { font-size: 0.72rem; color: var(--text2); }
+  .report-item .r-content { font-size: 0.85rem; color: var(--text); margin-top: 4px; white-space: pre-wrap; }
+  .report-item .r-author { font-size: 0.72rem; color: var(--accent); margin-top: 4px; }
+  .no-reports { font-size: 0.8rem; color: var(--text2); text-align: center; padding: 20px 0; }
+
+  /* Sortable ghost */
+  .sortable-ghost {
+    opacity: 0.4; background: var(--accent) !important;
+  }
+  .sortable-chosen { background: var(--card-hover) !important; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 20px; border-radius: 8px;
+    font-size: 0.8rem; z-index: 200;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 12px 10px 40px; }
+    .header h1 { font-size: 1.2rem; }
+    .todo-item { padding: 8px 12px 8px 14px; }
+    .category-header { padding: 10px 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fas fa-clipboard-list" style="color:var(--accent);margin-right:8px;"></i>项目落地待办进度</h1>
+    <p>海鲜火锅自助 · 黄辛庄农贸市场店 · 从0到1全流程</p>
+    <div class="stats" id="statsBar">
+      <span>总任务: <strong id="totalCount">0</strong></span>
+      <span>已完成: <strong id="doneCount" style="color:var(--accent2);">0</strong></span>
+      <span>进行中: <strong id="progressCount" style="color:var(--warn);">0</strong></span>
+      <span>进度: <strong id="pctDisplay" style="color:var(--accent);">0%</strong></span>
+    </div>
+    <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div id="categoryList"></div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <h3 id="modalTitle">行动报告</h3>
+    <div class="modal-sub" id="modalSub">记录该步骤的进展和结果</div>
+    <div class="report-list" id="reportList"></div>
+    <label for="reportContent">添加新报告</label>
+    <textarea id="reportContent" placeholder="写下你的行动报告…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeReportModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveReport()">提交报告</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+// ==================== 数据定义 ====================
+var DEFAULT_DATA = {
+  schema_version: 1,
+  categories: [
+    { id: 'cat_1', name: '房东洽谈', icon: '🏠', sort_order: 1, items: [
+      { id: 'it_1_1', title: '通过中介/线上平台寻找合适场地', desc: '在58同城、安居客、本地中介等渠道寻找2000㎡左右适合做餐饮的场地，关注位置、人流、停车条件', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_1_2', title: '实地考察场地', desc: '考察面积、结构、水电容量、消防设施、排烟条件、停车位数量、周边客流', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_1_3', title: '谈判租金及租期条件', desc: '按保底+分成模式谈判（保底7万/月，超额部分10%分成），谈判租期及递增条款', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_1_4', title: '签订租赁意向书', desc: '明确租金、租期、押金、免租期等核心条款，支付意向金', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_1_5', title: '签订正式租赁合同', desc: '律师审核合同条款，明确双方权利义务、违约责任、续租优先权', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_1_6', title: '办理场地交接手续', desc: '交接钥匙、水电燃气过户、物业交接单签字确认', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+    { id: 'cat_2', name: '投资人对接', icon: '💰', sort_order: 2, items: [
+      { id: 'it_2_1', title: '制作并提交商业计划书', desc: '完成商业计划书，包含项目概述、财务测算、分账机制、退出方案', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_2_2', title: '与投资人面谈项目细节', desc: '详细讲解项目盈利模型、风险控制、分账机制及退出方案', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_2_3', title: '协商投资金额及分红比例', desc: '按80万总投资、18%分红比例、3年合伙期限的方案协商', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_2_4', title: '签订投资合伙协议', desc: '律师起草协议，明确分红、退出机制、参与义务、合同条款', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_2_5', title: '投资人资金到账', desc: '确认80万投资款打入对公账户', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_2_6', title: '召开第一次合伙人会议', desc: '明确双方职责、沟通机制、月度经营会安排', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+    { id: 'cat_3', name: '施工公司', icon: '🔨', sort_order: 3, items: [
+      { id: 'it_3_1', title: '联系3家以上施工公司现场勘测并报价', desc: '邀请施工公司现场勘测，获取详细报价单和施工周期', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_3_2', title: '对比报价方案及施工资质', desc: '对比价格、施工周期、资质证书、过往案例、质保条款', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_3_3', title: '确定施工公司并签订施工合同', desc: '明确施工范围、工期、付款方式、验收标准、质保期', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_3_4', title: '提交装修图纸至物业/消防审批', desc: '准备装修图纸、结构安全证明，提交物业和消防部门审批', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_3_5', title: '施工进场：拆除工程', desc: '原场地拆除、垃圾清运', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_3_6', title: '水电改造工程', desc: '给排水管道铺设、强弱电布线、开关插座定位', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_3_7', title: '防水工程', desc: '厨房、卫生间等区域防水施工及闭水试验', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_3_8', title: '地面/墙面/吊顶工程', desc: '地砖铺设、墙面处理、吊顶安装', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_3_9', title: '厨房排烟及通风系统安装', desc: '排烟管道、油烟净化器、新风系统安装', status: 'pending', sort_order: 9, reports: [] },
+      { id: 'it_3_10', title: '空调系统安装', desc: '中央空调/分体空调安装调试', status: 'pending', sort_order: 10, reports: [] },
+      { id: 'it_3_11', title: '门头招牌制作安装', desc: '门头设计、招牌制作、夜间亮化', status: 'pending', sort_order: 11, reports: [] },
+      { id: 'it_3_12', title: '施工中期验收', desc: '检查水电隐蔽工程、防水等中期节点', status: 'pending', sort_order: 12, reports: [] },
+      { id: 'it_3_13', title: '施工竣工验收', desc: '全面验收，列出整改清单，施工方整改后复验', status: 'pending', sort_order: 13, reports: [] },
+      { id: 'it_3_14', title: '保洁开荒', desc: '全面深度清洁，为设备进场和开业做准备', status: 'pending', sort_order: 14, reports: [] },
+    ]},
+    { id: 'cat_4', name: '开业手续办理', icon: '📄', sort_order: 4, items: [
+      { id: 'it_4_1', title: '办理营业执照（工商注册）', desc: '确定经营范围，准备注册材料，提交工商登记', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_4_2', title: '办理食品经营许可证', desc: '提交食品安全管理制度、布局图、设备清单等材料，接受现场核查', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_4_3', title: '办理消防安全检查合格证', desc: '提交消防验收材料，接受消防部门现场检查', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_4_4', title: '办理环保审批（排烟/排水）', desc: '油烟净化、污水处理方案审批，取得环保许可', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_4_5', title: '办理员工健康证', desc: '组织全体员工到指定医院办理健康证', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_4_6', title: '办理税务登记', desc: '完成税务登记，核定税种，了解税收优惠政策', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_4_7', title: '开通银行对公账户', desc: '预约银行开户，准备营业执照等材料', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_4_8', title: '办理社保/公积金开户', desc: '为员工开通社保和公积金账户', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_5', name: '抖音美团服务商', icon: '📱', sort_order: 5, items: [
+      { id: 'it_5_1', title: '联系抖音本地生活服务商', desc: '通过抖音官方渠道或推荐，联系本地生活服务商', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_5_2', title: '联系美团/大众点评业务经理', desc: '联系美团区域业务经理，了解入驻条件和费用', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_5_3', title: '对比服务商报价及服务内容', desc: '对比各服务商的佣金比例、推广资源、服务范围', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_5_4', title: '签订服务合作协议', desc: '明确服务内容、佣金比例、结算周期、数据权限', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_5_5', title: '完成门店线上入驻', desc: '在抖音、美团、大众点评完成门店信息注册和审核', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_5_6', title: '上架团购套餐及定价', desc: '设计自助餐团购套餐，确定价格策略，上架到平台', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_5_7', title: '测试下单及核销流程', desc: '模拟用户下单、到店核销、评价全流程，确保顺畅', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_5_8', title: '对接收银系统打通', desc: '确保收银系统与抖音/美团订单数据自动同步', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_6', name: '供应商及客户经理对接', icon: '🤝', sort_order: 6, items: [
+      { id: 'it_6_1', title: '联系银行办理商家收款码', desc: '办理微信、支付宝、银联三合一收款码', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_6_2', title: '安装POS机及收银系统', desc: '采购/租赁POS机，安装收银软件，培训员工使用', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_6_3', title: '对接农贸市场食材供应商', desc: '联系市场内海鲜、肉类、蔬菜等供应商，建立供货关系', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_6_4', title: '联系酒水饮料供应商', desc: '对接啤酒、白酒、饮料供应商，谈好供货价和结算方式', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_6_5', title: '对接海鲜/冻品供应商', desc: '寻找优质海鲜和冻品供应商，确保货源稳定', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_6_6', title: '办理门店商业保险', desc: '购买财产险、公众责任险、食品安全险', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+    { id: 'cat_7', name: '团队组建招聘', icon: '👥', sort_order: 7, items: [
+      { id: 'it_7_1', title: '制定人员编制方案', desc: '确定48人编制：前厅20人（含店长/主管/服务员/收银）、后厨28人（含厨师长/厨师/帮厨/洗碗）', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_7_2', title: '发布招聘信息', desc: '在BOSS直聘、58同城、门店海报等多渠道发布招聘信息', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_7_3', title: '面试前厅服务人员', desc: '面试服务员、收银员、迎宾等前厅岗位', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_7_4', title: '面试后厨人员', desc: '面试厨师、帮厨、洗碗工等后厨岗位', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_7_5', title: '确定核心岗位人选', desc: '确定店长、厨师长、前厅主管等核心岗位', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_7_6', title: '办理入职手续及签订合同', desc: '签订劳动合同，收集身份证、健康证等材料', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_7_7', title: '岗前培训', desc: '培训服务流程、菜品知识、食品安全规范、收银系统操作', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_7_8', title: '制定排班制度及薪酬方案', desc: '确定排班轮休制度、绩效考核方案、薪酬发放流程', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_8', name: '食材设备采购', icon: '🛒', sort_order: 8, items: [
+      { id: 'it_8_1', title: '采购厨房设备', desc: '灶台、冰柜、冷藏柜、排烟设备、消毒柜、洗碗机等', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_8_2', title: '采购餐具及桌椅', desc: '120套餐具、桌椅、锅具、烤盘等用餐设备', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_8_3', title: '采购收银系统及硬件', desc: '收银电脑/平板、扫码枪、小票打印机、网络设备', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_8_4', title: '采购监控系统及网络设备', desc: '门店监控摄像头、路由器、交换机、WiFi覆盖', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_8_5', title: '采购员工工服及用品', desc: '厨师服、服务员围裙、工牌、手套、口罩等', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_8_6', title: '采购开业首批食材及调料', desc: '海鲜、肉类、蔬菜、火锅底料、调料等首批备货', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_8_7', title: '采购办公用品及杂项', desc: '办公用品、清洁用品、紧急药品等', status: 'pending', sort_order: 7, reports: [] },
+    ]},
+    { id: 'cat_9', name: '菜单设计与定价', icon: '📋', sort_order: 9, items: [
+      { id: 'it_9_1', title: '确定菜品结构', desc: '确定海鲜区、火锅区、烧烤区、热菜区、饮品区、水果区的菜品搭配', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_9_2', title: '设计菜单定价策略', desc: '确定169元/位自助定价，儿童/老人优惠价', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_9_3', title: '制作菜单', desc: '设计制作纸质菜单和电子扫码菜单', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_9_4', title: '试菜及菜品调整', desc: '邀请内部人员和亲友试菜，调整口味和出品', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_9_5', title: '确定最终菜单及出品标准', desc: '确定最终菜品清单、出品标准、摆盘要求', status: 'pending', sort_order: 5, reports: [] },
+    ]},
+    { id: 'cat_10', name: '营销预热', icon: '📢', sort_order: 10, items: [
+      { id: 'it_10_1', title: '创建抖音/小红书/快手账号', desc: '注册门店官方账号，完善资料和头像', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_10_2', title: '拍摄门店装修过程及预热视频', desc: '记录装修过程、展示环境、制造期待感', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_10_3', title: '设计开业活动方案', desc: '首周优惠、转发抽奖、进店送礼等活动策划', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_10_4', title: '制作宣传物料', desc: '传单、海报、易拉宝、桌牌等宣传物料设计制作', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_10_5', title: '联系本地KOL/美食博主探店', desc: '邀请本地美食博主来店体验并发布推广内容', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_10_6', title: '投放抖音同城流量广告', desc: '设置投放预算、目标人群、投放内容', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_10_7', title: '建立私域流量群', desc: '创建微信群，积累潜在客户，提前发布开业信息', status: 'pending', sort_order: 7, reports: [] },
+    ]},
+    { id: 'cat_11', name: '试营业', icon: '🧪', sort_order: 11, items: [
+      { id: 'it_11_1', title: '邀请亲友试吃（内部测试）', desc: '邀请亲友免费试吃，测试菜品口味和服务流程', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_11_2', title: '收集试吃反馈意见', desc: '收集菜品口味、服务态度、环境卫生等方面的反馈', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_11_3', title: '调整菜品及服务流程', desc: '根据反馈调整菜品口味、优化服务流程', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_11_4', title: '磨合团队配合', desc: '通过试营业实操，磨合前厅后厨配合、收银流程', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_11_5', title: '正式试营业（限量接待）', desc: '对外限量接待，收集真实顾客反馈，逐步完善', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_11_6', title: '试营业数据复盘', desc: '分析试营业期间营收、成本、客诉等数据，调整策略', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+    { id: 'cat_12', name: '正式开业', icon: '🎉', sort_order: 12, items: [
+      { id: 'it_12_1', title: '确定正式开业日期', desc: '选择吉日，提前一周对外公布开业信息', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_12_2', title: '举办开业庆典活动', desc: '剪彩仪式、舞狮表演或开业优惠活动', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_12_3', title: '邀请嘉宾、媒体、KOL到场', desc: '邀请投资人、合作伙伴、本地媒体到场见证', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_12_4', title: '开业促销活动执行', desc: '执行首周优惠、抽奖活动、赠品发放等', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_12_5', title: '首日营业数据总结', desc: '统计首日营业额、客流量、客单价、好评率', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_12_6', title: '开业后第一周运营复盘', desc: '全面复盘开业第一周数据，调整经营策略', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+  ]
+};
+
+// ==================== 状态管理 ====================
+var API_URL = '/api/todo';
+var appData = null;
+var currentReportItem = null;
+var debounceTimer = null;
+
+// ==================== 工具函数 ====================
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 4); }
+
+function statusText(s) {
+  return { pending: '待办', 'in-progress': '进行中', completed: '已完成', blocked: '受阻' }[s] || s;
+}
+
+function statusIcon(s) {
+  return { pending: 'far fa-circle', 'in-progress': 'fas fa-play', completed: 'fas fa-check-circle', blocked: 'fas fa-exclamation-circle' }[s];
+}
+
+// ==================== 渲染 ====================
+function render() {
+  if (!appData) return;
+  var cats = appData.categories;
+  var total = 0, done = 0, progress = 0;
+
+  cats.forEach(function(cat) {
+    cat.items.forEach(function(item) {
+      total++;
+      if (item.status === 'completed') done++;
+      if (item.status === 'in-progress') progress++;
+    });
+  });
+
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('progressCount').textContent = progress;
+  var pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('pctDisplay').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  var html = '';
+  cats.forEach(function(cat, ci) {
+    var catDone = cat.items.filter(function(i) { return i.status === 'completed'; }).length;
+    var catTotal = cat.items.length;
+    html += '<div class="category" data-cat-id="' + cat.id + '">';
+    html += '  <div class="category-header" onclick="toggleCat(this)">';
+    html += '    <span class="drag-handle" onclick="event.stopPropagation()"><i class="fas fa-grip-lines"></i></span>';
+    html += '    <span class="cat-icon" style="background:rgba(46,134,193,0.15);">' + cat.icon + '</span>';
+    html += '    <span class="cat-name">' + cat.name + '</span>';
+    html += '    <span class="cat-count">' + catDone + '/' + catTotal + '</span>';
+    html += '    <span class="cat-toggle"><i class="fas fa-chevron-down"></i></span>';
+    html += '  </div>';
+    html += '  <div class="category-body">';
+    cat.items.forEach(function(item) {
+      var doneCls = item.status === 'completed' ? 'done' : '';
+      var doneText = item.status === 'completed' ? 'done-text' : '';
+      html += '  <div class="todo-item" data-item-id="' + item.id + '">';
+      html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
+      html += '    <div class="item-check ' + item.status + '" onclick="cycleStatus(\'' + item.id + '\')"></div>';
+      html += '    <div class="item-body">';
+      html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
+      if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
+      html += '      <div class="item-meta">';
+      html += '        <span class="badge ' + item.status + '">' + statusText(item.status) + '</span>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '    <div class="item-actions">';
+      var rCount = (item.reports || []).length;
+      html += '      <button onclick="openReportModal(\'' + item.id + '\')" title="行动报告"><i class="fas fa-file-alt"></i></button>';
+      if (rCount > 0) html += '      <span class="report-count" onclick="openReportModal(\'' + item.id + '\')">' + rCount + '份</span>';
+      html += '    </div>';
+      html += '  </div>';
+    });
+    html += '  </div>';
+    html += '</div>';
+  });
+
+  document.getElementById('categoryList').innerHTML = html;
+  initSortable();
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleCat(header) {
+  var body = header.nextElementSibling;
+  var toggle = header.querySelector('.cat-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+// ==================== 状态切换 ====================
+var STATUS_CYCLE = ['pending', 'in-progress', 'completed', 'blocked'];
+
+function cycleStatus(itemId) {
+  if (!appData) return;
+  var item = findItem(itemId);
+  if (!item) return;
+  var idx = STATUS_CYCLE.indexOf(item.status);
+  item.status = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+  render();
+  scheduleSave();
+}
+
+function findItem(itemId) {
+  for (var ci = 0; ci < appData.categories.length; ci++) {
+    for (var ii = 0; ii < appData.categories[ci].items.length; ii++) {
+      if (appData.categories[ci].items[ii].id === itemId) {
+        return appData.categories[ci].items[ii];
+      }
+    }
+  }
+  return null;
+}
+
+// ==================== 报告功能 ====================
+function openReportModal(itemId) {
+  currentReportItem = findItem(itemId);
+  if (!currentReportItem) return;
+  document.getElementById('modalTitle').textContent = '行动报告：' + currentReportItem.title;
+  document.getElementById('modalSub').textContent = '记录该步骤的进展、结果和遇到的问题';
+  document.getElementById('reportContent').value = '';
+  renderReports();
+  document.getElementById('reportModal').classList.add('show');
+}
+
+function closeReportModal() {
+  document.getElementById('reportModal').classList.remove('show');
+  currentReportItem = null;
+}
+
+function renderReports() {
+  var list = document.getElementById('reportList');
+  var reports = currentReportItem.reports || [];
+  if (reports.length === 0) {
+    list.innerHTML = '<div class="no-reports">暂无行动报告，添加第一条</div>';
+    return;
+  }
+  var html = '';
+  reports.forEach(function(r) {
+    var d = new Date(r.created_at);
+    var dateStr = d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    html += '<div class="report-item">';
+    html += '  <div class="r-date">' + dateStr + '</div>';
+    html += '  <div class="r-content">' + escHtml(r.content) + '</div>';
+    if (r.author) html += '  <div class="r-author">— ' + escHtml(r.author) + '</div>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function saveReport() {
+  var content = document.getElementById('reportContent').value.trim();
+  if (!content) { showToast('请填写报告内容'); return; }
+  if (!currentReportItem) return;
+  if (!currentReportItem.reports) currentReportItem.reports = [];
+  currentReportItem.reports.push({
+    id: genId(),
+    created_at: new Date().toISOString(),
+    content: content,
+    author: '运营方'
+  });
+  document.getElementById('reportContent').value = '';
+  renderReports();
+  render();
+  scheduleSave();
+  showToast('报告已保存');
+}
+
+// ==================== 拖拽排序 ====================
+function initSortable() {
+  // Category level
+  var catList = document.getElementById('categoryList');
+  if (catList._sortable) catList._sortable.destroy();
+  catList._sortable = Sortable.create(catList, {
+    handle: '.drag-handle',
+    animation: 200,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    onEnd: function() {
+      reorderCategories();
+      scheduleSave();
+    }
+  });
+
+  // Item level within each category
+  var bodies = document.querySelectorAll('.category-body');
+  bodies.forEach(function(body) {
+    if (body._sortable) body._sortable.destroy();
+    body._sortable = Sortable.create(body, {
+      handle: '.item-drag',
+      animation: 200,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onEnd: function() {
+        reorderItems();
+        scheduleSave();
+      }
+    });
+  });
+}
+
+function reorderCategories() {
+  var catEls = document.querySelectorAll('.category');
+  catEls.forEach(function(el, idx) {
+    var catId = el.getAttribute('data-cat-id');
+    var cat = appData.categories.find(function(c) { return c.id === catId; });
+    if (cat) cat.sort_order = idx + 1;
+  });
+  appData.categories.sort(function(a, b) { return a.sort_order - b.sort_order; });
+}
+
+function reorderItems() {
+  var bodies = document.querySelectorAll('.category-body');
+  bodies.forEach(function(body) {
+    var catEl = body.closest('.category');
+    if (!catEl) return;
+    var catId = catEl.getAttribute('data-cat-id');
+    var cat = appData.categories.find(function(c) { return c.id === catId; });
+    if (!cat) return;
+    var itemEls = body.querySelectorAll('.todo-item');
+    itemEls.forEach(function(el, idx) {
+      var itemId = el.getAttribute('data-item-id');
+      var item = cat.items.find(function(i) { return i.id === itemId; });
+      if (item) item.sort_order = idx + 1;
+    });
+    cat.items.sort(function(a, b) { return a.sort_order - b.sort_order; });
+  });
+}
+
+// ==================== 自动保存 ====================
+function scheduleSave() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(saveToServer, 1500);
+}
+
+function saveToServer() {
+  if (!appData) return;
+  fetch(API_URL + '/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: appData })
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    if (res.success) showToast('已自动保存');
+  }).catch(function(e) {
+    console.error('Save failed:', e);
+  });
+}
+
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2000);
+}
+
+// ==================== 加载数据 ====================
+function loadData() {
+  fetch(API_URL)
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.data && res.data.categories && res.data.categories.length > 0) {
+        appData = res.data;
+      } else {
+        appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      }
+      render();
+    })
+    .catch(function(e) {
+      console.log('Load failed, using default:', e);
+      appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+      render();
+    });
+}
+
+// ==================== 启动 ====================
+document.addEventListener('DOMContentLoaded', function() {
+  loadData();
+  // Close modal on overlay click
+  document.getElementById('reportModal').addEventListener('click', function(e) {
+    if (e.target === this) closeReportModal();
+  });
+  // Ctrl+Enter to submit report
+  document.getElementById('reportContent').addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'Enter') { saveReport(); }
+  });
+});
+</script>
+</body>
+</html>
