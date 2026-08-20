@@ -288,10 +288,10 @@ module.exports = async (req, res) => {
       const lastSyncedHash = hashResult.rows.length > 0 ? hashResult.rows[0].value : null;
 
       // 3. 对比哈希值决定内容来源
-      // 不更新哈希！哈希只在前台保存内容时更新
-      // 哈希不同 → 代码有更新 → 让前端保留 HTML
       // 哈希相同 → 数据库已同步 → 覆盖
+      // 哈希不同 → 代码有更新 → 前端保留 HTML，并通知前端同步到 DB
       let source = htmlHash && htmlHash === lastSyncedHash ? 'db' : 'html';
+      let syncNeeded = source === 'html' && htmlHash !== '';
 
       // 4. 加载模型输入变量
       let model = null;
@@ -307,7 +307,52 @@ module.exports = async (req, res) => {
         }
       }
 
-      return res.json({ content: dbContent, model: model, source: source });
+      return res.json({ content: dbContent, model: model, source: source, sync_needed: syncNeeded });
+    }
+
+    // ==================== 商业计划书 - 后台同步：HTML 内容推送到数据库 ====================
+    if (req.method === 'POST' && path === '/api/business-plan/sync') {
+      const { content, html_hash, model } = req.body || {};
+      if (!content || typeof content !== 'object') {
+        return res.status(400).json({ error: '内容数据不能为空' });
+      }
+
+      const keys = Object.keys(content);
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        const val = content[key];
+        if (typeof val === 'string') {
+          await db.query(
+            `INSERT INTO business_plan_content (section_key, content, updated_at)
+             VALUES ($1, $2, NOW())
+             ON CONFLICT (section_key) DO UPDATE SET
+               content = $2, updated_at = NOW()`,
+            [key, val]
+          );
+        }
+      }
+
+      if (html_hash) {
+        await db.query(
+          `INSERT INTO business_plan_model (model_key, value, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (model_key) DO UPDATE SET
+             value = $2, updated_at = NOW()`,
+          ['html_content_hash', html_hash]
+        );
+      }
+
+      if (model && typeof model === 'object') {
+        await db.query(
+          `INSERT INTO business_plan_model (model_key, value, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (model_key) DO UPDATE SET
+             value = $2, updated_at = NOW()`,
+          ['model_inputs', JSON.stringify(model)]
+        );
+      }
+
+      return res.json({ success: true, count: keys.length });
     }
 
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================

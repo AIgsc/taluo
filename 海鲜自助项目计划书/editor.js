@@ -291,12 +291,6 @@
     return simpleHash(JSON.stringify(data));
   }
 
-  function computeModelHash() {
-    var model = window.BusinessModel;
-    if (!model || !model.inputs) return '';
-    return simpleHash(JSON.stringify(Object.keys(model.inputs).map(function(k) { return model.inputs[k]; })));
-  }
-
   // ==================== 从数据库加载内容 ====================
   async function loadContent() {
     try {
@@ -305,11 +299,15 @@
       var res = await fetch(url);
       if (res.ok) {
         var result = await res.json();
-        // 只有 content 来源是 db（前端保存的）才覆盖 HTML，避免代码内容被旧数据覆盖
+        // 只有哈希匹配（source=db）才覆盖 HTML，说明数据库内容是最新编辑的
         if (result.content && typeof result.content === 'object' && result.source === 'db') {
           applyContent(result.content);
         }
-        // 加载模型输入变量（始终从数据库加载，DB 是最新的）
+        // 哈希不匹配 → 代码推送更新了 → 前端保留 HTML，并同步到数据库
+        if (result.sync_needed) {
+          syncHtmlToDb();
+        }
+        // 加载模型输入变量
         if (result.model && typeof result.model === 'object') {
           var model = window.BusinessModel;
           if (model) {
@@ -322,7 +320,23 @@
     }
   }
 
-  // 前面不需要改，但保存时要把 HTML 哈希同步给 API
+  // ==================== 后台同步：把当前 HTML 内容推送到数据库 ====================
+  async function syncHtmlToDb() {
+    try {
+      var content = collectContent();
+      var htmlHash = computeHtmlHash();
+      var model = window.BusinessModel ? window.BusinessModel.getInputs() : null;
+      await fetch(API_URL + '/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content, html_hash: htmlHash, model: model })
+      });
+      console.log('后台同步：HTML 内容已同步到数据库');
+    } catch (e) {
+      // 静默失败，不影响页面展示
+      console.log('后台同步跳过:', e.message);
+    }
+  }
 
   // ==================== 保存内容到数据库并同步到 GitHub ====================
   async function saveContent() {
