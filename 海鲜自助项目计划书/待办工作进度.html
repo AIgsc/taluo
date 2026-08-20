@@ -444,9 +444,9 @@ var DEFAULT_DATA = {
     { id: 'cat_1', name: '房东洽谈', icon: '🏠', sort_order: 1, items: [
       { id: 'it_1_1', title: '通过中介/线上平台寻找合适场地', desc: '在58同城、安居客、本地中介等渠道寻找2000㎡左右适合做餐饮的场地，关注位置、人流、停车条件', status: 'pending', sort_order: 1, reports: [] },
       { id: 'it_1_2', title: '实地考察场地', desc: '考察面积、结构、水电容量、消防设施、排烟条件、停车位数量、周边客流', status: 'pending', sort_order: 2, reports: [] },
-      { id: 'it_1_3', title: '谈判租金及租期条件', desc: '按保底+分成模式谈判（保底7万/月，超额部分10%分成），谈判租期及递增条款', status: 'pending', sort_order: 3, reports: [] },
-      { id: 'it_1_4', title: '签订租赁意向书', desc: '明确租金、租期、押金、免租期等核心条款，支付意向金', status: 'pending', sort_order: 4, reports: [] },
-      { id: 'it_1_5', title: '签订正式租赁合同', desc: '律师审核合同条款，明确双方权利义务、违约责任、续租优先权', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_1_3', title: '谈判房东合作模式', desc: '按零固定租金+纯利润11%分成模式谈判，房东无需承担固定租金压力，门店亏损则无分成', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_1_4', title: '签订合作意向书', desc: '明确纯利润分成模式、分成比例11%、场地使用范围、配合办证义务等核心条款，无押金无固定租金', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_1_5', title: '签订正式合作合同', desc: '律师审核合同条款，明确纯利润分成11%、双方权利义务、违约责任、续约优先权', status: 'pending', sort_order: 5, reports: [] },
       { id: 'it_1_6', title: '办理场地交接手续', desc: '交接钥匙、水电燃气过户、物业交接单签字确认', status: 'pending', sort_order: 6, reports: [] },
     ]},
     { id: 'cat_2', name: '投资人对接', icon: '💰', sort_order: 2, items: [
@@ -554,7 +554,7 @@ var DEFAULT_DATA = {
     ]},
     { id: 'cat_13', name: '合同与法务', icon: '📋', sort_order: 13, items: [
       { id: 'it_13_1', title: '投资人合伙协议起草与审核', desc: '委托律师起草投资合伙协议，明确分红比例、退出机制、参与义务、保密条款', status: 'pending', sort_order: 1, reports: [] },
-      { id: 'it_13_2', title: '房屋租赁合同审核', desc: '律师审核租房合同，重点检查租期、租金递增、违约责任、续租优先权、拆迁补偿条款', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_13_2', title: '房东合作协议审核', desc: '律师审核合作合同，重点检查纯利润分成11%、违约责任、续约优先权、场地使用范围、拆迁补偿条款', status: 'pending', sort_order: 2, reports: [] },
       { id: 'it_13_3', title: '施工合同审核与签订', desc: '明确施工范围、工期节点、付款方式、验收标准、质保期、违约赔偿', status: 'pending', sort_order: 3, reports: [] },
       { id: 'it_13_4', title: '劳动合同与保密协议签订', desc: '统一签订劳动合同，明确岗位职责、薪酬福利、保密义务、竞业限制', status: 'pending', sort_order: 4, reports: [] },
       { id: 'it_13_5', title: '供应商供货合同签订', desc: '与食材、酒水等供应商签订供货合同，明确价格、结算周期、质量标准、退换货条款', status: 'pending', sort_order: 5, reports: [] },
@@ -642,7 +642,7 @@ function render() {
   // ====== 今日待办 ======
   var todayPending = [];
   cats.forEach(function(cat) {
-    var activeItems = cat.items.filter(function(i) { return i.status === 'pending' || i.status === 'in-progress' || i.status === 'blocked'; });
+    var activeItems = cat.items.filter(function(i) { return i.status === 'in-progress' || i.status === 'blocked'; });
     if (activeItems.length > 0) {
       todayPending.push({ cat: cat, items: activeItems });
     }
@@ -650,14 +650,14 @@ function render() {
   var todayTotal = todayPending.reduce(function(sum, g) { return sum + g.items.length; }, 0);
   html += '<div class="today-focus">';
   html += '  <div class="today-focus-header" onclick="toggleTodayFocus(this)">';
-  html += '    <span class="tf-icon"><i class="fas fa-sun" style="color:#fff;"></i></span>';
-  html += '    <span class="tf-title">今日待办</span>';
+  html += '    <span class="tf-icon"><i class="fas fa-play" style="color:#fff;"></i></span>';
+  html += '    <span class="tf-title">进行中任务</span>';
   html += '    <span class="tf-count">' + todayTotal + '项</span>';
   html += '    <span class="tf-toggle open"><i class="fas fa-chevron-down"></i></span>';
   html += '  </div>';
   html += '  <div class="today-focus-body open">';
   if (todayTotal === 0) {
-    html += '    <div class="today-focus-empty">🎉 所有任务已完成！</div>';
+    html += '    <div class="today-focus-empty">🎉 没有进行中的任务需要关注</div>';
   } else {
     todayPending.forEach(function(group) {
       html += '    <div class="today-focus-group">';
