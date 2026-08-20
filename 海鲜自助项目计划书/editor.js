@@ -1,18 +1,21 @@
 /**
- * 海鲜自助项目计划书 - 在线编辑功能 v3
+ * 海鲜自助项目计划书 - 在线编辑功能 v4
  * 双向同步：本地代码 ↔ 数据库 ↔ 前台页面
  * 
- * 核心逻辑：
- * 1. 页面加载 → 先用代码渲染 → 调 API 对比哈希
- * 2. 哈希匹配 → 数据库有用户编辑 → 应用数据库内容
- * 3. 哈希不匹配 → 代码最新 → 保留 HTML，后台同步到数据库
- * 4. 用户保存 → 写数据库 + 更新哈希 → 闭环
+ * 核心逻辑（基于 CODE_VERSION，不再使用哈希）：
+ * 1. 页面加载 → 先用代码渲染 → 调 API 对比版本号
+ * 2. 版本号不同 → 代码最新 → 保留 HTML 内容，同步到数据库
+ * 3. 版本号相同 → 代码未变 → 数据库可能有用户编辑 → 应用数据库内容
+ * 4. 用户保存 → 写数据库 → 闭环
+ * 
+ * 开发者修改代码后，需递增 HTML 中的 window.CODE_VERSION
  */
 
 (function() {
   'use strict';
 
   var API_URL = window.BP_API_URL || '/api/business-plan';
+  var CODE_VERSION = window.CODE_VERSION || '0';
   var editMode = false;
   var varMode = false;
   var hasChanges = false;
@@ -254,54 +257,37 @@
     return data;
   }
 
-  // ==================== 简单哈希 ====================
-  function simpleHash(str) {
-    if (!str) return '';
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-      var char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36);
-  }
-
-  // ==================== 计算当前 HTML 内容哈希 ====================
-  function computeHtmlHash() {
-    var elements = document.querySelectorAll('[data-edit]');
-    var data = {};
-    elements.forEach(function(el) {
-      data[el.getAttribute('data-edit')] = el.innerHTML.trim();
-    });
-    return simpleHash(JSON.stringify(data));
-  }
-
   // ==================== 从数据库加载内容 ====================
+  // 
+  // 新逻辑（基于 CODE_VERSION）：
+  // - 发送 CODE_VERSION 到 API
+  // - API 对比 DB 中存储的 code_version
+  // - 版本不同 → 代码最新 → 同步 HTML 到数据库，不应用 DB 内容
+  // - 版本相同 → 代码未变 → 数据库可能有用户编辑 → 应用 DB 内容
+  //
   async function loadContent() {
     try {
-      var htmlHash = computeHtmlHash();
-      var url = API_URL + '?html_hash=' + encodeURIComponent(htmlHash);
+      var url = API_URL + '?code_version=' + encodeURIComponent(CODE_VERSION);
       var res = await fetch(url);
       if (!res.ok) return;
       
       var result = await res.json();
       
-      // 核心判断：source 字段决定内容来源
-      // source='db' → 哈希匹配 → 数据库有用户编辑 → 用数据库内容覆盖页面
-      // source='html' → 哈希不匹配 → 代码最新 → 保留 HTML，后台同步到数据库
-      if (result.source === 'db' && result.content && typeof result.content === 'object') {
-        // 数据库有用户编辑的内容，应用到页面
+      // source='html' → 版本不同，代码最新 → 同步 HTML 到数据库
+      // source='db'   → 版本相同，代码未变 → 应用数据库内容（用户编辑）
+      if (result.source === 'html' && result.sync_needed) {
+        // 代码最新：把当前 HTML 内容推送到数据库
+        syncHtmlToDb();
+      } else if (result.source === 'db' && result.content && typeof result.content === 'object') {
+        // 代码未变：数据库有用户编辑的内容，应用到页面
         applyContent(result.content);
-        // 应用数据库的模型变量（用户在前台编辑过变量）
+        // 应用数据库的模型变量
         if (result.model && typeof result.model === 'object') {
           var dbModel = window.BusinessModel;
           if (dbModel) {
             dbModel.setInputs(result.model);
           }
         }
-      } else if (result.source === 'html' && result.sync_needed) {
-        // 代码最新，后台同步 HTML 到数据库
-        syncHtmlToDb();
       }
       // source 字段不存在（旧版 API）→ 不处理，保留 HTML 内容
     } catch (e) {
@@ -331,6 +317,7 @@
   }
 
   // ==================== 后台同步 HTML 到数据库 ====================
+  // 当代码版本更新时，把当前 HTML 内容推送到数据库
   async function syncHtmlToDb() {
     try {
       var content = collectContent();
@@ -344,12 +331,15 @@
       }
       if (!hasContent) return;
       
-      var htmlHash = computeHtmlHash();
       var model = window.BusinessModel ? window.BusinessModel.getInputs() : null;
       await fetch(API_URL + '/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content, html_hash: htmlHash, model: model })
+        body: JSON.stringify({ 
+          content: content, 
+          code_version: CODE_VERSION, 
+          model: model 
+        })
       });
     } catch (e) {
       // 静默处理
@@ -359,7 +349,6 @@
   // ==================== 保存内容到数据库 ====================
   async function saveContent() {
     var content = collectContent();
-    var htmlHash = computeHtmlHash();
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
 
@@ -382,7 +371,7 @@
     status.textContent = '';
 
     try {
-      var body = { content: content, html_hash: htmlHash };
+      var body = { content: content, code_version: CODE_VERSION };
       if (modelInputs) {
         body.model = modelInputs;
       }
@@ -432,7 +421,7 @@
       model.render();
     }
 
-    // 第二步：从数据库加载（检查是否有用户编辑）
+    // 第二步：从数据库加载（对比版本号决定是否应用用户编辑）
     loadContent();
 
     // 监听编辑变化

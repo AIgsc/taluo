@@ -208,7 +208,7 @@ module.exports = async (req, res) => {
     
     // ==================== 健康检查 ====================
     if (req.method === 'GET' && path === '/api/health') {
-      return res.json({ status: 'ok', timestamp: Date.now(), version: 'V3-20260820-sync-fix' });
+      return res.json({ status: 'ok', timestamp: Date.now(), version: 'V4-20260820-code-version' });
     }
     
     // ==================== 用户注册 ====================
@@ -268,9 +268,9 @@ module.exports = async (req, res) => {
     // ==================== 商业计划书内容 API（无需登录） ====================
     if (req.method === 'GET' && path === '/api/business-plan') {
 
-      // 接收前端传来的 HTML 哈希值
-      const htmlHash = req.query.html_hash || '';
-      console.log('[API GET] 收到 html_hash:', htmlHash);
+      // 接收前端传来的代码版本号
+      const codeVersion = req.query.code_version || '';
+      console.log('[API GET] 收到 code_version:', codeVersion);
 
       // 1. 查询数据库中的内容
       const result = await db.query(
@@ -282,21 +282,23 @@ module.exports = async (req, res) => {
       });
       console.log('[API GET] DB 内容条数:', Object.keys(dbContent).length);
 
-      // 2. 查询上次同步的哈希值
-      const hashResult = await db.query(
+      // 2. 查询数据库中的代码版本号
+      const versionResult = await db.query(
         'SELECT value FROM business_plan_model WHERE model_key = $1',
-        ['html_content_hash']
+        ['code_version']
       );
-      const lastSyncedHash = hashResult.rows.length > 0 ? hashResult.rows[0].value : null;
-      console.log('[API GET] DB 中记录的哈希:', lastSyncedHash);
+      const dbCodeVersion = versionResult.rows.length > 0 ? versionResult.rows[0].value : null;
+      console.log('[API GET] DB 中记录的 code_version:', dbCodeVersion);
 
-      // 3. 对比哈希值决定内容来源
-      let source = htmlHash && htmlHash === lastSyncedHash ? 'db' : 'html';
+      // 3. 对比版本号决定内容来源
+      // 版本不同 → 代码最新 → source='html'，需要同步
+      // 版本相同 → 代码未变 → source='db'，应用数据库内容
+      let source = (codeVersion && codeVersion === dbCodeVersion) ? 'db' : 'html';
       // 安全检查：如果数据库内容为空，强制返回 html（防止清空页面）
       if (source === 'db' && Object.keys(dbContent).length === 0) {
         source = 'html';
       }
-      let syncNeeded = source === 'html' && htmlHash !== '';
+      let syncNeeded = source === 'html' && codeVersion !== '';
       console.log('[API GET] 判断结果: source=' + source + ', sync_needed=' + syncNeeded);
 
       // 4. 加载模型输入变量
@@ -318,7 +320,7 @@ module.exports = async (req, res) => {
 
     // ==================== 商业计划书 - 后台同步：HTML 内容推送到数据库 ====================
     if (req.method === 'POST' && path === '/api/business-plan/sync') {
-      const { content, html_hash, model } = req.body || {};
+      const { content, code_version, model } = req.body || {};
       if (!content || typeof content !== 'object') {
         return res.status(400).json({ error: '内容数据不能为空' });
       }
@@ -338,13 +340,13 @@ module.exports = async (req, res) => {
         }
       }
 
-      if (html_hash) {
+      if (code_version) {
         await db.query(
           `INSERT INTO business_plan_model (model_key, value, updated_at)
            VALUES ($1, $2, NOW())
            ON CONFLICT (model_key) DO UPDATE SET
              value = $2, updated_at = NOW()`,
-          ['html_content_hash', html_hash]
+          ['code_version', code_version]
         );
       }
 
@@ -363,7 +365,7 @@ module.exports = async (req, res) => {
 
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================
     if (req.method === 'POST' && path === '/api/business-plan/save-and-deploy') {
-      const { content, model, html_hash } = req.body || {};
+      const { content, model, code_version } = req.body || {};
       if (!content || typeof content !== 'object') {
         return res.status(400).json({ error: '内容数据不能为空' });
       }
@@ -384,14 +386,14 @@ module.exports = async (req, res) => {
         }
       }
 
-      // 2. 更新 HTML 哈希标记（同步前台保存的哈希到数据库，下次页面加载时哈希匹配）
-      if (html_hash) {
+      // 2. 更新代码版本号
+      if (code_version) {
         await db.query(
           `INSERT INTO business_plan_model (model_key, value, updated_at)
            VALUES ($1, $2, NOW())
            ON CONFLICT (model_key) DO UPDATE SET
              value = $2, updated_at = NOW()`,
-          ['html_content_hash', html_hash]
+          ['code_version', code_version]
         );
       }
 
