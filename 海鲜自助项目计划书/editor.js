@@ -140,7 +140,7 @@
         '<div class="section-title">💵 投资与成本</div>' +
         '<div class="bp-var-group"><label>总投资（元）</label><input type="number" id="var-totalInvestment" value="' + inputs.totalInvestment + '"></div>' +
         '<div class="bp-var-group"><label>装修设备投资（元）</label><input type="number" id="var-equipmentInvestment" value="' + inputs.equipmentInvestment + '"></div>' +
-        '<div class="bp-var-group"><label>设备分摊月数</label><input type="number" id="var-paybackMonths" value="' + inputs.paybackMonths + '"></div>' +
+        '<div class="bp-var-group"><label>硬件分摊月数</label><input type="number" id="var-paybackMonths" value="' + inputs.paybackMonths + '"></div>' +
         '<div class="bp-var-group"><label>月人工成本（元）</label><input type="number" id="var-laborCost" value="' + inputs.laborCost + '"></div>' +
         '<div class="bp-var-group"><label>月房租（元）</label><input type="number" id="var-rent" value="' + inputs.rent + '"></div>' +
         '<div class="bp-var-group"><label>水电燃气杂费（元/月）</label><input type="number" id="var-utilityCost" value="' + inputs.utilityCost + '"></div>' +

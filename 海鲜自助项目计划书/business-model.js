@@ -43,7 +43,7 @@
       investorPct: 10,          // 投资人分红 %
       landlordThreshold: 30000, // 房东超额分成门槛
       landlordPct: 10,          // 房东超额分成率 %
-      paybackMonths: 12,        // 设备分摊月数
+      paybackMonths: 12,        // 硬件分摊月数
 
       // 扩展参数（通用模板）
       tableCount: 120,          // 桌数
@@ -249,8 +249,8 @@
         staff_initial_cost_wan: formatWan(i.staffInitialCost),
         food_initial_cost_wan: formatWan(i.foodInitialCost),
 
-        // ===== 5. 设备分摊 =====
-        equipment_amortization: formatNum(equipmentAmort) + '元/月',
+        // ===== 5. 硬件分摊 =====
+        equipment_amortization: formatNum(equipmentAmort) + '元','元/月',
         equipment_amortization_num: equipmentAmort,
         equipment_amortization_short: formatNum(equipmentAmort),
         equipment_amortization_months: i.paybackMonths + '个月',
