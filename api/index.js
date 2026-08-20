@@ -288,19 +288,10 @@ module.exports = async (req, res) => {
       const lastSyncedHash = hashResult.rows.length > 0 ? hashResult.rows[0].value : null;
 
       // 3. 对比哈希值决定内容来源
-      let source = 'db';
-      if (htmlHash && htmlHash !== lastSyncedHash) {
-        // 前端 HTML 哈希 ≠ 数据库记录的哈希 → 代码有更新，让前端保留 HTML 内容
-        // 同时更新数据库记录的哈希，标记"已同步到最新代码"
-        await db.query(
-          `INSERT INTO business_plan_model (model_key, value, updated_at)
-           VALUES ($1, $2, NOW())
-           ON CONFLICT (model_key) DO UPDATE SET
-             value = $2, updated_at = NOW()`,
-          ['html_content_hash', htmlHash]
-        );
-        source = 'html';
-      }
+      // 不更新哈希！哈希只在前台保存内容时更新
+      // 哈希不同 → 代码有更新 → 让前端保留 HTML
+      // 哈希相同 → 数据库已同步 → 覆盖
+      let source = htmlHash && htmlHash === lastSyncedHash ? 'db' : 'html';
 
       // 4. 加载模型输入变量
       let model = null;
@@ -321,7 +312,7 @@ module.exports = async (req, res) => {
 
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================
     if (req.method === 'POST' && path === '/api/business-plan/save-and-deploy') {
-      const { content, model } = req.body || {};
+      const { content, model, html_hash } = req.body || {};
       if (!content || typeof content !== 'object') {
         return res.status(400).json({ error: '内容数据不能为空' });
       }
@@ -342,7 +333,18 @@ module.exports = async (req, res) => {
         }
       }
 
-      // 2. 保存模型输入变量到数据库
+      // 2. 更新 HTML 哈希标记（同步前台保存的哈希到数据库，下次页面加载时哈希匹配）
+      if (html_hash) {
+        await db.query(
+          `INSERT INTO business_plan_model (model_key, value, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (model_key) DO UPDATE SET
+             value = $2, updated_at = NOW()`,
+          ['html_content_hash', html_hash]
+        );
+      }
+
+      // 3. 保存模型输入变量到数据库
       let savedModel = null;
       if (model && typeof model === 'object') {
         savedModel = model;

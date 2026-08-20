@@ -322,9 +322,13 @@
     }
   }
 
+  // 前面不需要改，但保存时要把 HTML 哈希同步给 API
+
   // ==================== 保存内容到数据库并同步到 GitHub ====================
   async function saveContent() {
     var content = collectContent();
+    var model = collectModel();
+    var htmlHash = computeHtmlHash(); // 同时发送当前 HTML 哈希
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
 
@@ -350,7 +354,7 @@
     status.textContent = '';
 
     try {
-      var body = { content: content };
+      var body = { content: content, html_hash: htmlHash };
       if (modelInputs) {
         body.model = modelInputs;
       }
