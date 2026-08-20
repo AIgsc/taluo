@@ -550,7 +550,7 @@ function render() {
       var doneText = item.status === 'completed' ? 'done-text' : '';
       html += '  <div class="todo-item" data-item-id="' + item.id + '">';
       html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
-      html += '    <div class="item-check ' + item.status + '"></div>';
+      html += '    <div class="item-check ' + item.status + '" onclick="showStatusMenu(this)"></div>';
       html += '    <div class="item-body">';
       html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
       if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
@@ -571,7 +571,6 @@ function render() {
 
   document.getElementById('categoryList').innerHTML = html;
   initSortable();
-  initStatusMenu();
 }
 
 function escHtml(s) {
@@ -586,7 +585,7 @@ function toggleCat(header) {
   toggle.classList.toggle('open');
 }
 
-// ==================== 状态切换（事件委托） ====================
+// ==================== 状态下拉菜单 ====================
 var STATUS_OPTIONS = [
   { value: 'pending', label: '待办', dotClass: 'pending' },
   { value: 'in-progress', label: '进行中', dotClass: 'in-progress' },
@@ -594,30 +593,16 @@ var STATUS_OPTIONS = [
   { value: 'blocked', label: '受阻', dotClass: 'blocked' }
 ];
 
-function initStatusMenu() {
-  document.getElementById('categoryList').addEventListener('click', function(e) {
-    var check = e.target.closest('.item-check');
-    if (!check) {
-      // 点击菜单选项时不要关闭
-      if (e.target.closest('.status-menu')) return;
-      closeStatusMenu();
-      return;
-    }
-    var itemEl = check.closest('.todo-item');
-    if (!itemEl) return;
-    var itemId = itemEl.getAttribute('data-item-id');
-    showStatusMenu(check, itemId);
-  });
-}
-
-function showStatusMenu(checkEl, itemId) {
+function showStatusMenu(el) {
   closeStatusMenu();
 
+  var itemEl = el.closest('.todo-item');
+  if (!itemEl) return;
+  var itemId = itemEl.getAttribute('data-item-id');
   var item = findItem(itemId);
   if (!item) return;
 
-  var rect = checkEl.getBoundingClientRect();
-
+  var rect = el.getBoundingClientRect();
   var menu = document.createElement('div');
   menu.className = 'status-menu';
   menu.id = 'statusMenu';
@@ -630,8 +615,11 @@ function showStatusMenu(checkEl, itemId) {
     option.className = 'status-option' + (isActive ? ' active' : '');
     option.innerHTML = '<span class="dot ' + opt.dotClass + '"></span>' + opt.label;
     option.onclick = function() {
-      selectStatus(itemId, opt.value);
+      item.status = opt.value;
       closeStatusMenu();
+      render();
+      scheduleSave();
+      showToast('状态已更新：' + statusText(opt.value));
     };
     menu.appendChild(option);
   });
@@ -644,14 +632,13 @@ function closeStatusMenu() {
   if (menu) menu.remove();
 }
 
-function selectStatus(itemId, status) {
-  var item = findItem(itemId);
-  if (!item) return;
-  item.status = status;
-  render();
-  scheduleSave();
-  showToast('状态已更新：' + statusText(status));
-}
+// 全局点击关闭菜单（只在初始化时绑定一次，不会重复）
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('statusMenu');
+  if (!menu) return;
+  if (e.target.closest('.status-menu') || e.target.closest('.item-check')) return;
+  closeStatusMenu();
+});
 
 function findItem(itemId) {
   for (var ci = 0; ci < appData.categories.length; ci++) {
