@@ -250,7 +250,7 @@
         food_initial_cost_wan: formatWan(i.foodInitialCost),
 
         // ===== 5. 硬件分摊 =====
-        equipment_amortization: formatNum(equipmentAmort) + '元','元/月',
+        equipment_amortization: formatNum(equipmentAmort) + '元',
         equipment_amortization_num: equipmentAmort,
         equipment_amortization_short: formatNum(equipmentAmort),
         equipment_amortization_months: i.paybackMonths + '个月',
