@@ -328,6 +328,9 @@
         operator_income_num: operatorIncome,
         operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
         operator_income_wan_display: (operatorIncome / 10000).toFixed(1) + '万',
+        operator_year1: formatNum(operatorIncome * 12) + '元',
+        operator_year1_wan: '约' + ((operatorIncome * 12) / 10000).toFixed(0) + '万',
+        operator_year2_wan: '约' + ((postAmortOperatorIncome * 12) / 10000).toFixed(0) + '万',
 
         // ===== 10. 悲观情景（完整） =====
         pessimistic_food_cost: formatNum(pessimisticFoodCost) + '元',
