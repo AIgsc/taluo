@@ -550,7 +550,7 @@ function render() {
       var doneText = item.status === 'completed' ? 'done-text' : '';
       html += '  <div class="todo-item" data-item-id="' + item.id + '">';
       html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
-      html += '    <div class="item-check ' + item.status + '" onclick="showStatusMenu(this)"></div>';
+      html += '    <div class="item-check ' + item.status + '"></div>';
       html += '    <div class="item-body">';
       html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
       if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
@@ -571,6 +571,13 @@ function render() {
 
   document.getElementById('categoryList').innerHTML = html;
   initSortable();
+  // 绑定状态切换事件（每次渲染后重新绑定到新元素上）
+  var checks = document.querySelectorAll('.item-check');
+  for (var i = 0; i < checks.length; i++) {
+    checks[i].addEventListener('click', function() {
+      showStatusMenu(this);
+    });
+  }
 }
 
 function escHtml(s) {
