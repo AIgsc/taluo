@@ -170,6 +170,28 @@
   .badge.completed { background: rgba(26,138,58,0.15); color: var(--accent2); }
   .badge.blocked { background: rgba(192,57,43,0.15); color: var(--danger); }
 
+  /* Status dropdown menu */
+  .status-menu {
+    position: absolute; z-index: 1000;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px; min-width: 130px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .status-menu .status-option {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 6px; cursor: pointer;
+    font-size: 0.8rem; color: var(--text); transition: background 0.1s;
+  }
+  .status-menu .status-option:hover { background: var(--card-hover); }
+  .status-menu .status-option .dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .status-menu .status-option .dot.pending { background: var(--text2); }
+  .status-menu .status-option .dot.in-progress { background: var(--warn); animation: pulse 1.5s infinite; }
+  .status-menu .status-option .dot.completed { background: var(--accent2); }
+  .status-menu .status-option .dot.blocked { background: var(--danger); }
+  .status-menu .status-option.active { background: var(--bg3); }
+
   .todo-item .item-actions {
     display: flex; align-items: center; gap: 4px; flex-shrink: 0;
   }
@@ -528,7 +550,7 @@ function render() {
       var doneText = item.status === 'completed' ? 'done-text' : '';
       html += '  <div class="todo-item" data-item-id="' + item.id + '">';
       html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
-      html += '    <div class="item-check ' + item.status + '" onclick="cycleStatus(\'' + item.id + '\')"></div>';
+      html += '    <div class="item-check ' + item.status + '" onclick="showStatusMenu(event,\'' + item.id + '\')"></div>';
       html += '    <div class="item-body">';
       html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
       if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
@@ -564,16 +586,62 @@ function toggleCat(header) {
 }
 
 // ==================== 状态切换 ====================
-var STATUS_CYCLE = ['pending', 'in-progress', 'completed', 'blocked'];
+var STATUS_OPTIONS = [
+  { value: 'pending', label: '待办', dotClass: 'pending' },
+  { value: 'in-progress', label: '进行中', dotClass: 'in-progress' },
+  { value: 'completed', label: '已完成', dotClass: 'completed' },
+  { value: 'blocked', label: '受阻', dotClass: 'blocked' }
+];
 
-function cycleStatus(itemId) {
-  if (!appData) return;
+function showStatusMenu(event, itemId) {
+  event.stopPropagation();
+  closeStatusMenu();
+
   var item = findItem(itemId);
   if (!item) return;
-  var idx = STATUS_CYCLE.indexOf(item.status);
-  item.status = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+
+  var checkEl = event.currentTarget;
+  var rect = checkEl.getBoundingClientRect();
+
+  var menu = document.createElement('div');
+  menu.className = 'status-menu';
+  menu.id = 'statusMenu';
+  menu.style.top = rect.bottom + 4 + 'px';
+  menu.style.left = rect.left + 'px';
+
+  STATUS_OPTIONS.forEach(function(opt) {
+    var isActive = item.status === opt.value;
+    var option = document.createElement('div');
+    option.className = 'status-option' + (isActive ? ' active' : '');
+    option.innerHTML = '<span class="dot ' + opt.dotClass + '"></span>' + opt.label;
+    option.onclick = function(e) {
+      e.stopPropagation();
+      selectStatus(itemId, opt.value);
+      closeStatusMenu();
+    };
+    menu.appendChild(option);
+  });
+
+  document.body.appendChild(menu);
+
+  // 点击其他地方关闭
+  setTimeout(function() {
+    document.addEventListener('click', closeStatusMenu, { once: true });
+  }, 0);
+}
+
+function closeStatusMenu() {
+  var menu = document.getElementById('statusMenu');
+  if (menu) menu.remove();
+}
+
+function selectStatus(itemId, status) {
+  var item = findItem(itemId);
+  if (!item) return;
+  item.status = status;
   render();
   scheduleSave();
+  showToast('状态已更新：' + statusText(status));
 }
 
 function findItem(itemId) {
