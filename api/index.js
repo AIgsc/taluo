@@ -208,7 +208,7 @@ module.exports = async (req, res) => {
     
     // ==================== 健康检查 ====================
     if (req.method === 'GET' && path === '/api/health') {
-      return res.json({ status: 'ok', timestamp: Date.now(), version: 'V2-20260511-neon-userid' });
+      return res.json({ status: 'ok', timestamp: Date.now(), version: 'V3-20260820-sync-fix' });
     }
     
     // ==================== 用户注册 ====================

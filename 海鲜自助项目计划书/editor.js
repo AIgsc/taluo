@@ -1,6 +1,12 @@
 /**
- * 海鲜自助项目计划书 - 在线编辑功能
- * 支持文字编辑 + 变量编辑，保存时同步到数据库和GitHub
+ * 海鲜自助项目计划书 - 在线编辑功能 v3
+ * 双向同步：本地代码 ↔ 数据库 ↔ 前台页面
+ * 
+ * 核心逻辑：
+ * 1. 页面加载 → 先用代码渲染 → 调 API 对比哈希
+ * 2. 哈希匹配 → 数据库有用户编辑 → 应用数据库内容
+ * 3. 哈希不匹配 → 代码最新 → 保留 HTML，后台同步到数据库
+ * 4. 用户保存 → 写数据库 + 更新哈希 → 闭环
  */
 
 (function() {
@@ -114,16 +120,16 @@
     modal.className = 'bp-modal';
 
     modal.innerHTML =
-      '<h3>📊 编辑核心变量</h3>' +
-      '<p style="font-size:12px;color:#888;margin:-8px 0 12px 0;">修改后所有关联数据自动重新计算，点击「应用并保存」同步到数据库和GitHub</p>' +
+      '<h3>编辑核心变量</h3>' +
+      '<p style="font-size:12px;color:#888;margin:-8px 0 12px 0;">修改后所有关联数据自动重新计算，点击「应用并保存」同步到数据库</p>' +
       '<div class="bp-var-section">' +
-        '<div class="section-title">🏠 场地</div>' +
+        '<div class="section-title">场地</div>' +
         '<div class="bp-var-group"><label>总面积（㎡）</label><input type="number" id="var-area" value="' + inputs.area + '"></div>' +
         '<div class="bp-var-group"><label>桌数</label><input type="number" id="var-tableCount" value="' + inputs.tableCount + '"></div>' +
         '<div class="bp-var-group"><label>每桌平均人数</label><input type="number" step="0.1" id="var-seatsPerTable" value="' + inputs.seatsPerTable + '"></div>' +
       '</div>' +
       '<div class="bp-var-section">' +
-        '<div class="section-title">👥 人员架构</div>' +
+        '<div class="section-title">人员架构</div>' +
         '<div class="bp-var-group"><label>总编制人数</label><input type="number" id="var-staffCount" value="' + inputs.staffCount + '"></div>' +
         '<div class="bp-var-group"><label>后厨人数</label><input type="number" id="var-kitchenStaff" value="' + inputs.kitchenStaff + '"></div>' +
         '<div class="bp-var-group"><label>后厨月度总成本（元）</label><input type="number" id="var-kitchenCost" value="' + inputs.kitchenCost + '"></div>' +
@@ -131,13 +137,13 @@
         '<div class="bp-var-group"><label>前厅月度总成本（元）</label><input type="number" id="var-frontCost" value="' + inputs.frontCost + '"></div>' +
       '</div>' +
       '<div class="bp-var-section">' +
-        '<div class="section-title">💰 营收</div>' +
+        '<div class="section-title">营收</div>' +
         '<div class="bp-var-group"><label>人均定价（元）</label><input type="number" id="var-price" value="' + inputs.price + '"></div>' +
         '<div class="bp-var-group"><label>日均核销营业额（元）</label><input type="number" id="var-dailyRevenue" value="' + inputs.dailyRevenue + '"></div>' +
         '<div class="bp-var-group"><label>食材成本率（%）</label><input type="number" id="var-foodCostPct" value="' + inputs.foodCostPct + '"></div>' +
       '</div>' +
       '<div class="bp-var-section">' +
-        '<div class="section-title">💵 投资与成本</div>' +
+        '<div class="section-title">投资与成本</div>' +
         '<div class="bp-var-group"><label>总投资（元）</label><input type="number" id="var-totalInvestment" value="' + inputs.totalInvestment + '"></div>' +
         '<div class="bp-var-group"><label>装修设备投资（元）</label><input type="number" id="var-equipmentInvestment" value="' + inputs.equipmentInvestment + '"></div>' +
         '<div class="bp-var-group"><label>硬件分摊月数</label><input type="number" id="var-paybackMonths" value="' + inputs.paybackMonths + '"></div>' +
@@ -147,12 +153,12 @@
         '<div class="bp-var-group"><label>其他杂费（元/月）</label><input type="number" id="var-miscCost" value="' + inputs.miscCost + '"></div>' +
       '</div>' +
       '<div class="bp-var-section">' +
-        '<div class="section-title">💴 前期一次性投入</div>' +
+        '<div class="section-title">前期一次性投入</div>' +
         '<div class="bp-var-group"><label>组建人工费用（元）</label><input type="number" id="var-staffInitialCost" value="' + inputs.staffInitialCost + '"></div>' +
         '<div class="bp-var-group"><label>首批食材备货（元）</label><input type="number" id="var-foodInitialCost" value="' + inputs.foodInitialCost + '"></div>' +
       '</div>' +
       '<div class="bp-var-section">' +
-        '<div class="section-title">📈 分成比例</div>' +
+        '<div class="section-title">分成比例</div>' +
         '<div class="bp-var-group"><label>营销费率（%）</label><input type="number" id="var-marketingPct" value="' + inputs.marketingPct + '"></div>' +
         '<div class="bp-var-group"><label>服务商抽成（%）</label><input type="number" id="var-serviceFeePct" value="' + inputs.serviceFeePct + '"></div>' +
         '<div class="bp-var-group"><label>运营部门分成（%）</label><input type="number" id="var-operationPct" value="' + inputs.operationPct + '"></div>' +
@@ -168,7 +174,6 @@
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // 关闭函数
     window.closeVarModal = function() {
       var o = document.getElementById('bp-var-overlay');
       if (o) o.remove();
@@ -230,23 +235,13 @@
       landlordPct: Number(document.getElementById('var-landlordPct').value) || 10,
     };
 
-    // 更新模型并重新渲染页面
     model.setInputs(inputs);
     hasChanges = true;
     document.getElementById('bp-status').textContent = '变量已更新，点击保存';
     document.getElementById('bp-status').style.color = 'rgba(255,255,255,0.9)';
 
-    // 自动触发保存到服务器
+    // 自动触发保存
     saveContent();
-  }
-
-  // ==================== 标记内容已修改 ====================
-  function markModified() {
-    if (!editMode) return;
-    if (!hasChanges) {
-      hasChanges = true;
-      document.getElementById('bp-status').textContent = '已修改，点击保存';
-    }
   }
 
   // ==================== 收集所有可编辑内容 ====================
@@ -259,31 +254,7 @@
     return data;
   }
 
-  // ==================== 应用保存的内容到页面 ====================
-  function applyContent(data) {
-    if (!data || typeof data !== 'object') return;
-    var keys = Object.keys(data);
-    // 安全检查：如果所有值都为空，不覆盖（防止清空页面）
-    var hasContent = false;
-    for (var i = 0; i < keys.length; i++) {
-      if (data[keys[i]] && data[keys[i]].trim()) {
-        hasContent = true;
-        break;
-      }
-    }
-    if (!hasContent) {
-      console.log('[同步] 跳过：数据库内容为空，保留 HTML 原始内容');
-      return;
-    }
-    keys.forEach(function(key) {
-      var el = document.querySelector('[data-edit="' + key + '"]');
-      if (el && data[key]) {
-        el.innerHTML = data[key];
-      }
-    });
-  }
-
-  // ==================== 简单哈希函数 ====================
+  // ==================== 简单哈希 ====================
   function simpleHash(str) {
     if (!str) return '';
     var hash = 0;
@@ -295,7 +266,7 @@
     return Math.abs(hash).toString(36);
   }
 
-  // ==================== 计算当前 HTML 内容的哈希值 ====================
+  // ==================== 计算当前 HTML 内容哈希 ====================
   function computeHtmlHash() {
     var elements = document.querySelectorAll('[data-edit]');
     var data = {};
@@ -309,51 +280,60 @@
   async function loadContent() {
     try {
       var htmlHash = computeHtmlHash();
-      console.log('[同步] 当前 HTML 哈希:', htmlHash);
       var url = API_URL + '?html_hash=' + encodeURIComponent(htmlHash);
       var res = await fetch(url);
-      console.log('[同步] API 响应状态:', res.status);
-      if (res.ok) {
-        var result = await res.json();
-        console.log('[同步] API 返回:', JSON.stringify({
-          source: result.source,
-          sync_needed: result.sync_needed,
-          contentKeys: result.content ? Object.keys(result.content).length : 0,
-          hasModel: !!result.model
-        }));
-        // 只有哈希匹配（source=db）才覆盖 HTML，说明数据库内容是最新编辑的
-        if (result.content && typeof result.content === 'object' && result.source === 'db') {
-          console.log('[同步] source=db，正在应用数据库内容覆盖 HTML...');
-          applyContent(result.content);
-          // 同时加载数据库的模型变量
-          if (result.model && typeof result.model === 'object') {
-            var dbModel = window.BusinessModel;
-            if (dbModel) {
-              console.log('[同步] source=db，加载数据库模型变量');
-              dbModel.setInputs(result.model);
-            }
-          }
-        } else {
-          console.log('[同步] source=' + result.source + '，保留 HTML 内容，不覆盖');
-          // 哈希不匹配 → 代码推送更新了 → 前端保留 HTML，并同步到数据库
-          if (result.sync_needed) {
-            console.log('[同步] sync_needed=true，开始后台同步 HTML 到数据库...');
-            syncHtmlToDb();
+      if (!res.ok) return;
+      
+      var result = await res.json();
+      
+      // 核心判断：source 字段决定内容来源
+      // source='db' → 哈希匹配 → 数据库有用户编辑 → 用数据库内容覆盖页面
+      // source='html' → 哈希不匹配 → 代码最新 → 保留 HTML，后台同步到数据库
+      if (result.source === 'db' && result.content && typeof result.content === 'object') {
+        // 数据库有用户编辑的内容，应用到页面
+        applyContent(result.content);
+        // 应用数据库的模型变量（用户在前台编辑过变量）
+        if (result.model && typeof result.model === 'object') {
+          var dbModel = window.BusinessModel;
+          if (dbModel) {
+            dbModel.setInputs(result.model);
           }
         }
-      } else {
-        console.log('[同步] API 请求失败，状态码:', res.status);
+      } else if (result.source === 'html' && result.sync_needed) {
+        // 代码最新，后台同步 HTML 到数据库
+        syncHtmlToDb();
       }
+      // source 字段不存在（旧版 API）→ 不处理，保留 HTML 内容
     } catch (e) {
-      console.log('[同步] 异常:', e.message);
+      // 静默处理
     }
   }
 
-  // ==================== 后台同步：把当前 HTML 内容推送到数据库 ====================
+  // ==================== 应用内容到页面 ====================
+  function applyContent(data) {
+    if (!data || typeof data !== 'object') return;
+    var keys = Object.keys(data);
+    // 安全检查：所有值都为空时不覆盖
+    var hasContent = false;
+    for (var i = 0; i < keys.length; i++) {
+      if (data[keys[i]] && data[keys[i]].trim()) {
+        hasContent = true;
+        break;
+      }
+    }
+    if (!hasContent) return;
+    keys.forEach(function(key) {
+      var el = document.querySelector('[data-edit="' + key + '"]');
+      if (el && data[key]) {
+        el.innerHTML = data[key];
+      }
+    });
+  }
+
+  // ==================== 后台同步 HTML 到数据库 ====================
   async function syncHtmlToDb() {
     try {
       var content = collectContent();
-      // 安全检查：如果内容为空，不同步（防止清空数据库）
       var keys = Object.keys(content);
       var hasContent = false;
       for (var i = 0; i < keys.length; i++) {
@@ -362,10 +342,8 @@
           break;
         }
       }
-      if (!hasContent) {
-        console.log('[同步] 跳过：当前页面内容为空，不同步到数据库');
-        return;
-      }
+      if (!hasContent) return;
+      
       var htmlHash = computeHtmlHash();
       var model = window.BusinessModel ? window.BusinessModel.getInputs() : null;
       await fetch(API_URL + '/sync', {
@@ -373,31 +351,26 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: content, html_hash: htmlHash, model: model })
       });
-      console.log('[同步] 后台同步完成：HTML 内容已同步到数据库');
     } catch (e) {
-      console.log('[同步] 后台同步失败:', e.message);
+      // 静默处理
     }
   }
 
-  // ==================== 保存内容到数据库并同步到 GitHub ====================
+  // ==================== 保存内容到数据库 ====================
   async function saveContent() {
     var content = collectContent();
-    var model = collectModel();
-    var htmlHash = computeHtmlHash(); // 同时发送当前 HTML 哈希
+    var htmlHash = computeHtmlHash();
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
 
-    var keys = Object.keys(content);
-    console.log('准备保存，区块数:', keys.length);
-
-    // 收集模型输入变量
+    // 收集模型变量
     var modelInputs = null;
-    var model = window.BusinessModel;
-    if (model) {
-      modelInputs = model.getInputs();
-      console.log('模型输入变量:', JSON.stringify(modelInputs));
+    var bm = window.BusinessModel;
+    if (bm) {
+      modelInputs = bm.getInputs();
     }
 
+    var keys = Object.keys(content);
     if (keys.length === 0 && !modelInputs) {
       status.textContent = '保存失败：未找到可编辑内容';
       status.style.color = '#e74c3c';
@@ -423,26 +396,21 @@
       if (res.ok) {
         var result = await res.json();
         hasChanges = false;
-        console.log('保存结果:', result);
         if (result.github && !result.github.synced) {
-          status.textContent = '保存成功，但 GitHub 同步失败: ' + (result.github.reason || '未知错误');
+          status.textContent = '保存成功，但 GitHub 同步失败';
           status.style.color = '#e67e22';
         } else {
-          status.textContent = '✅ 保存成功！已同步到数据库和 GitHub';
+          status.textContent = '保存成功！已同步到数据库';
           status.style.color = '#27ae60';
         }
-        // 关闭变量编辑弹窗
         if (varMode) {
           closeVarModal();
         }
       } else {
-        var errText = await res.text();
-        console.error('保存失败，状态码:', res.status, '响应:', errText);
         status.textContent = '保存失败，请重试';
         status.style.color = '#e74c3c';
       }
     } catch (e) {
-      console.error('保存网络错误:', e);
       status.textContent = '保存失败：网络错误';
       status.style.color = '#e74c3c';
     } finally {
@@ -458,22 +426,26 @@
   function init() {
     createToolbar();
 
-    // 渲染 BusinessModel 数据
+    // 第一步：渲染 BusinessModel（从代码计算）
     var model = window.BusinessModel;
     if (model) {
       model.render();
     }
 
-    // 从数据库加载已保存的内容（覆盖 HTML 默认内容）
+    // 第二步：从数据库加载（检查是否有用户编辑）
     loadContent();
 
-    // 监听输入事件，标记修改
+    // 监听编辑变化
     document.addEventListener('input', function(e) {
       if (e.target.closest && e.target.closest('[data-edit]')) {
-        markModified();
+        if (!hasChanges && editMode) {
+          hasChanges = true;
+          document.getElementById('bp-status').textContent = '已修改，点击保存';
+        }
       }
     });
 
+    // 页面从缓存恢复时重新加载
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
         loadContent();
