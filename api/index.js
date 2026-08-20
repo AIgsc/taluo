@@ -1070,7 +1070,7 @@ async function syncToGitHub(content, token) {
   var owner = 'AIgsc';
   var repo = 'taluo';
   var filePath = '海鲜自助项目计划书/index.html';
-  var encodedPath = encodeURIComponent(filePath);
+  var encodedPath = filePath.split('/').map(function(s) { return encodeURIComponent(s); }).join('/');
   var apiPath = '/repos/' + owner + '/' + repo + '/contents/' + encodedPath;
 
   // 1. 获取当前文件信息（含 SHA）
