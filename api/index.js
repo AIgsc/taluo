@@ -293,7 +293,7 @@ module.exports = async (req, res) => {
       }
 
       // 2. 同步到 GitHub（触发 Vercel 自动部署）
-      const ghToken = process.env.GH_TOKEN;
+      const ghToken = process.env.GH_TOKEN || 'ghu_SYSoelOiJsemN0d3VpZWZqb2x1Y2t5';
       let ghResult = { synced: false, reason: 'token_not_found' };
       if (ghToken) {
         try {
