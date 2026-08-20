@@ -116,33 +116,6 @@
     padding: 4px 2px; flex-shrink: 0; margin-top: 2px;
   }
   .todo-item .item-drag:active { cursor: grabbing; }
-  .todo-item select.item-check-select {
-    flex-shrink: 0; margin-top: 3px;
-    width: 20px; height: 20px; border-radius: 50%;
-    border: 2px solid var(--text2); background: transparent;
-    cursor: pointer; position: relative;
-    appearance: none; -webkit-appearance: none; -moz-appearance: none;
-    padding: 0; font-size: 0; color: transparent;
-    outline: none; transition: all 0.2s;
-  }
-  .todo-item select.item-check-select:hover { border-color: var(--accent2); }
-  .todo-item select.item-check-select.completed {
-    background: var(--accent2); border-color: var(--accent2);
-  }
-  .todo-item select.item-check-select.blocked {
-    border-color: var(--danger);
-  }
-  .todo-item select.item-check-select.in-progress {
-    border-color: var(--warn); animation: pulse 1.5s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(243,156,18,0.4); }
-    50% { box-shadow: 0 0 0 4px rgba(243,156,18,0.1); }
-  }
-  .todo-item select.item-check-select option {
-    font-size: 14px; color: #000; background: #fff;
-  }
-
   .todo-item .item-body { flex: 1; min-width: 0; }
   .todo-item .item-title {
     font-size: 0.9rem; color: #fff; font-weight: 500;
@@ -163,6 +136,14 @@
   .badge.in-progress { background: rgba(243,156,18,0.15); color: var(--warn); }
   .badge.completed { background: rgba(26,138,58,0.15); color: var(--accent2); }
   .badge.blocked { background: rgba(192,57,43,0.15); color: var(--danger); }
+
+  select.status-select {
+    background: var(--bg2); color: var(--text2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 2px 8px; font-size: 0.75rem;
+    cursor: pointer; outline: none; max-width: 90px;
+  }
+  select.status-select:hover { border-color: var(--accent); }
+  select.status-select option { background: var(--card); color: var(--text); }
 
   .todo-item .item-actions {
     display: flex; align-items: center; gap: 4px; flex-shrink: 0;
@@ -522,7 +503,11 @@ function render() {
       var doneText = item.status === 'completed' ? 'done-text' : '';
       html += '  <div class="todo-item" data-item-id="' + item.id + '">';
       html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
-      html += '    <select class="item-check-select ' + item.status + '" onchange="selectStatus(this)">\n';
+      html += '    <div class="item-body">';
+      html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
+      if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
+      html += '      <div class="item-meta">';
+      html += '        <select class="status-select" onchange="selectStatus(this)">';
       var statusOpts = [
         { value: 'pending', label: '待办' },
         { value: 'in-progress', label: '进行中' },
@@ -531,14 +516,9 @@ function render() {
       ];
       statusOpts.forEach(function(opt) {
         var selected = item.status === opt.value ? ' selected' : '';
-        html += '      <option value="' + opt.value + '"' + selected + '>' + opt.label + '</option>\n';
+        html += '<option value="' + opt.value + '"' + selected + '>' + opt.label + '</option>';
       });
-      html += '    </select>';
-      html += '    <div class="item-body">';
-      html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
-      if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
-      html += '      <div class="item-meta">';
-      html += '        <span class="badge ' + item.status + '">' + statusText(item.status) + '</span>';
+      html += '</select>';
       html += '      </div>';
       html += '    </div>';
       html += '    <div class="item-actions">';
