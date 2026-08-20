@@ -116,37 +116,31 @@
     padding: 4px 2px; flex-shrink: 0; margin-top: 2px;
   }
   .todo-item .item-drag:active { cursor: grabbing; }
-  .todo-item .item-check {
+  .todo-item select.item-check-select {
     flex-shrink: 0; margin-top: 3px;
     width: 20px; height: 20px; border-radius: 50%;
     border: 2px solid var(--text2); background: transparent;
-    cursor: pointer; position: relative; transition: all 0.2s;
+    cursor: pointer; position: relative;
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    padding: 0; font-size: 0; color: transparent;
+    outline: none; transition: all 0.2s;
   }
-  .todo-item .item-check:hover { border-color: var(--accent2); }
-  .todo-item .item-check.done {
+  .todo-item select.item-check-select:hover { border-color: var(--accent2); }
+  .todo-item select.item-check-select.completed {
     background: var(--accent2); border-color: var(--accent2);
   }
-  .todo-item .item-check.done::after {
-    content: '✓'; position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); color: #fff; font-size: 0.7rem;
-  }
-  .todo-item .item-check.blocked {
+  .todo-item select.item-check-select.blocked {
     border-color: var(--danger);
   }
-  .todo-item .item-check.blocked::after {
-    content: '!'; position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); color: var(--danger); font-size: 0.8rem; font-weight: bold;
-  }
-  .todo-item .item-check.in-progress {
+  .todo-item select.item-check-select.in-progress {
     border-color: var(--warn); animation: pulse 1.5s infinite;
   }
   @keyframes pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(243,156,18,0.4); }
     50% { box-shadow: 0 0 0 4px rgba(243,156,18,0.1); }
   }
-  .todo-item .item-check.in-progress::after {
-    content: '▶'; position: absolute; top: 50%; left: 55%;
-    transform: translate(-50%, -50%); color: var(--warn); font-size: 0.6rem;
+  .todo-item select.item-check-select option {
+    font-size: 14px; color: #000; background: #fff;
   }
 
   .todo-item .item-body { flex: 1; min-width: 0; }
@@ -169,28 +163,6 @@
   .badge.in-progress { background: rgba(243,156,18,0.15); color: var(--warn); }
   .badge.completed { background: rgba(26,138,58,0.15); color: var(--accent2); }
   .badge.blocked { background: rgba(192,57,43,0.15); color: var(--danger); }
-
-  /* Status dropdown menu */
-  .status-menu {
-    position: absolute; z-index: 1000;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 8px; padding: 4px; min-width: 130px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-  }
-  .status-menu .status-option {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 12px; border-radius: 6px; cursor: pointer;
-    font-size: 0.8rem; color: var(--text); transition: background 0.1s;
-  }
-  .status-menu .status-option:hover { background: var(--card-hover); }
-  .status-menu .status-option .dot {
-    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-  }
-  .status-menu .status-option .dot.pending { background: var(--text2); }
-  .status-menu .status-option .dot.in-progress { background: var(--warn); animation: pulse 1.5s infinite; }
-  .status-menu .status-option .dot.completed { background: var(--accent2); }
-  .status-menu .status-option .dot.blocked { background: var(--danger); }
-  .status-menu .status-option.active { background: var(--bg3); }
 
   .todo-item .item-actions {
     display: flex; align-items: center; gap: 4px; flex-shrink: 0;
@@ -550,7 +522,18 @@ function render() {
       var doneText = item.status === 'completed' ? 'done-text' : '';
       html += '  <div class="todo-item" data-item-id="' + item.id + '">';
       html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
-      html += '    <div class="item-check ' + item.status + '"></div>';
+      html += '    <select class="item-check-select ' + item.status + '" onchange="selectStatus(this)">\n';
+      var statusOpts = [
+        { value: 'pending', label: '待办' },
+        { value: 'in-progress', label: '进行中' },
+        { value: 'completed', label: '已完成' },
+        { value: 'blocked', label: '受阻' }
+      ];
+      statusOpts.forEach(function(opt) {
+        var selected = item.status === opt.value ? ' selected' : '';
+        html += '      <option value="' + opt.value + '"' + selected + '>' + opt.label + '</option>\n';
+      });
+      html += '    </select>';
       html += '    <div class="item-body">';
       html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
       if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
@@ -571,13 +554,6 @@ function render() {
 
   document.getElementById('categoryList').innerHTML = html;
   initSortable();
-  // 绑定状态切换事件（每次渲染后重新绑定到新元素上）
-  var checks = document.querySelectorAll('.item-check');
-  for (var i = 0; i < checks.length; i++) {
-    checks[i].addEventListener('click', function() {
-      showStatusMenu(this);
-    });
-  }
 }
 
 function escHtml(s) {
@@ -592,60 +568,20 @@ function toggleCat(header) {
   toggle.classList.toggle('open');
 }
 
-// ==================== 状态下拉菜单 ====================
-var STATUS_OPTIONS = [
-  { value: 'pending', label: '待办', dotClass: 'pending' },
-  { value: 'in-progress', label: '进行中', dotClass: 'in-progress' },
-  { value: 'completed', label: '已完成', dotClass: 'completed' },
-  { value: 'blocked', label: '受阻', dotClass: 'blocked' }
-];
-
-function showStatusMenu(el) {
-  closeStatusMenu();
-
+// ==================== 状态选择（原生 select 下拉） ====================
+function selectStatus(el) {
   var itemEl = el.closest('.todo-item');
   if (!itemEl) return;
   var itemId = itemEl.getAttribute('data-item-id');
   var item = findItem(itemId);
   if (!item) return;
-
-  var rect = el.getBoundingClientRect();
-  var menu = document.createElement('div');
-  menu.className = 'status-menu';
-  menu.id = 'statusMenu';
-  menu.style.top = rect.bottom + 4 + 'px';
-  menu.style.left = rect.left + 'px';
-
-  STATUS_OPTIONS.forEach(function(opt) {
-    var isActive = item.status === opt.value;
-    var option = document.createElement('div');
-    option.className = 'status-option' + (isActive ? ' active' : '');
-    option.innerHTML = '<span class="dot ' + opt.dotClass + '"></span>' + opt.label;
-    option.onclick = function() {
-      item.status = opt.value;
-      closeStatusMenu();
-      render();
-      scheduleSave();
-      showToast('状态已更新：' + statusText(opt.value));
-    };
-    menu.appendChild(option);
-  });
-
-  document.body.appendChild(menu);
+  var newStatus = el.value;
+  if (item.status === newStatus) return;
+  item.status = newStatus;
+  render();
+  scheduleSave();
+  showToast('状态已更新：' + statusText(newStatus));
 }
-
-function closeStatusMenu() {
-  var menu = document.getElementById('statusMenu');
-  if (menu) menu.remove();
-}
-
-// 全局点击关闭菜单（只在初始化时绑定一次，不会重复）
-document.addEventListener('click', function(e) {
-  var menu = document.getElementById('statusMenu');
-  if (!menu) return;
-  if (e.target.closest('.status-menu') || e.target.closest('.item-check')) return;
-  closeStatusMenu();
-});
 
 function findItem(itemId) {
   for (var ci = 0; ci < appData.categories.length; ci++) {
