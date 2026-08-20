@@ -295,28 +295,43 @@
   async function loadContent() {
     try {
       var htmlHash = computeHtmlHash();
+      console.log('[同步] 当前 HTML 哈希:', htmlHash);
       var url = API_URL + '?html_hash=' + encodeURIComponent(htmlHash);
       var res = await fetch(url);
+      console.log('[同步] API 响应状态:', res.status);
       if (res.ok) {
         var result = await res.json();
+        console.log('[同步] API 返回:', JSON.stringify({
+          source: result.source,
+          sync_needed: result.sync_needed,
+          contentKeys: result.content ? Object.keys(result.content).length : 0,
+          hasModel: !!result.model
+        }));
         // 只有哈希匹配（source=db）才覆盖 HTML，说明数据库内容是最新编辑的
         if (result.content && typeof result.content === 'object' && result.source === 'db') {
+          console.log('[同步] source=db，正在应用数据库内容覆盖 HTML...');
           applyContent(result.content);
+        } else {
+          console.log('[同步] source=' + result.source + '，保留 HTML 内容，不覆盖');
         }
         // 哈希不匹配 → 代码推送更新了 → 前端保留 HTML，并同步到数据库
         if (result.sync_needed) {
+          console.log('[同步] sync_needed=true，开始后台同步 HTML 到数据库...');
           syncHtmlToDb();
         }
         // 加载模型输入变量
         if (result.model && typeof result.model === 'object') {
           var model = window.BusinessModel;
           if (model) {
+            console.log('[同步] 加载模型变量，keys:', Object.keys(result.model).length);
             model.setInputs(result.model);
           }
         }
+      } else {
+        console.log('[同步] API 请求失败，状态码:', res.status);
       }
     } catch (e) {
-      console.log('商业计划书：使用默认内容');
+      console.log('[同步] 异常:', e.message);
     }
   }
 

@@ -270,6 +270,7 @@ module.exports = async (req, res) => {
 
       // 接收前端传来的 HTML 哈希值
       const htmlHash = req.query.html_hash || '';
+      console.log('[API GET] 收到 html_hash:', htmlHash);
 
       // 1. 查询数据库中的内容
       const result = await db.query(
@@ -279,6 +280,7 @@ module.exports = async (req, res) => {
       result.rows.forEach(function(row) {
         dbContent[row.section_key] = row.content;
       });
+      console.log('[API GET] DB 内容条数:', Object.keys(dbContent).length);
 
       // 2. 查询上次同步的哈希值
       const hashResult = await db.query(
@@ -286,12 +288,12 @@ module.exports = async (req, res) => {
         ['html_content_hash']
       );
       const lastSyncedHash = hashResult.rows.length > 0 ? hashResult.rows[0].value : null;
+      console.log('[API GET] DB 中记录的哈希:', lastSyncedHash);
 
       // 3. 对比哈希值决定内容来源
-      // 哈希相同 → 数据库已同步 → 覆盖
-      // 哈希不同 → 代码有更新 → 前端保留 HTML，并通知前端同步到 DB
       let source = htmlHash && htmlHash === lastSyncedHash ? 'db' : 'html';
       let syncNeeded = source === 'html' && htmlHash !== '';
+      console.log('[API GET] 判断结果: source=' + source + ', sync_needed=' + syncNeeded);
 
       // 4. 加载模型输入变量
       let model = null;
