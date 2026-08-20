@@ -151,10 +151,16 @@
       });
 
       if (res.ok) {
+        var result = await res.json();
         hasChanges = false;
-        status.textContent = '保存成功，正在部署...';
-        status.style.color = '#27ae60';
-        console.log('保存成功，已触发部署');
+        console.log('保存结果:', result);
+        if (result.github && !result.github.synced) {
+          status.textContent = '保存成功，但 GitHub 同步失败: ' + (result.github.reason || '未知错误');
+          status.style.color = '#e67e22';
+        } else {
+          status.textContent = '保存成功，正在部署...';
+          status.style.color = '#27ae60';
+        }
       } else {
         var errText = await res.text();
         console.error('保存失败，状态码:', res.status, '响应:', errText);
