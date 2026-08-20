@@ -130,6 +130,14 @@ async function ensureTables() {
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS business_plan_model (
+      id SERIAL PRIMARY KEY,
+      model_key VARCHAR(255) NOT NULL UNIQUE,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
   tablesCreated = true;
   console.log('数据库表初始化完成');
 }
@@ -266,17 +274,32 @@ module.exports = async (req, res) => {
       result.rows.forEach(function(row) {
         content[row.section_key] = row.content;
       });
-      return res.json({ content: content });
+
+      // 加载模型输入变量
+      let model = null;
+      const modelResult = await db.query(
+        'SELECT value FROM business_plan_model WHERE model_key = $1',
+        ['model_inputs']
+      );
+      if (modelResult.rows.length > 0) {
+        try {
+          model = JSON.parse(modelResult.rows[0].value);
+        } catch (e) {
+          model = null;
+        }
+      }
+
+      return res.json({ content: content, model: model });
     }
 
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================
     if (req.method === 'POST' && path === '/api/business-plan/save-and-deploy') {
-      const { content } = req.body || {};
+      const { content, model } = req.body || {};
       if (!content || typeof content !== 'object') {
         return res.status(400).json({ error: '内容数据不能为空' });
       }
 
-      // 1. 保存到数据库
+      // 1. 保存内容到数据库
       const keys = Object.keys(content);
       for (let i = 0; i < keys.length; i++) {
         const key = keys[i];
@@ -292,12 +315,25 @@ module.exports = async (req, res) => {
         }
       }
 
-      // 2. 同步到 GitHub（触发 Vercel 自动部署）
+      // 2. 保存模型输入变量到数据库
+      let savedModel = null;
+      if (model && typeof model === 'object') {
+        savedModel = model;
+        await db.query(
+          `INSERT INTO business_plan_model (model_key, value, updated_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (model_key) DO UPDATE SET
+             value = $2, updated_at = NOW()`,
+          ['model_inputs', JSON.stringify(model)]
+        );
+      }
+
+      // 3. 同步到 GitHub（触发 Vercel 自动部署）
       const ghToken = process.env.GH_TOKEN;
       let ghResult = { synced: false, reason: 'token_not_found' };
       if (ghToken) {
         try {
-          await syncToGitHub(content, ghToken);
+          await syncToGitHub(content, savedModel, ghToken);
           ghResult = { synced: true };
           console.log('GitHub 同步成功');
         } catch (e) {
@@ -1066,7 +1102,7 @@ function githubRequest(method, path, token, body) {
   });
 }
 
-async function syncToGitHub(content, token) {
+async function syncToGitHub(content, model, token) {
   var owner = 'AIgsc';
   var repo = 'taluo';
   var filePath = '海鲜自助项目计划书/index.html';
@@ -1097,12 +1133,19 @@ async function syncToGitHub(content, token) {
     }
   }
 
-  if (updatedCount === 0) {
-    console.log('没有匹配的 data-edit 区块，跳过 GitHub 提交');
+  // 3. 替换 data-model 计算值（使用模型输入运行计算）
+  if (model && typeof model === 'object') {
+    var computedValues = calculateModel(model);
+    updatedHtml = replaceDataModelContent(updatedHtml, computedValues);
+    console.log('已替换 data-model 计算值');
+  }
+
+  if (updatedCount === 0 && (!model || typeof model !== 'object')) {
+    console.log('没有可更新的内容，跳过 GitHub 提交');
     return;
   }
 
-  // 3. 提交更新到 GitHub
+  // 4. 提交更新到 GitHub
   var newContent = Buffer.from(updatedHtml, 'utf-8').toString('base64');
   var putRes = await githubRequest('PUT', apiPath, token, JSON.stringify({
     message: '自动部署：更新商业计划书内容',
@@ -1116,6 +1159,147 @@ async function syncToGitHub(content, token) {
   }
 
   console.log('已提交 ' + updatedCount + ' 个区块到 GitHub');
+}
+
+// ==================== 服务端计算引擎（与前端 business-model.js 完全一致） ====================
+function calculateModel(inputs) {
+  var i = Object.assign({
+    area: 2000, price: 169, dailyRevenue: 60000,
+    totalInvestment: 800000, equipmentInvestment: 500000,
+    foodCostPct: 45, rent: 70000, laborCost: 243000,
+    marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
+    investorPct: 10, landlordThreshold: 30000, landlordPct: 10,
+    paybackMonths: 12
+  }, inputs || {});
+
+  function formatNum(n) {
+    return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  function formatWan(n) {
+    var w = n / 10000;
+    return w >= 10 ? Math.round(w) + '万' : w.toFixed(1) + '万';
+  }
+
+  var monthlyRevenue = Math.round(i.dailyRevenue * 30);
+  var equipmentAmort = Math.round(i.equipmentInvestment / i.paybackMonths);
+  var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
+  var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
+  var totalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
+  var operatingProfit = monthlyRevenue - totalExpense;
+  var cashNetProfit = operatingProfit + equipmentAmort;
+  var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
+  var profitAfterService = operatingProfit - serviceFee;
+  var investorDividend = Math.round(profitAfterService * i.investorPct / 100);
+  var landlordDividend = Math.round(Math.max(0, profitAfterService - i.landlordThreshold) * i.landlordPct / 100);
+  var operatorIncome = profitAfterService - investorDividend - landlordDividend;
+
+  var pessimisticFoodCost = Math.round(monthlyRevenue * 0.48);
+  var pessimisticTotalExpense = i.laborCost + pessimisticFoodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
+  var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
+  var pessimisticProfitAfterService = pessimisticOperatingProfit - serviceFee;
+  var pessimisticOperatorIncome = pessimisticProfitAfterService - Math.round(pessimisticProfitAfterService * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterService - 30000) * 0.1);
+
+  var avgMonthlyIncome = Math.round(operatorIncome * 0.7 + (operatorIncome * 0.5) * 0.3);
+  var paybackPeriod = Math.ceil(i.totalInvestment / Math.max(1, avgMonthlyIncome));
+
+  // 与前端 BusinessModel.values 完全一致
+  return {
+    area: i.area + '㎡',
+    area_dining: Math.round(i.area * 0.475) + '㎡（' + (47.5) + '%）',
+    area_serving: Math.round(i.area * 0.15) + '㎡（' + (15) + '%）',
+    area_kitchen: Math.round(i.area * 0.2) + '㎡（' + (20) + '%）',
+    area_storage: Math.round(i.area * 0.1) + '㎡（' + (10) + '%）',
+    area_lobby: Math.round(i.area * 0.04) + '㎡（' + (4) + '%）',
+    area_restroom: Math.round(i.area * 0.035) + '㎡（' + (3.5) + '%）',
+
+    price: i.price + '元/位',
+
+    daily_revenue: formatWan(i.dailyRevenue),
+    monthly_revenue: formatWan(monthlyRevenue),
+    monthly_revenue_num: formatNum(monthlyRevenue) + '元',
+
+    total_investment: formatWan(i.totalInvestment),
+    equipment_investment: formatWan(i.equipmentInvestment),
+
+    equipment_amortization: formatNum(equipmentAmort),
+    equipment_amortization_short: formatNum(equipmentAmort),
+
+    food_cost: formatNum(foodCost),
+    labor_cost: formatNum(i.laborCost),
+    rent: formatNum(i.rent),
+    marketing_cost: formatNum(marketingCost),
+    misc_cost: formatNum(i.miscCost),
+    total_operating_expense: formatNum(totalExpense),
+
+    operating_profit: formatNum(operatingProfit),
+    operating_profit_display: formatNum(operatingProfit),
+    cash_net_profit_display: formatNum(cashNetProfit),
+
+    service_fee: formatNum(serviceFee) + '元',
+    profit_after_service_fee: formatNum(profitAfterService) + '元',
+    investor_dividend: formatNum(investorDividend) + '元',
+    landlord_dividend: formatNum(landlordDividend) + '元',
+    operator_income: formatNum(operatorIncome) + '元',
+    operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
+
+    pessimistic_food_cost: formatNum(pessimisticFoodCost),
+
+    payback_result: i.paybackMonths + '个月',
+  };
+}
+
+// ==================== HTML data-model 替换函数 ====================
+function replaceDataModelContent(html, modelValues) {
+  if (!modelValues || typeof modelValues !== 'object') return html;
+
+  var updated = html;
+  var keys = Object.keys(modelValues);
+
+  for (var k = 0; k < keys.length; k++) {
+    var key = keys[k];
+    var value = String(modelValues[key]);
+    if (!value) continue;
+
+    // 查找 data-model="key" 并替换 inner text
+    var attr = 'data-model="' + key + '"';
+    var searchFrom = 0;
+    var found = false;
+
+    while (true) {
+      var attrIdx = updated.indexOf(attr, searchFrom);
+      if (attrIdx === -1) break;
+
+      // 找到标签开始位置
+      var beforeAttr = updated.substring(0, attrIdx);
+      var tagStart = beforeAttr.lastIndexOf('<');
+      if (tagStart === -1) { searchFrom = attrIdx + 1; continue; }
+
+      // 提取标签名
+      var tagPart = updated.substring(tagStart);
+      var tagNameMatch = tagPart.match(/^<(\w+)/);
+      if (!tagNameMatch) { searchFrom = attrIdx + 1; continue; }
+      var tagName = tagNameMatch[1];
+
+      // 找到开标签结束位置
+      var afterAttr = updated.substring(attrIdx + attr.length);
+      var openTagEndRel = afterAttr.indexOf('>');
+      if (openTagEndRel === -1) { searchFrom = attrIdx + 1; continue; }
+
+      var contentStart = attrIdx + attr.length + openTagEndRel + 1;
+      var closingTag = '</' + tagName + '>';
+
+      // 找到对应的闭标签
+      var closeIdx = updated.indexOf(closingTag, contentStart);
+      if (closeIdx === -1) { searchFrom = attrIdx + 1; continue; }
+
+      // 替换内容
+      updated = updated.substring(0, contentStart) + value + updated.substring(closeIdx);
+      found = true;
+      searchFrom = contentStart + value.length;
+    }
+  }
+
+  return updated;
 }
 
 // ==================== HTML 替换函数 ====================
