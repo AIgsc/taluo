@@ -7,7 +7,6 @@
  *   --dry-run 只显示不保存
  */
 
-require('dotenv').config();
 const { Pool } = require('pg');
 const BusinessModel = require('../海鲜自助项目计划书/business-model.js');
 
