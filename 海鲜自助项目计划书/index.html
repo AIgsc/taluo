@@ -2202,19 +2202,17 @@
 <h1><span style="font-size:1.8rem;">海鲜火锅自助</span><span data-model="area">2000㎡</span><span style="font-size:1.8rem;">黄辛庄农贸市场店</span></h1>
     <div class="divider"></div>
     <div class="info">
-      <strong>包含内容：</strong>投资人 · 房东 · 施工 · 财务对账<br>
-      <strong>硬件投入：</strong><span data-model="equipment_investment">50万</span>元（装修/门脸/设备/餐具/办公/工具）<br>
-      <strong>流动资金：</strong>30万元（前期人工组建20万+首批食材备货10万）<br>
-      <strong>总现金投入：</strong><span style="color:#ffd700;font-size:1.1rem;"><span data-model="total_investment">80万</span>元</span><br>
+      <strong>包含内容：</strong>投资人 · 房东 · 项目组织者（老板）· 财务对账<br>
+      <strong>投资人出资：</strong><span style="color:#ffd700;font-size:1.1rem;"><span data-model="total_investment">80万</span>元</span>（装修设备50万+流动资金30万）<br>
+      <strong>老板（组织者）：</strong>不投钱，全程运营管理，拿分红<br>
       <strong>目标营业：</strong>日销<span data-model="daily_revenue">6万</span> · 月销<span data-model="monthly_revenue">180万</span><br>
       <strong>团队编制：</strong>48人<br>
-      <strong>回本周期：</strong><span data-model="payback_result">4个月</span>（运营方回本，含爬坡期）<br>
       <strong>投资人回本：</strong><span data-model="investor_payback">18个月</span>（分红<span data-model="investor_pct">12%</span>，年化收益约73%）<br>
       <strong>合伙期限：</strong><span data-model="investor_term">36个月</span>（3年，期满自动终止，<span data-model="investor_total_3y">约175万</span>总回报，<span data-model="investor_roi_3y">219%</span>）<br>
       <strong>老板月纯利：</strong>第1-12月 <span data-model="operator_income">297,320元</span>/月（约<span data-model="operator_income_wan">29.7万</span>）· 第13月起 <span data-model="post_amort_operator_income">329,820元</span>/月（约<span data-model="post_amort_operator_income_wan">33.0万</span>）<br>
       <strong>老板年纯利：</strong>第1年 <span data-model="operator_year1_wan">约357万</span> · 第2年起 <span data-model="operator_year2_wan">约396万</span>
     </div>
-    <div class="version">版本 V11.2 · 封面新增老板纯利一览</div>
+    <div class="version">版本 V11.3 · 老板不投钱 · 角色定位修正</div>
   
 </div>
 
@@ -2378,7 +2376,7 @@
     <div class="highlight-box" style="border-left:4px solid #c0392b;background:#fff5f5;">
       <strong>⚠️ 悲观 vs 理想对比（经营考核口径）：</strong><br>
       理想模型运营方月实得≈<span data-model="operator_income_wan">27.5万</span> → 悲观模型≈<span data-model="pessimistic_operator_income_wan">31.7万</span>，<strong>每月少<span data-model="pessimistic_vs_ideal_diff">4.5万</span>，年累计少<span data-model="pessimistic_vs_ideal_annual">54万</span></strong>。<br>
-      回本周期从<span data-model="payback_result">12个月</span>延长至<span data-model="pessimistic_payback">约14-15个月</span>。<br>
+      投资人回本约<span data-model="pessimistic_payback">约18个月（投资人）</span>。<br>
       <strong>建议：</strong>实际操作中应按悲观情景做预算预留，才能在真实经营中游刃有余。
     </div>
   </div>
@@ -2391,37 +2389,29 @@
       <h2>回本周期测算</h2>
     </div>
     <div class="data-grid">
-      <div class="data-card"><div class="label">总投资</div><div class="value"><span data-model="total_investment">80万</span></div></div>
-      <div class="data-card"><div class="label">稳定后运营方月实得</div><div class="value green"><span data-model="operator_income_wan">27.5万</span></div></div>
+      <div class="data-card"><div class="label">投资人出资</div><div class="value"><span data-model="total_investment">80万</span></div></div>
+      <div class="data-card"><div class="label">投资人月分红（12%）</div><div class="value green"><span data-model="investor_dividend">45,280元</span></div></div>
+      <div class="data-card"><div class="label">投资人回本周期</div><div class="value green"><span data-model="investor_payback">18个月</span></div></div>
     </div>
-    <div class="sub-title-sm">回本推演时间线（经营考核口径，含硬件分摊）</div>
+    <div class="sub-title-sm">投资人资金回推演时间线（80万为投资人出资，老板不投钱）</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th style="width:25%;">阶段</th><th style="width:35%;">时间</th><th style="width:40%;text-align:right;">累计净现金流</th></tr></thead>
+        <thead><tr><th style="width:25%;">阶段</th><th style="width:35%;">时间</th><th style="width:40%;text-align:right;">投资人累计收回</th></tr></thead>
         <tbody>
-          <tr><td>装修施工期</td><td>第1–2月</td><td style="text-align:right;color:#c0392b;">-80万（投入）</td></tr>
-          <tr><td>试营业爬坡期</td><td>第3–6月</td><td style="text-align:right;color:#c0392b;">-80万～-50万</td></tr>
-          <tr><td>稳定盈利期</td><td>第7–10月</td><td style="text-align:right;color:#1a8a3a;">-50万～-15万</td></tr>
-          <tr><td>运营方回本</td><td><strong>第12个月</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;">运营方回本</td></tr>
+          <tr><td>装修施工期</td><td>第1–2月</td><td style="text-align:right;color:#c0392b;">0元（投入80万）</td></tr>
+          <tr><td>试营业爬坡期</td><td>第3–6月</td><td style="text-align:right;color:#c0392b;">0～5万（分红较低）</td></tr>
+          <tr><td>稳定分红期</td><td>第7–12月</td><td style="text-align:right;color:#c0392b;">5万～54万</td></tr>
+          <tr><td>投资人回本</td><td><strong>第18个月</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;">累计收回80万</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="highlight-box orange">
-      <strong>回本周期说明（经营口径，含硬件分摊<span data-model="equipment_amortization_short">41,667</span>元/月）：</strong><br>
-      • 装修施工期2个月：<span data-model="total_investment">80万</span>现金投入（装修<span data-model="equipment_investment">50万</span>+组建人工<span data-model="staff_initial_cost_wan">20万</span>+预留食材<span data-model="food_initial_cost_wan">10万</span>），0营收<br>
-      • 试营业第1-2个月（第3-4月）：日均3-4万，月营收≈<span data-model="trial1_revenue_wan">100万</span>，经营口径支出≈<span data-model="trial1_expense_wan">89.5万</span>（含硬件分摊4.17万），扣两费后≈<span data-model="trial1_after_fees_wan">2.5万</span><br>
-      • 试营业第3-4个月（第5-6月）：日均4-5万，月营收≈<span data-model="trial2_revenue_wan">130万</span>，经营口径支出≈<span data-model="trial2_expense_wan">103.9万</span>，扣两费后≈<span data-model="trial2_after_fees_wan">15.7万</span><br>
-      • 第7个月起：稳定日均6万+，月纯利<span data-model="stable_after_fees_wan">37.7万</span>，运营方实得约<span data-model="stable_operator_income_wan">27.5万</span><br>
-      <strong>结论：运营方从进场到回本约12个月，企业整体运营健康。</strong>
+    <div class="highlight-box">
+      <strong>角色说明：</strong><br>
+      • <strong>投资人：</strong>出资80万（装修设备50万+流动资金30万），按纯利12%分红，约18个月回本，3年累计回报约175万（219%）<br>
+      • <strong>老板（项目组织者）：</strong>不投钱，全程负责运营管理，月均纯利约29.7万（第1-12月）/ 33.0万（第13月起），年收入约357-396万<br>
+      • <strong>房东：</strong>收租7万/月+超额分成，月均约10.5万<br>
+      <strong>三方各取所需，共同把项目做好，缺一不可。</strong>
     </div>
-    <div class="highlight-box" style="border-left:4px solid #2e86c1;">
-      <strong>📌 投资人分红回本分析</strong><br>
-      投资人按纯利<span data-model="investor_pct">12%</span>分红，月均<span data-model="investor_dividend">45,280元</span>，年化收益率约73%。<br>
-      <strong>投资人回本周期：<span data-model="investor_payback">18个月</span>（80万 ÷ 4.5万/月 ≈ 18个月）</strong><br>
-      第13个月起硬件分摊结束，纯利上升至<span data-model="cash_net_profit_num">563,000</span>−<span data-model="total_fee_num">144,000</span>=<span data-model="post_amort_profit_after_fees_plain">419,000</span>，投资人分红增至<span data-model="post_amort_profit_after_fees_plain">419,000</span>×<span data-model="investor_pct">12%</span>≈50,280元/月，回本后纯收益。<br>
-      <span style="color:#2e86c1;">现金流水看"手上实际剩多少钱"（稳定月<span data-model="cash_net_profit_display">56.3万</span>）；经营口径看"门店赚不赚钱"（含设备消耗）。</span>
-    </div>
-  
 </div>
 
 <!-- ==================== 六、项目风险控制 ==================== -->
@@ -2758,7 +2748,7 @@
       <h2>三方分账机制</h2>
     </div>
     <p class="fs-085 color-gray" style="margin-bottom:12px;">最终合同定稿 · 无争议 · 法定结算顺序<br>⚠️ 以下分账基数使用<b>经营考核口径利润</b>（含硬件分摊<span data-model="equipment_amortization_short">41,667</span>元/月），非现金净利润。</p>
-    <div class="sub-title-sm">分账顺序</div>
+    <div class="sub-title-sm">分账顺序（出资人·房东·项目组织者）</div>
     <ol class="step-list">
       <li><strong>优先扣除：</strong>前端服务商 营业额4%流水抽成</li>
       <li><strong>核算当月完整纯利后：</strong>投资人分纯利<span data-model="investor_pct">12%</span></li>
@@ -2866,7 +2856,7 @@
 <script>
 // 代码版本号：每次修改 HTML/JS 代码后递增此版本号
 // 用于判断代码是否比数据库更新，实现双向同步
-window.CODE_VERSION = '20260820-008';
+window.CODE_VERSION = '20260820-009';
 </script>
 <script src="business-model.js"></script>
 <script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>

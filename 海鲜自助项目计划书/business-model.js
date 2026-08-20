@@ -98,9 +98,7 @@
       var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
       var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * i.investorPct / 100) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
 
-      // 回本相关
-      var avgMonthlyIncome = Math.round(operatorIncome * 0.7 + (operatorIncome * 0.5) * 0.3);
-      var paybackPeriod = Math.ceil(i.totalInvestment / Math.max(1, avgMonthlyIncome));
+      // 回本相关（老板不投钱，无需计算回本周期）
 
       // ========== 周度营收分解 ==========
       var monThuDaily = Math.round(i.dailyRevenue * 0.583);
@@ -170,7 +168,7 @@
       // ========== 悲观 vs 理想对比 ==========
       var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
       var pessimisticVsIdealAnnual = pessimisticVsIdealMonthly * 12;
-      var pessimisticPaybackPeriod = Math.ceil(paybackPeriod * 1.25);
+      var pessimisticPaybackPeriod = '约18个月（投资人）';
 
       // ========== 人均薪酬 ==========
       var avgSalary = Math.round(i.laborCost / i.staffCount);
@@ -347,12 +345,12 @@
         pessimistic_vs_ideal_diff: (pessimisticVsIdealMonthly / 10000).toFixed(1) + '万',
         pessimistic_vs_ideal_diff_plain: pessimisticVsIdealMonthly,
         pessimistic_vs_ideal_annual: (pessimisticVsIdealAnnual / 10000).toFixed(0) + '万',
-        pessimistic_payback: '约 ' + pessimisticPaybackPeriod + '-' + (pessimisticPaybackPeriod + 1) + ' 个月',
+        pessimistic_payback: pessimisticPaybackPeriod,
 
-        // ===== 11. 回本周期 =====
+        // ===== 11. 回本周期（老板不投钱，仅显示投资人数据） =====
         payback_months: i.paybackMonths,
-        payback_result: paybackPeriod + '个月',
-        payback_result_plain: paybackPeriod,
+        payback_result: '老板不投钱，无需回本',
+        payback_result_plain: 0,
         investor_payback: Math.ceil(i.totalInvestment / Math.max(1, investorDividend)) + '个月',
         investor_payback_plain: Math.ceil(i.totalInvestment / Math.max(1, investorDividend)),
 
@@ -580,9 +578,7 @@
         var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
         var pessimisticVsIdealAnnual = pessimisticVsIdealMonthly * 12;
 
-        // 回本
-        var avgMonthlyIncome = Math.round(operatorIncome * 0.7 + (operatorIncome * 0.5) * 0.3);
-        var paybackPeriod = Math.ceil(i.totalInvestment / Math.max(1, avgMonthlyIncome));
+        // 回本（老板不投钱，仅查看投资人数据）
 
         return {
           // 原始中间值
@@ -653,8 +649,7 @@
           suppliesAmort: Math.round(suppliesAsset / i.paybackMonths),
 
           // 回本
-          avgMonthlyIncome: avgMonthlyIncome,
-          paybackPeriod: paybackPeriod,
+          // 回本 - 老板不投钱，无需计算
 
           // 流动资金
           workingCapital: i.totalInvestment - i.equipmentInvestment,
