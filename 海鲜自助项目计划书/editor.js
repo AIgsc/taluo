@@ -261,9 +261,23 @@
 
   // ==================== 应用保存的内容到页面 ====================
   function applyContent(data) {
-    Object.keys(data).forEach(function(key) {
+    if (!data || typeof data !== 'object') return;
+    var keys = Object.keys(data);
+    // 安全检查：如果所有值都为空，不覆盖（防止清空页面）
+    var hasContent = false;
+    for (var i = 0; i < keys.length; i++) {
+      if (data[keys[i]] && data[keys[i]].trim()) {
+        hasContent = true;
+        break;
+      }
+    }
+    if (!hasContent) {
+      console.log('[同步] 跳过：数据库内容为空，保留 HTML 原始内容');
+      return;
+    }
+    keys.forEach(function(key) {
       var el = document.querySelector('[data-edit="' + key + '"]');
-      if (el) {
+      if (el && data[key]) {
         el.innerHTML = data[key];
       }
     });
@@ -339,6 +353,19 @@
   async function syncHtmlToDb() {
     try {
       var content = collectContent();
+      // 安全检查：如果内容为空，不同步（防止清空数据库）
+      var keys = Object.keys(content);
+      var hasContent = false;
+      for (var i = 0; i < keys.length; i++) {
+        if (content[keys[i]] && content[keys[i]].trim()) {
+          hasContent = true;
+          break;
+        }
+      }
+      if (!hasContent) {
+        console.log('[同步] 跳过：当前页面内容为空，不同步到数据库');
+        return;
+      }
       var htmlHash = computeHtmlHash();
       var model = window.BusinessModel ? window.BusinessModel.getInputs() : null;
       await fetch(API_URL + '/sync', {
@@ -346,10 +373,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: content, html_hash: htmlHash, model: model })
       });
-      console.log('后台同步：HTML 内容已同步到数据库');
+      console.log('[同步] 后台同步完成：HTML 内容已同步到数据库');
     } catch (e) {
-      // 静默失败，不影响页面展示
-      console.log('后台同步跳过:', e.message);
+      console.log('[同步] 后台同步失败:', e.message);
     }
   }
 

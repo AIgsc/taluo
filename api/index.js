@@ -292,6 +292,10 @@ module.exports = async (req, res) => {
 
       // 3. 对比哈希值决定内容来源
       let source = htmlHash && htmlHash === lastSyncedHash ? 'db' : 'html';
+      // 安全检查：如果数据库内容为空，强制返回 html（防止清空页面）
+      if (source === 'db' && Object.keys(dbContent).length === 0) {
+        source = 'html';
+      }
       let syncNeeded = source === 'html' && htmlHash !== '';
       console.log('[API GET] 判断结果: source=' + source + ', sync_needed=' + syncNeeded);
 
