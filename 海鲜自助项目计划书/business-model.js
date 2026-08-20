@@ -44,6 +44,7 @@
       landlordThreshold: 30000, // 房东超额分成门槛
       landlordPct: 10,          // 房东超额分成率 %
       paybackMonths: 12,        // 硬件分摊月数
+      partnerTermMonths: 36,    // 投资人合伙期限（月）
 
       // 扩展参数（通用模板）
       tableCount: 120,          // 桌数
@@ -158,6 +159,13 @@
       var postAmortInvestorDividend = Math.round(postAmortProfitAfterFees * i.investorPct / 100);
       var postAmortLandlordDividend = Math.round(Math.max(0, postAmortProfitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
       var postAmortOperatorIncome = postAmortProfitAfterFees - postAmortInvestorDividend - postAmortLandlordDividend;
+
+      // ========== 投资人3年总收益 ==========
+      var investorYear1 = investorDividend * 12;
+      var investorYear2 = postAmortInvestorDividend * 12;
+      var investorYear3 = postAmortInvestorDividend * 12;
+      var investorTotalReturn3y = investorYear1 + investorYear2 + investorYear3;
+      var investorROI = (investorTotalReturn3y / i.totalInvestment * 100).toFixed(0);
 
       // ========== 悲观 vs 理想对比 ==========
       var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
@@ -344,6 +352,20 @@
         payback_result_plain: paybackPeriod,
         investor_payback: Math.ceil(i.totalInvestment / Math.max(1, investorDividend)) + '个月',
         investor_payback_plain: Math.ceil(i.totalInvestment / Math.max(1, investorDividend)),
+
+        // ===== 投资人合伙期限 =====
+        investor_term: i.partnerTermMonths + '个月',
+        investor_term_plain: i.partnerTermMonths,
+        investor_term_year: (i.partnerTermMonths / 12) + '年',
+        investor_year1_dividend: formatWan(investorYear1),
+        investor_year1_dividend_wan: (investorYear1 / 10000).toFixed(0) + '万',
+        investor_year2_dividend: formatWan(investorYear2),
+        investor_year2_dividend_wan: (investorYear2 / 10000).toFixed(0) + '万',
+        investor_year3_dividend: formatWan(investorYear3),
+        investor_year3_dividend_wan: (investorYear3 / 10000).toFixed(0) + '万',
+        investor_total_3y: formatWan(investorTotalReturn3y),
+        investor_total_3y_wan: (investorTotalReturn3y / 10000).toFixed(0) + '万',
+        investor_roi_3y: investorROI + '%',
 
         // 试营业推演
         trial1_revenue_wan: formatWan(trial1MonthlyRev),

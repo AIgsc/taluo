@@ -2209,9 +2209,10 @@
       <strong>目标营业：</strong>日销<span data-model="daily_revenue">6万</span> · 月销<span data-model="monthly_revenue">180万</span><br>
       <strong>团队编制：</strong>48人<br>
       <strong>回本周期：</strong><span data-model="payback_result">4个月</span>（运营方回本，含爬坡期）<br>
-      <strong>投资人回本：</strong><span data-model="investor_payback">12个月</span>（分红<span data-model="investor_pct">18%</span>，年化收益超100%）
+      <strong>投资人回本：</strong><span data-model="investor_payback">12个月</span>（分红<span data-model="investor_pct">18%</span>，年化收益超100%）<br>
+      <strong>合伙期限：</strong><span data-model="investor_term">36个月</span>（3年，期满自动终止，<span data-model="investor_total_3y">约240万</span>总回报，<span data-model="investor_roi_3y">300%</span>）
     </div>
-    <div class="version">版本 V10.0 · 设备12个月分摊+两套报表</div>
+    <div class="version">版本 V11.0 · 设备12个月分摊+两套报表 · 投资人3年合伙制</div>
   
 </div>
 
@@ -2784,6 +2785,29 @@
       <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「经营纯利」定义，否则结算时各执一词，产生纠纷。</span><br>
       <span style="color:#2e86c1;">📌 第13个月起硬件分摊结束，经营纯利=<span data-model="cash_net_profit_num">563,000</span>−<span data-model="total_fee_num">144,000</span>=<span data-model="post_amort_profit_after_fees_plain">419,000</span>，投资分红<span data-model="investor_pct">18%</span>≈75,420元，运营方月实得上升至约<span data-model="post_amort_operator_income">338,200元</span>。</span>
     </div>
+
+    <div class="sub-title" style="margin-top:24px;">📋 投资人退出机制</div>
+    <div class="highlight-box" style="border-left:4px solid #8e44ad;">
+      <strong>定位：固定期限财务合伙人（非干股、非按劳分配）</strong><br>
+      投资人出资80万但不参与日常运营，属于纯资本投资。按「共担风险、限期分红、到期退出」原则设计。<br><br>
+      <strong>📌 合伙期限：<span data-model="investor_term">36个月</span>（3年）</strong><br>
+      • <strong>第1年（回本期）：</strong>月分红<span data-model="investor_dividend_num">67,920元</span>，12个月累计收回约<span data-model="investor_year1_dividend_wan">81万</span>，基本覆盖原始投资<br>
+      • <strong>第2年（纯收益期）：</strong>硬件分摊结束，月分红升至约75,420元，全年累计<span data-model="investor_year2_dividend_wan">90万</span><br>
+      • <strong>第3年（纯收益期）：</strong>同上，全年累计<span data-model="investor_year3_dividend_wan">90万</span><br>
+      • <strong>3年总分红：<span data-model="investor_total_3y_wan">约260万</span>，投资回报率<span data-model="investor_roi_3y">约328%</span></strong><br><br>
+      <strong>📌 期满退出方式（3选1，写入合同）：</strong><br>
+      <strong>方案A（推荐）：</strong>期满自动终止，无需回购，投资人已获得3倍以上回报，合作关系自然结束。<br>
+      <strong>方案B（提前回购）：</strong>第12个月后（投资人已回本），运营方可按「剩余月数 × 月均分红 × 50%」折价回购，提前解除合伙关系。<br>
+      <strong>方案C（续约）：</strong>双方协商一致，续签合同，分红比例重新商定（建议降至10%），继续合作。<br><br>
+      <strong>⚠️ 合同关键条款：</strong>
+      <ol style="margin:4px 0 0 20px;font-size:0.85rem;">
+        <li>投资人按出资额<span style="color:#c0392b;">80万</span>承担有限责任，不承担经营亏损的无限连带责任</li>
+        <li>投资人不得干预日常经营决策，仅享有知情权和分红权</li>
+        <li>每月5日前出上月财务报表，10日前完成分红结算</li>
+        <li>合伙期内投资人不得中途撤资，运营方不得无故终止分红</li>
+        <li>期满后运营方有优先续约权，同等条件下优先于第三方</li>
+      </ol>
+    </div>
   
 </div>
 
@@ -2797,7 +2821,7 @@
 <script>
 // 代码版本号：每次修改 HTML/JS 代码后递增此版本号
 // 用于判断代码是否比数据库更新，实现双向同步
-window.CODE_VERSION = '20260820-004';
+window.CODE_VERSION = '20260820-005';
 </script>
 <script src="business-model.js"></script>
 <script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>
