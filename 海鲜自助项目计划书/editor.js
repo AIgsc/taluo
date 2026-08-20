@@ -1,14 +1,14 @@
 /**
  * 海鲜自助项目计划书 - 在线编辑功能
- * 支持所有文字内容点击编辑，保存到本地 JSON 文件
- * 运行 sync-html.js 将编辑内容写入 HTML 文件
+ * 编辑内容保存到数据库，页面始终从数据库加载最新内容
+ * 运行 sync-html.js 将数据库内容同步到 HTML 文件
  */
 
 (function() {
   'use strict';
 
-  // 本地保存服务器地址（修改为你的实际地址）
-  const SAVE_URL = window.BP_SAVE_URL || 'http://localhost:3456';
+  // API 地址，通过 Vercel 同域部署，使用相对路径
+  const API_URL = window.BP_API_URL || '/api/business-plan';
   let editMode = false;
   let hasChanges = false;
 
@@ -98,13 +98,38 @@
     return data;
   }
 
-  // ==================== 保存内容到本地 JSON 文件 ====================
+  // ==================== 应用保存的内容到页面 ====================
+  function applyContent(data) {
+    Object.keys(data).forEach(function(key) {
+      var el = document.querySelector('[data-edit="' + key + '"]');
+      if (el) {
+        el.innerHTML = data[key];
+      }
+    });
+  }
+
+  // ==================== 从数据库加载内容 ====================
+  async function loadContent() {
+    try {
+      var res = await fetch(API_URL);
+      if (res.ok) {
+        var result = await res.json();
+        if (result.content && typeof result.content === 'object') {
+          applyContent(result.content);
+          console.log('商业计划书：已加载数据库中的编辑内容');
+        }
+      }
+    } catch (e) {
+      console.log('商业计划书：使用默认内容');
+    }
+  }
+
+  // ==================== 保存内容到数据库 ====================
   async function saveContent() {
     var content = collectContent();
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
 
-    // 调试：打印收集到的 keys
     var keys = Object.keys(content);
     console.log('准备保存，区块数:', keys.length, 'keys:', keys.join(', '));
 
@@ -119,7 +144,7 @@
     status.textContent = '';
 
     try {
-      var res = await fetch(SAVE_URL + '/save', {
+      var res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: content })
@@ -127,7 +152,7 @@
 
       if (res.ok) {
         hasChanges = false;
-        status.textContent = '保存成功！运行 sync-html.js 同步到 HTML';
+        status.textContent = '保存成功';
         status.style.color = '#27ae60';
         console.log('保存成功');
       } else {
@@ -138,7 +163,7 @@
       }
     } catch (e) {
       console.error('保存网络错误:', e);
-      status.textContent = '保存失败：请先启动 save-server.js';
+      status.textContent = '保存失败：网络错误';
       status.style.color = '#e74c3c';
     } finally {
       saveBtn.disabled = false;
@@ -153,10 +178,20 @@
   function init() {
     createToolbar();
 
+    // 从数据库加载已保存的内容（覆盖 HTML 默认内容）
+    loadContent();
+
     // 监听输入事件，标记修改
     document.addEventListener('input', function(e) {
       if (e.target.closest && e.target.closest('[data-edit]')) {
         markModified();
+      }
+    });
+
+    // 处理 bfcache（浏览器后退/前进缓存）恢复场景
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) {
+        loadContent();
       }
     });
   }
