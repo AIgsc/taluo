@@ -40,7 +40,7 @@
       // 分账参数
       serviceFeePct: 4,         // 服务商抽成（成交额%）%
       operationPct: 4,          // 运营部门分成（成交额%）%
-      investorPct: 18,          // 投资人分红 %
+      investorPct: 12,          // 投资人分红 %
       landlordThreshold: 30000, // 房东超额分成门槛
       landlordPct: 10,          // 房东超额分成率 %
       paybackMonths: 12,        // 硬件分摊月数
