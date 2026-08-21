@@ -860,17 +860,18 @@ function render() {
   cats.forEach(function(cat) {
     try {
       var val = localStorage.getItem('todo_cat_collapsed_' + cat.id);
-      if (val === '1') {
+      if (val === '0') { // 之前是展开状态
         var catDiv = document.querySelector('[data-cat-id="' + cat.id + '"]');
         if (catDiv) {
           var body = catDiv.querySelector('.category-body');
           var toggle = catDiv.querySelector('.cat-toggle');
           if (body && toggle) {
-            body.classList.remove('open');
-            toggle.classList.remove('open');
+            body.classList.add('open');
+            toggle.classList.add('open');
           }
         }
       }
+      // val === '1'（折叠）或 null（首次）：保持默认折叠状态，无需操作
     } catch(e) {}
   });
   initSortable();
@@ -890,8 +891,8 @@ function toggleCat(header) {
   var catDiv = header.closest('.category');
   var catId = catDiv ? catDiv.getAttribute('data-cat-id') : null;
   if (catId) {
-    var collapsed = !body.classList.contains('open');
-    try { localStorage.setItem('todo_cat_collapsed_' + catId, collapsed ? '1' : ''); } catch(e) {}
+    var isOpen = body.classList.contains('open');
+    try { localStorage.setItem('todo_cat_collapsed_' + catId, isOpen ? '0' : '1'); } catch(e) {}
   }
 }
 
