@@ -560,6 +560,8 @@ var DEFAULT_DATA = {
       { id: 'it_3_12', title: '施工中期验收', desc: '检查水电隐蔽工程、防水等中期节点', status: 'pending', sort_order: 12, reports: [] },
       { id: 'it_3_13', title: '施工竣工验收', desc: '全面验收，列出整改清单，施工方整改后复验', status: 'pending', sort_order: 13, reports: [] },
       { id: 'it_3_14', title: '保洁开荒', desc: '全面深度清洁，为设备进场和开业做准备', status: 'pending', sort_order: 14, reports: [] },
+      { id: 'it_3_15', title: '燃气报装申请', desc: '联系燃气公司提交报装申请，预约现场勘测和施工，餐饮自助燃气用量大，需提前规划', status: 'pending', sort_order: 15, reports: [] },
+      { id: 'it_3_16', title: '燃气验收及通气', desc: '燃气管道安装完成后申请验收，取得燃气验收合格证明后方可通气点火', status: 'pending', sort_order: 16, reports: [] },
     ]},
     { id: 'cat_4', name: '开业手续办理', icon: '📄', sort_order: 4, items: [
       { id: 'it_4_1', title: '办理营业执照（工商注册）', desc: '确定经营范围，准备注册材料，提交工商登记', status: 'pending', sort_order: 1, reports: [] },
@@ -570,6 +572,7 @@ var DEFAULT_DATA = {
       { id: 'it_4_6', title: '办理税务登记', desc: '完成税务登记，核定税种，了解税收优惠政策', status: 'pending', sort_order: 6, reports: [] },
       { id: 'it_4_7', title: '开通银行对公账户', desc: '预约银行开户，准备营业执照等材料', status: 'pending', sort_order: 7, reports: [] },
       { id: 'it_4_8', title: '办理社保/公积金开户', desc: '为员工开通社保和公积金账户', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_4_9', title: '门头牌匾审批', desc: '向城管部门提交门头牌匾设计方案审批，很多城市门头需城管审批通过后方可制作安装', status: 'pending', sort_order: 9, reports: [] },
     ]},
     { id: 'cat_5', name: '抖音美团服务商', icon: '📱', sort_order: 5, items: [
       { id: 'it_5_1', title: '联系抖音本地生活服务商', desc: '通过抖音官方渠道或推荐，联系本地生活服务商', status: 'pending', sort_order: 1, reports: [] },
@@ -598,6 +601,7 @@ var DEFAULT_DATA = {
       { id: 'it_7_6', title: '办理入职手续及签订合同', desc: '签订劳动合同，收集身份证、健康证等材料', status: 'pending', sort_order: 6, reports: [] },
       { id: 'it_7_7', title: '岗前培训', desc: '培训服务流程、菜品知识、食品安全规范、收银系统操作', status: 'pending', sort_order: 7, reports: [] },
       { id: 'it_7_8', title: '制定排班制度及薪酬方案', desc: '确定排班轮休制度、绩效考核方案、薪酬发放流程', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_7_9', title: '员工宿舍安排', desc: '如门店提供住宿，需提前安排员工宿舍选址、租赁、床具采购及入住管理', status: 'pending', sort_order: 9, reports: [] },
     ]},
     { id: 'cat_8', name: '食材设备采购', icon: '🛒', sort_order: 8, items: [
       { id: 'it_8_1', title: '采购厨房设备', desc: '灶台、冰柜、冷藏柜、排烟设备、消毒柜、洗碗机等', status: 'pending', sort_order: 1, reports: [] },
@@ -662,6 +666,7 @@ var DEFAULT_DATA = {
       { id: 'it_14_9', title: '建立角色收益速览数据模板', desc: '按投资人12%分红、房东11%分成、运营方实得的模式，制作月度收益速览表，包含月均收益、年收益、3年总收益', status: 'pending', sort_order: 9, reports: [] },
       { id: 'it_14_10', title: '设计月度分账执行流程', desc: '每月5日出报表→10日前完成分账结算→三方确认对账→打款，明确各环节负责人', status: 'pending', sort_order: 10, reports: [] },
       { id: 'it_14_11', title: '制定投资人退出方案文档', desc: '按方案A(期满终止)/B(提前回购)/C(续约合作)三种退出方式，准备合同条款和测算数据', status: 'pending', sort_order: 11, reports: [] },
+      { id: 'it_14_12', title: '备用金管理流程', desc: '制定门店备用金管理制度，明确备用金额度、使用范围、报销流程、盘点周期', status: 'pending', sort_order: 12, reports: [] },
     ]},
     { id: 'cat_15', name: '经营数据分析系统', icon: '📊', sort_order: 15, items: [
       { id: 'it_15_1', title: '设计日报表模板', desc: '包含：当日营收、客流量、客单价、各平台订单数、好评率、差评分析', status: 'pending', sort_order: 1, reports: [] },
@@ -1179,10 +1184,12 @@ function initSortable() {
     }
   });
 
-  // Item level within each category
+  // Item level within each category — only init on visible bodies
   var bodies = document.querySelectorAll('.category-body');
   bodies.forEach(function(body) {
     if (body._sortable) body._sortable.destroy();
+    // Skip hidden bodies (collapsed categories) to avoid drag anomalies
+    if (window.getComputedStyle(body).display === 'none') return;
     body._sortable = Sortable.create(body, {
       handle: '.item-drag',
       animation: 200,
@@ -1240,6 +1247,7 @@ function saveToServer() {
     if (res.success) showToast('已自动保存');
   }).catch(function(e) {
     console.error('Save failed:', e);
+    showToast('⚠️ 保存失败，请检查网络连接');
   });
 }
 
