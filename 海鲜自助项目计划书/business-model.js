@@ -152,7 +152,7 @@
       realisticPayback = paybackMonth;
       realisticPaybackFromInvestment = paybackMonth + 2;
 
-      // 3年各年收益
+      // 3年各年收益（投资人）
       var year1Total = 0;
       var year2Total = 0;
       var year3Total = 0;
@@ -174,6 +174,31 @@
       }
       var investorTotalReturn3y = year1Total + year2Total + year3Total;
       var investorROI = (investorTotalReturn3y / i.totalInvestment * 100).toFixed(0);
+
+      // ========== 老板（运营方）3年各年收益 ==========
+      var opYear1 = 0, opYear2 = 0, opYear3 = 0;
+      var opCumInvestor = 0;
+      for (var om = 1; om <= 36; om++) {
+        var opDiv = 0;
+        if (om >= 6) {
+          // 投资人先分
+          var invThisMonth = 0;
+          if (opCumInvestor < i.totalInvestment) {
+            invThisMonth = investorPrePayback;
+            if (opCumInvestor + invThisMonth > i.totalInvestment) invThisMonth = i.totalInvestment - opCumInvestor;
+          } else {
+            invThisMonth = investorPostPayback;
+          }
+          opCumInvestor += invThisMonth;
+          // 老板分剩余（房东已固定扣除）
+          var isPrePayback = opCumInvestor < i.totalInvestment;
+          opDiv = dividendBase - landlordDividend - invThisMonth;
+        }
+        if (om <= 12) opYear1 += opDiv;
+        else if (om <= 24) opYear2 += opDiv;
+        else opYear3 += opDiv;
+      }
+      var operatorTotal3y = opYear1 + opYear2 + opYear3;
 
       // ========== 试营业推演 ==========
       var trial1MonthlyRev = Math.round(monthlyRevenue * 0.50);
@@ -363,9 +388,6 @@
         operator_income_num: operatorIncomePre,
         operator_income_wan: (operatorIncomePre / 10000).toFixed(1) + '万',
         operator_income_wan_display: (operatorIncomePre / 10000).toFixed(1) + '万',
-        operator_year1: formatNum(operatorIncomePre * 12) + '元',
-        operator_year1_wan: '约' + ((operatorIncomePre * 12) / 10000).toFixed(0) + '万',
-        operator_year2_wan: '约' + ((operatorIncomePost * 12) / 10000).toFixed(0) + '万',
 
         // ===== 11. 回本周期 =====
         payback_result: '老板不投钱，无需回本',
@@ -402,11 +424,14 @@
         landlord_total_3y_wan: ((landlordDividend * 36) / 10000).toFixed(0) + '万',
         landlord_dividend_share_wan: ((landlordDividend * 36) / 10000).toFixed(0) + '万',
 
-        // ===== 运营方（老板）收益汇总 =====
-        operator_total_3y: formatWan(operatorIncomePre * 12 + operatorIncomePost * 24),
-        operator_total_3y_wan: ((operatorIncomePre * 12 + operatorIncomePost * 24) / 10000).toFixed(0) + '万',
+        // 运营方（老板）收益汇总
+        operator_total_3y: formatWan(operatorTotal3y),
+        operator_total_3y_wan: (operatorTotal3y / 10000).toFixed(0) + '万',
         operator_monthly_avg_wan: (operatorIncomePre / 10000).toFixed(1) + '万（回本前）/ ' + (operatorIncomePost / 10000).toFixed(1) + '万（回本后）',
         operator_steady_income_wan: (operatorIncomePost / 10000).toFixed(1) + '万',
+        operator_year1: formatNum(opYear1) + '元',
+        operator_year1_wan: '约' + (opYear1 / 10000).toFixed(0) + '万',
+        operator_year2_wan: '约' + (opYear2 / 10000).toFixed(0) + '万',
 
         // 试营业推演
         trial1_revenue_wan: formatWan(trial1MonthlyRev),
