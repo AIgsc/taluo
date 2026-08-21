@@ -43,7 +43,6 @@
       investorPctYear1: 15,     // 投资人分红 - 第1-12月 %
       investorPct: 11,          // 投资人分红 - 第13-36月 %
       landlordProfitPct: 12,    // 房东利润分红（净利润×12%）%
-      paybackMonths: 12,        // 硬件分摊月数
       partnerTermMonths: 36,    // 投资人合伙期限（月）
 
       // 扩展参数（通用模板）
@@ -76,19 +75,14 @@
 
       // ========== 基础计算 ==========
       var monthlyRevenue = Math.round(i.dailyRevenue * 30);
-      var equipmentAmort = Math.round(i.equipmentInvestment / i.paybackMonths);
       var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
       var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
-      // 经营口径总支出（含设备摊销）
-      var totalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
-      var operatingProfit = monthlyRevenue - totalExpense;
-      // 现金净利润（不扣设备摊销）
       var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
       var cashNetProfit = monthlyRevenue - cashTotalExpense;
       var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
       var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
       var totalFee = serviceFee + operationFee;
-      // 分红基数 = 现金净利润 - 两费（不扣设备摊销，设备款已由投资人一次性支付）
+      // 分红基数 = 现金净利润 - 两费（设备款已由投资人一次性支付，不重复扣减）
       var dividendBase = cashNetProfit - totalFee;
       // 投资人：第1-12月 15%，第13-36月 11%
       var investorDividendYear1 = Math.round(dividendBase * i.investorPctYear1 / 100);
@@ -121,16 +115,6 @@
       // ========== 流动资金 ==========
       var workingCapital = i.totalInvestment - i.equipmentInvestment;
 
-      // ========== 设备分摊明细 ==========
-      var hardAssetPct = 0.646;
-      var furnitureAssetPct = 0.24;
-      var hardAsset = Math.round(i.equipmentInvestment * hardAssetPct);
-      var furnitureAsset = Math.round(i.equipmentInvestment * furnitureAssetPct);
-      var suppliesAsset = i.equipmentInvestment - hardAsset - furnitureAsset;
-      var hardAmort = Math.round(hardAsset / i.paybackMonths);
-      var furnitureAmort = Math.round(furnitureAsset / i.paybackMonths);
-      var suppliesAmort = Math.round(suppliesAsset / i.paybackMonths);
-
       // ========== 试营业推演（3个月逐渐上升到6万） ==========
       var trial1MonthlyRev = Math.round(monthlyRevenue * 0.50); // 第1月 3万/天
       var trial1Expense = Math.round(monthlyRevenue * 0.75);
@@ -152,25 +136,18 @@
       trial3Profit = trial3Profit - trial3Fee;
 
       // ========== 现金流水 ==========
-      var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
       var equipmentMonthExpense = cashTotalExpense + i.equipmentInvestment;
       var equipmentMonthProfit = monthlyRevenue - equipmentMonthExpense;
 
-      // ========== 第13个月起（设备分摊结束，分红基数不变，但投资人降为11%） ==========
-      var postAmortTotalExpense = totalExpense - equipmentAmort;
-      var postAmortOperatingProfit = monthlyRevenue - postAmortTotalExpense;
-      // 分红基数不变（不扣设备摊销），但投资人比例从15%降为11%
-      var postAmortInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
-      // 房东公式不变：max(营业额×8%, 现金净利润×12%)
-      var postAmortLandlordByRevenue = Math.round(monthlyRevenue * i.landlordRevenuePct / 100);
-      var postAmortLandlordByProfit = Math.round(dividendBase * i.landlordProfitPct / 100);
-      var postAmortLandlordDividend = Math.max(postAmortLandlordByRevenue, postAmortLandlordByProfit);
-      var postAmortOperatorIncome = dividendBase - postAmortInvestorDividend - postAmortLandlordDividend;
+      // ========== 第2-3年稳态（投资人降为11%） ==========
+      var steadyInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
+      var steadyLandlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
+      var steadyOperatorIncome = dividendBase - steadyInvestorDividend - steadyLandlordDividend;
 
       // ========== 投资人3年总收益 ==========
       var investorYear1 = investorDividendYear1 * 12;
-      var investorYear2 = postAmortInvestorDividend * 12;
-      var investorYear3 = postAmortInvestorDividend * 12;
+      var investorYear2 = steadyInvestorDividend * 12;
+      var investorYear3 = steadyInvestorDividend * 12;
       var investorTotalReturn3y = investorYear1 + investorYear2 + investorYear3;
       var investorROI = (investorTotalReturn3y / i.totalInvestment * 100).toFixed(0);
 
@@ -259,28 +236,7 @@
         staff_initial_cost_wan: formatWan(i.staffInitialCost),
         food_initial_cost_wan: formatWan(i.foodInitialCost),
 
-        // ===== 5. 硬件分摊 =====
-        equipment_amortization: formatNum(equipmentAmort) + '元',
-        equipment_amortization_num: equipmentAmort,
-        equipment_amortization_short: formatNum(equipmentAmort),
-        equipment_amortization_months: i.paybackMonths + '个月',
-        equipment_amortization_months_plain: i.paybackMonths,
-
-        // 设备明细
-        hard_asset: formatNum(hardAsset) + '元',
-        hard_asset_plain: hardAsset,
-        hard_amort_amount: formatNum(hardAmort) + '元/月',
-        hard_amort_plain: hardAmort,
-        furniture_asset: formatNum(furnitureAsset) + '元',
-        furniture_asset_plain: furnitureAsset,
-        furniture_amort_amount: formatNum(furnitureAmort) + '元/月',
-        furniture_amort_plain: furnitureAmort,
-        supplies_asset: formatNum(suppliesAsset) + '元',
-        supplies_asset_plain: suppliesAsset,
-        supplies_amort_amount: formatNum(suppliesAmort) + '元/月',
-        supplies_amort_plain: suppliesAmort,
-
-        // ===== 6. 成本 =====
+        // ===== 5. 成本 =====
         food_cost: formatNum(foodCost) + '元',
         food_cost_num: foodCost,
         food_cost_pct: i.foodCostPct + '%',
@@ -296,19 +252,12 @@
         utility_cost: formatNum(i.utilityCost) + '元',
         utility_cost_plain: i.utilityCost,
 
-        // ===== 7. 经营口径总支出 =====
-        total_operating_expense: formatNum(totalExpense) + '元',
-        total_operating_expense_num: totalExpense,
-
-        // ===== 8. 利润 =====
-        operating_profit: formatNum(operatingProfit) + '元',
-        operating_profit_num: operatingProfit,
-        operating_profit_display: formatNum(operatingProfit),
+        // ===== 7. 利润 =====
         cash_net_profit: formatNum(cashNetProfit) + '元',
         cash_net_profit_num: cashNetProfit,
         cash_net_profit_display: formatNum(cashNetProfit),
 
-        // ===== 9. 三方分账 =====
+        // ===== 8. 三方分账 =====
         service_fee: formatNum(serviceFee) + '元',
         service_fee_num: serviceFee,
         service_fee_pct: i.serviceFeePct + '%',
@@ -333,12 +282,11 @@
         operator_income_wan_display: (operatorIncome / 10000).toFixed(1) + '万',
         operator_year1: formatNum(operatorIncome * 12) + '元',
         operator_year1_wan: '约' + ((operatorIncome * 12) / 10000).toFixed(0) + '万',
-        operator_year2_wan: '约' + ((postAmortOperatorIncome * 12) / 10000).toFixed(0) + '万',
+        operator_year2_wan: '约' + ((steadyOperatorIncome * 12) / 10000).toFixed(0) + '万',
 
         // ===== 10. （已删除悲观情景，食材成本固定48%） =====
 
         // ===== 11. 回本周期（老板不投钱，仅显示投资人数据） =====
-        payback_months: i.paybackMonths,
         payback_result: '老板不投钱，无需回本',
         payback_result_plain: 0,
         investor_payback: Math.ceil(i.totalInvestment / Math.max(1, investorDividendYear1)) + '个月',
@@ -357,24 +305,23 @@
         investor_total_3y: formatWan(investorTotalReturn3y),
         investor_total_3y_wan: (investorTotalReturn3y / 10000).toFixed(0) + '万',
         investor_roi_3y: investorROI + '%',
-        investor_monthly_avg: formatWan(investorDividendYear1) + '（第1年）/ ' + formatWan(postAmortInvestorDividend) + '（第2-3年）',
-        investor_monthly_avg_wan: '第1年' + formatWan(investorDividendYear1) + '，第2-3年' + formatWan(postAmortInvestorDividend),
+        investor_monthly_avg: formatWan(investorDividendYear1) + '（第1年）/ ' + formatWan(steadyInvestorDividend) + '（第2-3年）',
+        investor_monthly_avg_wan: '第1年' + formatWan(investorDividendYear1) + '，第2-3年' + formatWan(steadyInvestorDividend),
 
         // ===== 房东收益汇总（无固定租金，纯分成） =====
         landlord_monthly_income: formatNum(landlordDividend) + '元',
         landlord_monthly_income_wan: (landlordDividend / 10000).toFixed(1) + '万',
-        landlord_monthly_post_amort_wan: (postAmortLandlordDividend / 10000).toFixed(1) + '万',
         landlord_year1_total: formatWan(landlordDividend * 12),
         landlord_year1_total_wan: ((landlordDividend * 12) / 10000).toFixed(0) + '万',
-        landlord_total_3y: formatWan(landlordDividend * 12 + postAmortLandlordDividend * 24),
-        landlord_total_3y_wan: ((landlordDividend * 12 + postAmortLandlordDividend * 24) / 10000).toFixed(0) + '万',
-        landlord_rent_share_wan: ((i.rent * 36) / 10000).toFixed(0) + '万',
-        landlord_dividend_share_wan: ((landlordDividend * 12 + postAmortLandlordDividend * 24) / 10000).toFixed(0) + '万',
+        landlord_total_3y: formatWan(landlordDividend * 12 + steadyLandlordDividend * 24),
+        landlord_total_3y_wan: ((landlordDividend * 12 + steadyLandlordDividend * 24) / 10000).toFixed(0) + '万',
+        landlord_dividend_share_wan: ((landlordDividend * 12 + steadyLandlordDividend * 24) / 10000).toFixed(0) + '万',
 
         // ===== 运营方（老板）收益汇总 =====
-        operator_total_3y: formatWan(operatorIncome * 12 + postAmortOperatorIncome * 24),
-        operator_total_3y_wan: ((operatorIncome * 12 + postAmortOperatorIncome * 24) / 10000).toFixed(0) + '万',
-        operator_monthly_avg_wan: (operatorIncome / 10000).toFixed(1) + '万（第1年）/ ' + (postAmortOperatorIncome / 10000).toFixed(1) + '万（第2-3年）',
+        operator_total_3y: formatWan(operatorIncome * 12 + steadyOperatorIncome * 24),
+        operator_total_3y_wan: ((operatorIncome * 12 + steadyOperatorIncome * 24) / 10000).toFixed(0) + '万',
+        operator_monthly_avg_wan: (operatorIncome / 10000).toFixed(1) + '万（第1年）/ ' + (steadyOperatorIncome / 10000).toFixed(1) + '万（第2-3年）',
+        operator_steady_income_wan: (steadyOperatorIncome / 10000).toFixed(1) + '万',
 
         // 试营业推演（3个月逐渐上升）
         trial1_revenue_wan: formatWan(trial1MonthlyRev),
@@ -404,12 +351,6 @@
         trial3_fee_wan: (trial3Fee / 10000).toFixed(1) + '万',
         trial3_fee_plain: trial3Fee,
 
-        // 稳定期
-        stable_profit_wan: (operatingProfit / 10000).toFixed(1) + '万',
-        stable_total_fee_wan: (totalFee / 10000).toFixed(1) + '万',
-        stable_after_fees_wan: (profitAfterFees / 10000).toFixed(1) + '万',
-        stable_operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
-
         // ===== 12. 现金流水 =====
         cash_total_expense: formatNum(cashTotalExpense) + '元',
         cash_total_expense_num: cashTotalExpense,
@@ -418,17 +359,7 @@
         equipment_month_profit: formatNum(equipmentMonthProfit) + '元',
         equipment_month_profit_num: equipmentMonthProfit,
 
-        // ===== 13. 第13个月起（设备分摊结束） =====
-        post_amort_profit: formatNum(postAmortOperatingProfit) + '元',
-        post_amort_profit_plain: postAmortOperatingProfit,
-        post_amort_profit_wan: (postAmortOperatingProfit / 10000).toFixed(0) + '万',
-        post_amort_profit_after_fees: formatNum(postAmortProfitAfterFees) + '元',
-        post_amort_profit_after_fees_plain: postAmortProfitAfterFees,
-        post_amort_operator_income: formatNum(postAmortOperatorIncome) + '元',
-        post_amort_operator_income_plain: postAmortOperatorIncome,
-        post_amort_operator_income_wan: (postAmortOperatorIncome / 10000).toFixed(1) + '万',
-
-        // ===== 14. 人员架构 =====
+        // ===== 13. 人员架构 =====
         staff_count: i.staffCount + '人',
         staff_count_plain: i.staffCount,
         avg_salary: '≈' + formatNum(avgSalary) + '元',
@@ -513,7 +444,6 @@
           marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
           operationPct: 4, investorPctYear1: 15, investorPct: 11,
           landlordProfitPct: 12,
-          paybackMonths: 12,
           tableCount: 120, seatsPerTable: 2.8, staffCount: 38,
           utilityCost: 60000, kitchenStaff: 22, kitchenCost: 105000,
           frontStaff: 16, frontCost: 75000,
@@ -571,18 +501,10 @@
         var equipmentMonthExpense = cashTotalExpense + i.equipmentInvestment;
         var equipmentMonthProfit = monthlyRevenue - equipmentMonthExpense;
 
-        // 第13个月起（投资人降为11%）
-        var postAmortInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
-        var postAmortLandlordByRevenue = Math.round(monthlyRevenue * i.landlordRevenuePct / 100);
-        var postAmortLandlordByProfit = Math.round(dividendBase * i.landlordProfitPct / 100);
-        var postAmortLandlordDividend = Math.max(postAmortLandlordByRevenue, postAmortLandlordByProfit);
-        var postAmortOperatorIncome = dividendBase - postAmortInvestorDividend - postAmortLandlordDividend;
-
-        // 设备分摊明细
-        var equipmentAmort = Math.round(i.equipmentInvestment / i.paybackMonths);
-        var hardAsset = Math.round(i.equipmentInvestment * 0.646);
-        var furnitureAsset = Math.round(i.equipmentInvestment * 0.24);
-        var suppliesAsset = i.equipmentInvestment - hardAsset - furnitureAsset;
+        // 第2-3年稳态（投资人降为11%）
+        var steadyInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
+        var steadyLandlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
+        var steadyOperatorIncome = dividendBase - steadyInvestorDividend - steadyLandlordDividend;
 
         // 试营业推演（3个月逐渐上升）
 
@@ -631,16 +553,10 @@
           equipmentMonthExpense: equipmentMonthExpense,
           equipmentMonthProfit: equipmentMonthProfit,
 
-          // 第13个月起
-          postAmortInvestorDividend: postAmortInvestorDividend,
-          postAmortLandlordDividend: postAmortLandlordDividend,
-          postAmortOperatorIncome: postAmortOperatorIncome,
-
-          // 设备明细
-          hardAsset: hardAsset, furnitureAsset: furnitureAsset, suppliesAsset: suppliesAsset,
-          hardAmort: Math.round(hardAsset / i.paybackMonths),
-          furnitureAmort: Math.round(furnitureAsset / i.paybackMonths),
-          suppliesAmort: Math.round(suppliesAsset / i.paybackMonths),
+          // 第2-3年稳态
+          steadyInvestorDividend: steadyInvestorDividend,
+          steadyLandlordDividend: steadyLandlordDividend,
+          steadyOperatorIncome: steadyOperatorIncome,
 
           // 回本
           // 回本 - 老板不投钱，无需计算
