@@ -27,13 +27,13 @@
       area: 2000,               // 总面积 ㎡
       price: 169,               // 人均定价 元
       dailyRevenue: 60000,      // 日均核销营业额 元
-      totalInvestment: 800000,  // 总投资 元
-      equipmentInvestment: 500000, // 装修设备投资 元
+      totalInvestment: 1000000, // 总投资 元
+      equipmentInvestment: 700000, // 装修设备投资 元
 
       // 成本参数
       foodCostPct: 48,          // 食材成本率 %（固定48%）
       rent: 0,                  // 房租 元/月（房东无固定租金，改为利润分成）
-      laborCost: 180000,        // 人工成本 元/月（38人，含社保餐宿）
+      laborCost: 192500,        // 人工成本 元/月（38人，含社保餐宿）
       marketingPct: 3,          // 营销费率 %
       miscCost: 60000,          // 杂费 元/月
 
@@ -77,7 +77,7 @@
       var monthlyRevenue = Math.round(i.dailyRevenue * 30);
       var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
       var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
-      var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
+      var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
       var cashNetProfit = monthlyRevenue - cashTotalExpense;
       var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
       var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
@@ -87,8 +87,10 @@
       // 投资人：第1-12月 15%，第13-36月 11%
       var investorDividendYear1 = Math.round(dividendBase * i.investorPctYear1 / 100);
       var investorDividend = Math.round(dividendBase * i.investorPct / 100);
-      // 房东：净利润×12%（月度双向择优，净利润×8%保底，×12%分红，取高值即12%）
-      var landlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
+      // 房东：双向择优分成（流水8%保底 vs 利润12%分红，取高值）
+      var landlordRevenueFloor = Math.round(monthlyRevenue * 8 / 100);
+      var landlordProfitShare = Math.round(dividendBase * 12 / 100);
+      var landlordDividend = Math.max(landlordRevenueFloor, landlordProfitShare);
       var operatorIncome = dividendBase - investorDividend - landlordDividend;
 
       // 回本相关（老板不投钱，无需计算回本周期）
@@ -141,7 +143,7 @@
 
       // ========== 第2-3年稳态（投资人降为11%） ==========
       var steadyInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
-      var steadyLandlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
+      var steadyLandlordDividend = Math.max(landlordRevenueFloor, Math.round(dividendBase * 12 / 100));
       var steadyOperatorIncome = dividendBase - steadyInvestorDividend - steadyLandlordDividend;
 
       // ========== 投资人3年总收益 ==========
@@ -272,10 +274,14 @@
         investor_dividend: formatNum(investorDividendYear1) + '元',
         investor_dividend_num: investorDividendYear1,
         investor_pct: '15%（第1-12月）/ 11%（第13-36月）',
-        // 房东：净利润×12%
+        // 房东：双向择优分成（流水8%保底 vs 利润12%分红，取高值）
         landlord_dividend: formatNum(landlordDividend) + '元',
         landlord_dividend_num: landlordDividend,
-        landlord_pct: '12%（净利润分红）',
+        landlord_pct: '双向择优（流水×8%保底 / 利润×12%分红，取高值）',
+        landlord_revenue_floor: formatNum(landlordRevenueFloor) + '元',
+        landlord_revenue_floor_num: landlordRevenueFloor,
+        landlord_profit_share: formatNum(landlordProfitShare) + '元',
+        landlord_profit_share_num: landlordProfitShare,
         operator_income: formatNum(operatorIncome) + '元',
         operator_income_num: operatorIncome,
         operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
@@ -374,8 +380,8 @@
         front_cost_plain: i.frontCost,
 
         // ===== 15. 项目概述 =====
-        total_investment_detail: '总投资' + formatWan(i.equipmentInvestment) + '万元（装修/门脸/设备/餐具/办公/工具，商务风装修 · 二手设备 · 全部包含）',
-        equipment_investment_detail: '装修投入' + formatWan(i.equipmentInvestment),
+        total_investment_detail: '总硬件投资' + formatWan(i.equipmentInvestment) + '元（含装修/门脸/设备/海鲜池/消防/电力改造，极简工业风+二手设备全包）',
+        equipment_investment_detail: '装修设备投入' + formatWan(i.equipmentInvestment),
         staff_initial_investment: '组建前厅后厨人工' + formatWan(i.staffInitialCost),
         food_initial_investment: '预留' + formatWan(i.foodInitialCost) + '采购食材',
         total_investment_summary: '共' + formatWan(i.totalInvestment),
@@ -439,8 +445,8 @@
         // 复制一份计算逻辑供服务端使用
         var i = Object.assign({
           area: 2000, price: 169, dailyRevenue: 60000,
-          totalInvestment: 800000, equipmentInvestment: 500000,
-          foodCostPct: 48, rent: 0, laborCost: 180000,
+          totalInvestment: 1000000, equipmentInvestment: 700000,
+          foodCostPct: 48, rent: 0, laborCost: 192500,
           marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
           operationPct: 4, investorPctYear1: 15, investorPct: 11,
           landlordProfitPct: 12,
@@ -454,7 +460,7 @@
         var monthlyRevenue = Math.round(i.dailyRevenue * 30);
         var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
         var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
-        var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
+        var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
         var cashNetProfit = monthlyRevenue - cashTotalExpense;
         var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
         var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
@@ -462,7 +468,9 @@
         var dividendBase = cashNetProfit - totalFee;
         var investorDividendYear1 = Math.round(dividendBase * i.investorPctYear1 / 100);
         var investorDividend = Math.round(dividendBase * i.investorPct / 100);
-        var landlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
+        var landlordRevenueFloor = Math.round(monthlyRevenue * 8 / 100);
+        var landlordProfitShare = Math.round(dividendBase * 12 / 100);
+        var landlordDividend = Math.max(landlordRevenueFloor, landlordProfitShare);
         var operatorIncome = dividendBase - investorDividend - landlordDividend;
 
         // 周度营收（各天均衡6万）
@@ -503,7 +511,7 @@
 
         // 第2-3年稳态（投资人降为11%）
         var steadyInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
-        var steadyLandlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
+        var steadyLandlordDividend = Math.max(landlordRevenueFloor, Math.round(dividendBase * 12 / 100));
         var steadyOperatorIncome = dividendBase - steadyInvestorDividend - steadyLandlordDividend;
 
         // 试营业推演（3个月逐渐上升）
