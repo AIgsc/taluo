@@ -42,7 +42,7 @@
       operationPct: 4,          // 运营部门分成（成交额%）%
       investorPctYear1: 15,     // 投资人分红 - 第1-12月 %
       investorPct: 11,          // 投资人分红 - 第13-36月 %
-      landlordProfitPct: 12,    // 房东利润分红（净利润×12%）%
+      landlordProfitPct: 12,    // 房东利润分成（阈值触发：≥30万→12%，<30万→8%）%
       partnerTermMonths: 36,    // 投资人合伙期限（月）
 
       // 扩展参数（通用模板）
@@ -87,10 +87,10 @@
       // 投资人：第1-12月 15%，第13-36月 11%
       var investorDividendYear1 = Math.round(dividendBase * i.investorPctYear1 / 100);
       var investorDividend = Math.round(dividendBase * i.investorPct / 100);
-      // 房东：双向择优分成（流水8%保底 vs 利润12%分红，取高值）
-      var landlordRevenueFloor = Math.round(monthlyRevenue * 8 / 100);
-      var landlordProfitShare = Math.round(dividendBase * 12 / 100);
-      var landlordDividend = Math.max(landlordRevenueFloor, landlordProfitShare);
+      // 房东：利润阈值触发分成（≥30万→12%，<30万→8%）
+      var profitThreshold = 300000;
+      var landlordProfitPct = dividendBase >= profitThreshold ? 12 : 8;
+      var landlordDividend = Math.round(dividendBase * landlordProfitPct / 100);
       var operatorIncome = dividendBase - investorDividend - landlordDividend;
 
       // 回本相关（老板不投钱，无需计算回本周期）
@@ -143,7 +143,8 @@
 
       // ========== 第2-3年稳态（投资人降为11%） ==========
       var steadyInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
-      var steadyLandlordDividend = Math.max(landlordRevenueFloor, Math.round(dividendBase * 12 / 100));
+      var steadyLandlordProfitPct = dividendBase >= profitThreshold ? 12 : 8;
+      var steadyLandlordDividend = Math.round(dividendBase * steadyLandlordProfitPct / 100);
       var steadyOperatorIncome = dividendBase - steadyInvestorDividend - steadyLandlordDividend;
 
       // ========== 投资人3年总收益 ==========
@@ -274,14 +275,14 @@
         investor_dividend: formatNum(investorDividendYear1) + '元',
         investor_dividend_num: investorDividendYear1,
         investor_pct: '15%（第1-12月）/ 11%（第13-36月）',
-        // 房东：双向择优分成（流水8%保底 vs 利润12%分红，取高值）
+        // 房东：利润阈值触发分成（≥30万→12%，<30万→8%）
         landlord_dividend: formatNum(landlordDividend) + '元',
         landlord_dividend_num: landlordDividend,
-        landlord_pct: '双向择优（流水×8%保底 / 利润×12%分红，取高值）',
-        landlord_revenue_floor: formatNum(landlordRevenueFloor) + '元',
-        landlord_revenue_floor_num: landlordRevenueFloor,
-        landlord_profit_share: formatNum(landlordProfitShare) + '元',
-        landlord_profit_share_num: landlordProfitShare,
+        landlord_pct: '利润阈值触发（≥30万→12% / <30万→8%）',
+        landlord_threshold: formatNum(profitThreshold) + '元',
+        landlord_threshold_num: profitThreshold,
+        landlord_pct_high: '12%（纯利润≥30万/月）',
+        landlord_pct_low: '8%（纯利润<30万/月）',
         operator_income: formatNum(operatorIncome) + '元',
         operator_income_num: operatorIncome,
         operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
@@ -468,9 +469,10 @@
         var dividendBase = cashNetProfit - totalFee;
         var investorDividendYear1 = Math.round(dividendBase * i.investorPctYear1 / 100);
         var investorDividend = Math.round(dividendBase * i.investorPct / 100);
-        var landlordRevenueFloor = Math.round(monthlyRevenue * 8 / 100);
-        var landlordProfitShare = Math.round(dividendBase * 12 / 100);
-        var landlordDividend = Math.max(landlordRevenueFloor, landlordProfitShare);
+        // 房东：利润阈值触发分成（≥30万→12%，<30万→8%）
+        var profitThreshold = 300000;
+        var landlordProfitPct = dividendBase >= profitThreshold ? 12 : 8;
+        var landlordDividend = Math.round(dividendBase * landlordProfitPct / 100);
         var operatorIncome = dividendBase - investorDividend - landlordDividend;
 
         // 周度营收（各天均衡6万）
@@ -511,7 +513,8 @@
 
         // 第2-3年稳态（投资人降为11%）
         var steadyInvestorDividend = Math.round(dividendBase * i.investorPct / 100);
-        var steadyLandlordDividend = Math.max(landlordRevenueFloor, Math.round(dividendBase * 12 / 100));
+        var steadyLandlordProfitPct = dividendBase >= profitThreshold ? 12 : 8;
+        var steadyLandlordDividend = Math.round(dividendBase * steadyLandlordProfitPct / 100);
         var steadyOperatorIncome = dividendBase - steadyInvestorDividend - steadyLandlordDividend;
 
         // 试营业推演（3个月逐渐上升）
