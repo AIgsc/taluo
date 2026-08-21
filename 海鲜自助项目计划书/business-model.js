@@ -33,8 +33,8 @@
       // 成本参数
       foodCostPct: 48,          // 食材成本率 %（固定48%）
       rent: 0,                  // 房租 元/月（房东无固定租金，改为利润分成）
-      laborCost: 192500,        // 人工成本 元/月（38人，含社保餐宿）
-      marketingPct: 3,          // 营销费率 %
+      laborCost: 215600,        // 人工成本 元/月（38人，含社保餐宿，北京房山上调12%）
+      marketingPct: 0,          // 营销费率%（已含在运营部门费4%中，不单独列支）
       miscCost: 60000,          // 杂费 元/月
 
       // 分账参数
@@ -93,7 +93,17 @@
       var landlordDividend = Math.round(dividendBase * landlordProfitPct / 100);
       var operatorIncome = dividendBase - investorDividend - landlordDividend;
 
-      // 回本相关（老板不投钱，无需计算回本周期）
+      // ========== 投资人真实回本周期（含装修期+爬坡期） ==========
+      // 月1-2: 装修期，0收入，0分红
+      // 月3-5: 试营业（亏损），0分红
+      // 月6-12: 满额分红（7个月）
+      // 月13+: 降为11%比例
+      var year1FullDividend = investorDividendYear1 * 7; // 月6-12共7个月
+      var remainingAfterYear1 = Math.max(0, i.totalInvestment - year1FullDividend);
+      var monthsAfterYear1 = remainingAfterYear1 > 0 ? Math.ceil(remainingAfterYear1 / Math.max(1, steadyInvestorDividend)) : 0;
+      var realisticPayback = 12 + monthsAfterYear1; // 从开业算起（含装修+爬坡的无分红月份）
+      // 从出资日算起（含2个月装修期）= realisticPayback + 2
+      var realisticPaybackFromInvestment = realisticPayback + 2;
 
       // ========== 周度营收分解（日均6万，各天均衡） ==========
       var monThuDaily = i.dailyRevenue;
@@ -108,7 +118,7 @@
       var sunCustomers = Math.round(sunDaily / i.price);
       var weeklyCustomers = monThuCustomers * 4 + friCustomers + satCustomers + sunCustomers;
 
-      var tableCapacity = i.tableCount * i.seatsPerTable;
+      var tableCapacity = i.tableCount * 4; // 按满座4人/桌计算翻台率（标准口径）
       var monThuTurnover = (monThuCustomers / tableCapacity);
       var friTurnover = (friCustomers / tableCapacity);
       var satTurnover = (satCustomers / tableCapacity);
@@ -147,11 +157,11 @@
       var steadyLandlordDividend = Math.round(dividendBase * steadyLandlordProfitPct / 100);
       var steadyOperatorIncome = dividendBase - steadyInvestorDividend - steadyLandlordDividend;
 
-      // ========== 投资人3年总收益 ==========
-      var investorYear1 = investorDividendYear1 * 12;
+      // ========== 投资人3年总收益（含装修+爬坡真实情景） ==========
+      var investorYear1Real = investorDividendYear1 * 7; // 扣掉前5个月装修+爬坡无分红
       var investorYear2 = steadyInvestorDividend * 12;
       var investorYear3 = steadyInvestorDividend * 12;
-      var investorTotalReturn3y = investorYear1 + investorYear2 + investorYear3;
+      var investorTotalReturn3y = investorYear1Real + investorYear2 + investorYear3;
       var investorROI = (investorTotalReturn3y / i.totalInvestment * 100).toFixed(0);
 
       // ========== 人均薪酬 ==========
@@ -299,6 +309,11 @@
         payback_result_plain: 0,
         investor_payback: Math.ceil(i.totalInvestment / Math.max(1, investorDividendYear1)) + '个月',
         investor_payback_plain: Math.ceil(i.totalInvestment / Math.max(1, investorDividendYear1)),
+        // 真实回本（含装修+爬坡）
+        realistic_payback: realisticPayback + '个月（从开业算起）',
+        realistic_payback_plain: realisticPayback,
+        realistic_payback_from_investment: realisticPaybackFromInvestment + '个月（从出资日算起）',
+        realistic_payback_desc: '含2个月装修期+3个月试营业期，从开业第6个月起满额分红，约' + realisticPayback + '个月收回本金',
 
         // ===== 投资人合伙期限 =====
         investor_term: i.partnerTermMonths + '个月',
