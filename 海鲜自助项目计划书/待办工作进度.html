@@ -1307,33 +1307,36 @@ function showToast(msg) {
 
 // ==================== 加载数据 ====================
 function loadData() {
+  // Phase 1: 先渲染本地数据，用户立刻看到内容
+  appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  appData.data_version = DATA_VERSION;
+  migrateItemFields();
+  render();
+
+  // Phase 2: 后台异步加载服务器数据，同步最新状态
   fetch(API_URL)
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (res.data && res.data.categories && res.data.categories.length > 0) {
-        // 检查数据版本，版本不一致时强制使用 DEFAULT_DATA
         if (res.data.data_version === DATA_VERSION) {
           appData = res.data;
         } else {
           console.log('数据版本不一致，使用最新 DEFAULT_DATA (v' + DATA_VERSION + ')');
           appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
           appData.data_version = DATA_VERSION;
-          saveToServer(); // 立即保存新数据到数据库
+          saveToServer();
         }
       } else {
         appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
         appData.data_version = DATA_VERSION;
         saveToServer();
       }
-      migrateItemFields(); // 确保所有待办项包含新字段
+      migrateItemFields();
       render();
     })
     .catch(function(e) {
-      console.log('Load failed, using default:', e);
-      appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-      appData.data_version = DATA_VERSION;
-      migrateItemFields();
-      render();
+      console.log('Load failed, using cached:', e);
+      // 本地数据已渲染，无需额外处理
     });
 }
 
