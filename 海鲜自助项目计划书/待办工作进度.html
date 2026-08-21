@@ -560,12 +560,12 @@ var DEFAULT_DATA = {
     { id: 'cat_1', name: '房东洽谈', icon: '🏠', sort_order: 1, items: [
       { id: 'it_1_1', title: '通过中介/线上平台寻找合适场地', desc: '在58同城、安居客、本地中介等渠道寻找2000㎡左右适合做餐饮的场地，关注位置、人流、停车条件', status: 'pending', sort_order: 1, reports: [] },
       { id: 'it_1_2', title: '实地考察场地', desc: '考察面积、结构、水电容量、消防设施、排烟条件、停车位数量、周边客流', status: 'pending', sort_order: 2, reports: [] },
-      { id: 'it_1_3', title: '谈判房东合作模式', desc: '按零固定租金+利润阈值触发分成模式谈判（可分配纯利≥30万→12%，<30万→8%），房东无需承担固定租金压力，门店亏损则无分成', status: 'pending', sort_order: 3, reports: [] },
-      { id: 'it_1_4', title: '签订合作意向书', desc: '明确利润阈值触发分成模式（≥30万→12%，<30万→8%）、场地使用范围、配合办证义务等核心条款，无押金无固定租金', status: 'pending', sort_order: 4, reports: [] },
-      { id: 'it_1_5', title: '签订正式合作合同', desc: '律师审核合同条款，明确利润阈值触发分成（≥30万→12%，<30万→8%）、双方权利义务、违约责任、续约优先权', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_1_3', title: '谈判房东合作模式', desc: '按零固定租金+超额累进分成模式谈判（30万以内10%、超出部分20%），房东无需承担固定租金压力，门店亏损则无分成', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_1_4', title: '签订合作意向书', desc: '明确超额累进分成模式（30万以内10%、超出部分20%）、场地使用范围、配合办证义务等核心条款，无押金无固定租金', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_1_5', title: '签订正式合作合同', desc: '律师审核合同条款，明确超额累进分成（30万以内10%、超出部分20%）、双方权利义务、违约责任、续约优先权', status: 'pending', sort_order: 5, reports: [] },
       { id: 'it_1_6', title: '办理场地交接手续', desc: '交接钥匙、水电燃气过户、物业交接单签字确认', status: 'pending', sort_order: 6, reports: [] },
-      { id: 'it_1_7', title: '准备淡季分账方案预案', desc: '准备淡季场景（可分配纯利<30万）的分账说明，用于房东沟通：利润25万时房东分2万、投资人分3.75万、老板实得19.25万，各方同步让利', status: 'pending', sort_order: 7, reports: [] },
-      { id: 'it_1_8', title: '确认房东超额累进分成方案', desc: '将房东分成改为超额累进制（30万以内8%、超出部分12%），消除跳档漏洞，写入合同和分账制度', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_1_7', title: '准备淡季分账方案预案', desc: '准备淡季场景（可分配纯利<30万）的分账说明，用于房东沟通：利润25万时房东分2.5万、投资人分3.75万、老板实得18.75万，各方同步让利', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_1_8', title: '确认房东超额累进分成方案', desc: '将房东分成改为超额累进制（30万以内10%、超出部分20%），消除跳档漏洞，写入合同和分账制度', status: 'pending', sort_order: 8, reports: [] },
     ]},
     { id: 'cat_2', name: '投资人对接', icon: '💰', sort_order: 2, items: [
       { id: 'it_2_1', title: '制作并提交商业计划书', desc: '完成商业计划书，包含项目概述、财务测算、分账机制、退出方案', status: 'pending', sort_order: 1, reports: [] },
@@ -679,7 +679,7 @@ var DEFAULT_DATA = {
     ]},
     { id: 'cat_13', name: '合同与法务', icon: '📋', sort_order: 13, items: [
       { id: 'it_13_1', title: '投资人合伙协议起草与审核', desc: '委托律师起草投资合伙协议，明确分红比例、退出机制、参与义务、保密条款', status: 'pending', sort_order: 1, reports: [] },
-      { id: 'it_13_2', title: '房东合作协议审核', desc: '律师审核合作合同，重点检查利润阈值触发分成（≥30万→12%，<30万→8%）、违约责任、续约优先权、场地使用范围、拆迁补偿条款', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_13_2', title: '房东合作协议审核', desc: '律师审核合作合同，重点检查超额累进分成（30万以内10%、超出部分20%）、违约责任、续约优先权、场地使用范围、拆迁补偿条款', status: 'pending', sort_order: 2, reports: [] },
       { id: 'it_13_3', title: '施工合同审核与签订', desc: '明确施工范围、工期节点、付款方式、验收标准、质保期、违约赔偿', status: 'pending', sort_order: 3, reports: [] },
       { id: 'it_13_4', title: '劳动合同与保密协议签订', desc: '统一签订劳动合同，明确岗位职责、薪酬福利、保密义务、竞业限制', status: 'pending', sort_order: 4, reports: [] },
       { id: 'it_13_5', title: '供应商供货合同签订', desc: '与食材、酒水等供应商签订供货合同，明确价格、结算周期、质量标准、退换货条款', status: 'pending', sort_order: 5, reports: [] },
