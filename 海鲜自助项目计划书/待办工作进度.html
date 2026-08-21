@@ -264,6 +264,16 @@
   .todo-item.is-overdue .item-title { color: #e8a0a0; }
   .today-focus-item.is-overdue .tfi-title { color: #e8a0a0; }
 
+  /* Quick date buttons */
+  .date-quick-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 3px 10px; font-size: 0.72rem; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg2); color: var(--text2); transition: all 0.15s;
+    font-family: inherit; line-height: 1.4;
+  }
+  .date-quick-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
   /* Status quick menu */
   .status-menu {
     display: none; position: absolute; z-index: 10;
@@ -467,10 +477,18 @@
       <div style="flex:1;min-width:140px;">
         <label for="editTodoStartDate">计划开始日期</label>
         <input id="editTodoStartDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoStartDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoStartDate',1)">明天</button>
+        </div>
       </div>
       <div style="flex:1;min-width:140px;">
         <label for="editTodoDueDate">截止日期</label>
         <input id="editTodoDueDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoDueDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoDueDate',1)">明天</button>
+        </div>
       </div>
     </div>
     <div class="btn-row">
@@ -510,10 +528,18 @@
       <div style="flex:1;min-width:140px;">
         <label for="addTodoStartDate">计划开始日期</label>
         <input id="addTodoStartDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoStartDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoStartDate',1)">明天</button>
+        </div>
       </div>
       <div style="flex:1;min-width:140px;">
         <label for="addTodoDueDate">截止日期</label>
         <input id="addTodoDueDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoDueDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoDueDate',1)">明天</button>
+        </div>
       </div>
     </div>
     <div class="btn-row">
@@ -719,6 +745,15 @@ function isOverdue(item) {
   return due < today;
 }
 
+function setQuickDate(inputId, offsetDays) {
+  var d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  var y = d.getFullYear();
+  var m = ('0' + (d.getMonth() + 1)).slice(-2);
+  var day = ('0' + d.getDate()).slice(-2);
+  document.getElementById(inputId).value = y + '-' + m + '-' + day;
+}
+
 function priorityColor(p) {
   return { urgent: 'var(--danger)', high: 'var(--orange)', medium: 'var(--accent)', low: 'var(--text2)' }[p] || 'var(--text2)';
 }
@@ -751,7 +786,9 @@ function render() {
   // ====== 今日待办 ======
   var todayPending = [];
   cats.forEach(function(cat) {
-    var activeItems = cat.items.filter(function(i) { return i.status === 'in-progress' || i.status === 'blocked'; });
+    var activeItems = cat.items.filter(function(i) {
+      return i.status === 'in-progress' || i.status === 'blocked' || (i.status === 'pending' && isOverdue(i));
+    });
     if (activeItems.length > 0) {
       todayPending.push({ cat: cat, items: activeItems });
     }
@@ -760,13 +797,13 @@ function render() {
   html += '<div class="today-focus">';
   html += '  <div class="today-focus-header" onclick="toggleTodayFocus(this)">';
   html += '    <span class="tf-icon"><i class="fas fa-play" style="color:#fff;"></i></span>';
-  html += '    <span class="tf-title">进行中任务</span>';
+  html += '    <span class="tf-title">进行中 & 超期任务</span>';
   html += '    <span class="tf-count">' + todayTotal + '项</span>';
   html += '    <span class="tf-toggle open"><i class="fas fa-chevron-down"></i></span>';
   html += '  </div>';
   html += '  <div class="today-focus-body open">';
   if (todayTotal === 0) {
-    html += '    <div class="today-focus-empty">🎉 没有进行中的任务需要关注</div>';
+    html += '    <div class="today-focus-empty">🎉 没有进行中或超期的任务需要关注</div>';
   } else {
     todayPending.forEach(function(group) {
       html += '    <div class="today-focus-group">';
