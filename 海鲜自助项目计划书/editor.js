@@ -33,11 +33,11 @@
     var style = document.createElement('style');
     style.textContent =
       '#bp-toolbar{' +
-        'position:relative;z-index:9999;background:#1a5276;color:#fff;padding:12px 24px;' +
+        'position:sticky;top:0;z-index:9999;background:#1a5276;color:#fff;padding:12px 24px;' +
         'border-radius:0;box-shadow:0 2px 8px rgba(0,0,0,0.15);' +
-        'display:flex;align-items:center;gap:12px;font-size:14px;' +
-        'transition:opacity 0.3s;touch-action:manipulation;' +
-        'margin:0 0 16px 0;' +
+        'display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;' +
+        'flex-wrap:wrap;transition:opacity 0.3s;touch-action:manipulation;' +
+        'width:100%;box-sizing:border-box;' +
       '}' +
       '#bp-toolbar .bp-btn{' +
         'border:none;padding:10px 20px;border-radius:8px;cursor:pointer;' +
