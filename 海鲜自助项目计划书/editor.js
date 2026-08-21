@@ -165,10 +165,11 @@
       '<div class="bp-var-section">' +
         '<div class="section-title">分成比例</div>' +
         '<div class="bp-var-group"><label>营销费率（%）</label><input type="number" id="var-marketingPct" value="' + inputs.marketingPct + '"></div>' +
-        '<div class="bp-var-group"><label>服务商抽成（%）</label><input type="number" id="var-serviceFeePct" value="' + inputs.serviceFeePct + '"></div>' +
+        '<div class="bp-var-group"><label>抖音服务商抽成（%）</label><input type="number" id="var-serviceFeePct" value="' + inputs.serviceFeePct + '"></div>' +
         '<div class="bp-var-group"><label>运营部门分成（%）</label><input type="number" id="var-operationPct" value="' + inputs.operationPct + '"></div>' +
-        '<div class="bp-var-group"><label>投资人分红（%）</label><input type="number" id="var-investorPct" value="' + inputs.investorPct + '"></div>' +
-        '<div class="bp-var-group"><label>房东利润分成比例（%）（无固定租金）</label><input type="number" id="var-landlordPct" value="' + inputs.landlordPct + '"></div>' +
+        '<div class="bp-var-group"><label>投资人分红 - 回本前（%）</label><input type="number" id="var-investorPctPrePayback" value="' + inputs.investorPctPrePayback + '"></div>' +
+        '<div class="bp-var-group"><label>投资人分红 - 回本后（%）</label><input type="number" id="var-investorPct" value="' + inputs.investorPct + '"></div>' +
+        '<div class="bp-var-group"><label>房东分成（按超额累进规则自动计算，不可直接设置）</label><input type="text" readonly style="background:#f5f5f5;color:#888;" value="30万以内10% / 超出部分20%"></div>' +
       '</div>' +
       '<div class="bp-modal-actions">' +
         '<button class="bp-btn-cancel" onclick="closeVarModal()">取消</button>' +
@@ -214,27 +215,27 @@
       area: Number(document.getElementById('var-area').value) || 2000,
       tableCount: Number(document.getElementById('var-tableCount').value) || 120,
       seatsPerTable: Number(document.getElementById('var-seatsPerTable').value) || 2.8,
-      staffCount: Number(document.getElementById('var-staffCount').value) || 48,
-      kitchenStaff: Number(document.getElementById('var-kitchenStaff').value) || 28,
-      kitchenCost: Number(document.getElementById('var-kitchenCost').value) || 139000,
-      frontStaff: Number(document.getElementById('var-frontStaff').value) || 20,
-      frontCost: Number(document.getElementById('var-frontCost').value) || 104000,
+      staffCount: Number(document.getElementById('var-staffCount').value) || 38,
+      kitchenStaff: Number(document.getElementById('var-kitchenStaff').value) || 22,
+      kitchenCost: Number(document.getElementById('var-kitchenCost').value) || 105000,
+      frontStaff: Number(document.getElementById('var-frontStaff').value) || 16,
+      frontCost: Number(document.getElementById('var-frontCost').value) || 75000,
       price: Number(document.getElementById('var-price').value) || 169,
       dailyRevenue: Number(document.getElementById('var-dailyRevenue').value) || 60000,
-      foodCostPct: Number(document.getElementById('var-foodCostPct').value) || 45,
-      totalInvestment: Number(document.getElementById('var-totalInvestment').value) || 800000,
-      equipmentInvestment: Number(document.getElementById('var-equipmentInvestment').value) || 500000,
-      laborCost: Number(document.getElementById('var-laborCost').value) || 243000,
-      rent: Number(document.getElementById('var-rent').value) || 70000,
-      utilityCost: Number(document.getElementById('var-utilityCost').value) || 48000,
+      foodCostPct: Number(document.getElementById('var-foodCostPct').value) || 48,
+      totalInvestment: Number(document.getElementById('var-totalInvestment').value) || 1000000,
+      equipmentInvestment: Number(document.getElementById('var-equipmentInvestment').value) || 700000,
+      laborCost: Number(document.getElementById('var-laborCost').value) || 215600,
+      rent: Number(document.getElementById('var-rent').value) || 0,
+      utilityCost: Number(document.getElementById('var-utilityCost').value) || 60000,
       miscCost: Number(document.getElementById('var-miscCost').value) || 60000,
       staffInitialCost: Number(document.getElementById('var-staffInitialCost').value) || 200000,
       foodInitialCost: Number(document.getElementById('var-foodInitialCost').value) || 100000,
-      marketingPct: Number(document.getElementById('var-marketingPct').value) || 3,
+      marketingPct: Number(document.getElementById('var-marketingPct').value) || 0,
       serviceFeePct: Number(document.getElementById('var-serviceFeePct').value) || 4,
       operationPct: Number(document.getElementById('var-operationPct').value) || 4,
+      investorPctPrePayback: Number(document.getElementById('var-investorPctPrePayback').value) || 40,
       investorPct: Number(document.getElementById('var-investorPct').value) || 10,
-      landlordPct: Number(document.getElementById('var-landlordPct').value) || 10,
     };
 
     model.setInputs(inputs);
