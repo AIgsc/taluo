@@ -2283,9 +2283,9 @@
       <strong>老板（组织者）：</strong>不投钱，全程运营管理，拿分红<br>
       <strong>目标营业：</strong>日销<span data-model="daily_revenue">6.0万</span> · 月销<span data-model="monthly_revenue">180万</span><br>
       <strong>团队编制：</strong>38人<br>
-      <strong>投资人回本：</strong><span data-model="realistic_payback_from_investment">约26个月</span>（含装修+爬坡，从出资日算起）<br>
-      <strong>合伙期限：</strong><span data-model="investor_term">36个月</span>（3年，期满自动终止，<span data-model="investor_total_3y">约168万</span>总回报，<span data-model="investor_roi_3y">168%</span>）<br>
-      <strong>老板月纯利：</strong>第1-12月约<span data-model="operator_income_wan">36.5万</span> · 第13月起约<span data-model="operator_steady_income_wan">32.8万</span><br>
+      <strong>投资人回本：</strong><span data-model="realistic_payback_from_investment">约12个月</span>（从出资日算起，回本前分40%加速回本）<br>
+      <strong>合伙期限：</strong><span data-model="investor_term">36个月</span>（3年，期满资产归运营方，<span data-model="investor_total_3y">约168万</span>总回报，<span data-model="investor_roi_3y">168%</span>）<br>
+      <strong>老板月纯利：</strong>回本前约<span data-model="operator_income_wan">XX万</span> · 回本后约<span data-model="operator_steady_income_wan">XX万</span><br>
       <strong>老板年纯利：</strong>第1年约<span data-model="operator_year1_wan">373万</span> · 第2年起 <span data-model="operator_year2_wan">约394万</span>
     </div>
     <div class="version">版本 V11.3 · 老板不投钱 · 角色定位修正</div>
@@ -2413,13 +2413,13 @@
       <div class="data-card"><div class="label">月度总营收</div><div class="value green"><span data-model="monthly_revenue_num">1,800,000元</span></div></div>
     </div>
     <div class="highlight-box green" style="text-align:center;">
-      <strong style="font-size:1.2rem;">月度可分配纯利：<span data-model="dividend_base_display">425,500</span> 元</strong>
+      <strong style="font-size:1.2rem;">月度可分配纯利：<span data-model="dividend_base_display">456,400</span> 元</strong>
     </div>
     <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
       <strong>📌 利润口径说明：</strong><br>
-      • 可分配纯利 = 月度总营收 − 全部运营成本(人工/食材/水电/杂费) − 服务商费(4%) − 运营部门费(4%) = <span data-model="dividend_base_num">425,500</span>元<br>
-      • 营销费用已含在运营部门费4%中，由运营方从该费用中统筹支付达人对接、拍摄剪辑、线上推广等，不单独列支运营成本<br>
-      • 三方分红统一使用「可分配纯利」为基数，确保各方利益一致。
+      • 可分配纯利 = 月度总营收 − 全部运营成本(人工/食材/水电/杂费) − 抖音服务商费(4%) − 运营部门费(4%) = <span data-model="dividend_base_num">456,400</span>元<br>
+      • 8%为流量获客刚性成本（抖音服务商4%+运营部门4%），等同于食材、水电、人工，属于开店必须花的硬支出，不是老板的个人收益。<br>
+      • 没有流量就没有客流，门店直接倒闭。这部分费用是给前端流量团队的，投资人和房东无需额外承担。
     </div>
   
 
@@ -2435,8 +2435,8 @@
     </div>
     <div class="data-grid">
       <div class="data-card"><div class="label">投资人出资</div><div class="value"><span data-model="total_investment">100万</span></div></div>
-      <div class="data-card"><div class="label">投资人月分红（第1-12月15%）</div><div class="value green"><span data-model="investor_dividend">50,387元</span></div></div>
-      <div class="data-card"><div class="label">投资人回本周期（含装修+爬坡）</div><div class="value green"><span data-model="realistic_payback"><span>约24个月</span></span></div></div>
+      <div class="data-card"><div class="label">投资人月分红（回本前40%）</div><div class="value green"><span data-model="investor_dividend">XX元</span></div></div>
+      <div class="data-card"><div class="label">投资人回本周期（含装修+爬坡，回本前40%加速）</div><div class="value green"><span data-model="realistic_payback"><span>约11个月</span></span></div></div>
     </div>
     <div class="sub-title-sm">投资人资金回推演时间线（100万为投资人出资，老板不投钱）</div>
     <div class="table-wrap">
@@ -2787,15 +2787,22 @@
       <h2>三方分账机制</h2>
     </div>
     <p class="fs-085 color-gray" style="margin-bottom:12px;">最终合同定稿 · 无争议 · 法定结算顺序<br>⚠️ 分账基数使用月度真实可分配现金净利润（不重复扣减设备摊销）。</p>
-    <div class="sub-title-sm">分账顺序（出资人·房东·项目组织者）</div>
+    <div class="sub-title-sm">分账顺序（投资人·房东·门店老板）</div>
+    <div class="highlight-box" style="border-left:4px solid #8e44ad;background:#f8f0fc;">
+      <strong>📌 关键说明：8%不是老板的收益，是流量获客的刚性成本</strong><br>
+      抖音服务商费（4%）+ 运营部门费（4%）= 8%，属于 <strong>前端获客必需支出</strong>，和食材成本、人工工资、水电费一样，是开店必须花的钱。<br>
+      没有流量就没有客流，门店直接倒闭。这8%是给抖音服务商团队（短视频/直播/达人/团购核销）的硬支出，<strong>不是老板空手套白狼的抽成</strong>。<br>
+      老板（门店运营方）的收入来源是：<strong>扣除所有成本（含8%流量费）后的剩余利润</strong>，和投资人、房东一样承担经营风险。
+    </div>
     <ol class="step-list">
-      <li><strong>扣全部运营成本：</strong>人工、食材、水电、营销、杂费</li>
-      <li><strong>优先扣除：</strong>服务商费（营业额4%）</li>
-      <li><strong>优先扣除：</strong>运营部门费（营业额4%，含达人对接/拍摄剪辑/线上推广等全部营销支出，由运营方统筹支付）</li>
+      <li><strong>扣全部运营成本：</strong>人工、食材、水电、杂费</li>
+      <li><strong>优先扣除：</strong>抖音服务商费（营业额4%，前端获客团队）</li>
+      <li><strong>优先扣除：</strong>运营部门费（营业额4%，达人对接/拍摄剪辑/线上推广等全部营销支出）</li>
       <li><strong>弥补往期亏损：</strong>如有亏损，先弥补再分红</li>
-      <li><strong>投资人阶梯分红：</strong>第1–12个月分可分配纯利<span data-model="investor_pct">11%</span>，第13–36个月分可分配纯利<span data-model="investor_pct_year2">11%</span></li>
-      <li><strong>房东分成：</strong>可分配纯利×8%/12%（利润阈值触发：&lt;30万→8%，≥30万→12%）</li>
-      <li><strong>剩余全部：</strong>归运营方所有</li>
+      <li><strong>投资人分红（回本前40%）：</strong>投资人累计分红未达100万本金前，按可分配纯利的40%加速回本</li>
+      <li><strong>投资人分红（回本后10%）：</strong>本金收回后，按可分配纯利的10%享受纯收益，直至36个月期满</li>
+      <li><strong>房东分成（超额累进）：</strong>可分配纯利中30万以内部分按10%，超出30万部分按20%</li>
+      <li><strong>剩余全部：</strong>归门店老板（运营方）所有</li>
     </ol>
     <div class="sub-title-sm">当月具体分账明细（月销<span data-model="monthly_revenue">180万</span>稳定状态，可分配纯利口径）</div>
     <div class="table-wrap">
@@ -2803,24 +2810,24 @@
         <thead><tr><th style="width:60%;">分账项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
         <tbody>
           <tr><td>① 月度总营收</td><td style="text-align:right;"><span data-model="monthly_revenue_num">1,800,000元</span></td></tr>
-          <tr><td>② 减：全部运营成本（人工/食材/水电/营销/杂费）</td><td style="text-align:right;color:#c0392b;"><span data-model="cash_total_expense_num">1139600</span></td></tr>
-          <tr><td>③ 减：服务商费用（营收×4%，优先扣除）</td><td style="text-align:right;color:#c0392b;"><span data-model="service_fee_num">72000</span></td></tr>
-          <tr><td>④ 减：运营部门费用（营收×4%，独立团队无底薪）</td><td style="text-align:right;color:#c0392b;"><span data-model="operation_fee_num">72000</span></td></tr>
-          <tr style="background:#d5f5e3;"><td><strong>⑤ 月度可分配纯利（三方分红统一基数）</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="dividend_base_num">425,500</span></strong></td></tr>
+          <tr><td>② 减：全部运营成本（人工/食材/水电/杂费）</td><td style="text-align:right;color:#c0392b;"><span data-model="cash_total_expense_num">1,199,600</span></td></tr>
+          <tr><td>③ 减：抖音服务商费用（营收×4%，前端获客硬成本）</td><td style="text-align:right;color:#c0392b;"><span data-model="service_fee_num">72,000</span></td></tr>
+          <tr><td>④ 减：运营部门费用（营收×4%，达人/拍摄/直播硬成本）</td><td style="text-align:right;color:#c0392b;"><span data-model="operation_fee_num">72,000</span></td></tr>
+          <tr style="background:#d5f5e3;"><td><strong>⑤ 月度可分配纯利（三方分红统一基数）</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="dividend_base_num">456,400</span></strong></td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 三方分红（全部以可分配纯利为基数） ——</td></tr>
-          <tr><td>⑥ 房东分成（利润≥30万，按12%）</td><td style="text-align:right;"><span data-model="landlord_dividend">42,807元</span></td></tr>
-          <tr><td>⑦ 投资人分红（第1-12月15%）</td><td style="text-align:right;"><span data-model="investor_dividend">50,387元</span></td></tr>
-          <tr class="total-row"><td><strong>⑧ 项目运营方（老板）月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income">364,873元</span></strong></td></tr>
+          <tr><td>⑥ 投资人分红（回本前，分可分配纯利40%）</td><td style="text-align:right;color:#1a8a3a;"><span data-model="investor_dividend">182,560元</span></td></tr>
+          <tr><td>⑦ 房东分成（超额累进：30万内10% + 超出部分20%）</td><td style="text-align:right;"><span data-model="landlord_dividend">61,280元</span></td></tr>
+          <tr class="total-row"><td><strong>⑧ 门店老板（运营方）月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income">212,560元</span></strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="highlight-box" style="border-left:4px solid #8e44ad;">
       <strong>📌 利润基数定义（写进合同）：</strong><br>
-      「可分配纯利」= 总营业额 − 全部运营成本(人工/食材/水电/杂费) − 服务商费用(<span data-model="service_fee_pct">4%</span>) − 运营部门费用(<span data-model="operation_pct">4%</span>)<br>
-      营销费用已含在运营部门费中，由运营方承担，不单独列支。<br>
-      投资人分红基数 = 可分配纯利；房东分红基数 = 可分配纯利（利润阈值触发：&lt;30万→8%，≥30万→12%）。<br>
+      「可分配纯利」= 总营业额 − 全部运营成本(人工/食材/水电/杂费) − 抖音服务商费用(<span data-model="service_fee_pct">4%</span>) − 运营部门费用(<span data-model="operation_pct">4%</span>)<br>
+      8%流量费已包含抖音服务商和运营部门全部营销支出，属于开店刚性成本，不由老板个人承担。<br>
+      投资人分红基数 = 可分配纯利；房东分成基数 = 可分配纯利（超额累进：30万以内10% / 超出部分20%）。<br>
       <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「可分配纯利」定义，否则结算时各执一词，产生纠纷。</span><br>
-      <span style="color:#2e86c1;">📌 第1-12月：可分配纯利≈<span data-model="dividend_base_num">456,400</span>元，投资人分15%≈68,460元，房东分12%（≥30万阈值）≈54,768元，运营方≈333,172元。</span>
+      <span style="color:#2e86c1;">📌 稳态可分配纯利≈<span data-model="dividend_base_num">456,400</span>元，回本前投资人分40%≈182,560元，房东超额累进≈61,280元，运营方≈212,560元。</span>
     </div>
     <div class="highlight-box" style="border-left:4px solid #c0392b;font-size:0.85rem;">
       <strong>📌 财务透明与防跳档机制（写进合同）：</strong><br><br>
@@ -2840,13 +2847,15 @@
     <div class="sub-title" style="margin-top:24px;">📋 投资人退出机制</div>
     <div class="highlight-box" style="border-left:4px solid #8e44ad;">
       <strong>定位：固定期限财务合伙人（非干股、非按劳分配）</strong><br>
-      投资人出资100万但不参与日常经营，属于纯资本投资。按「共担风险、限期分红、到期退出」原则设计。<br><br>
+      投资人出资100万但不参与日常经营，属于纯资本投资。按「回本前高比例加速回本、回本后降比例享收益、到期退出」原则设计。<br><br>
       <strong>📌 合伙期限：<span data-model="investor_term">36个月</span>（3年）</strong><br>
-      • <strong>第1年（回本期）：</strong>月分红约6.8万（可分配纯利×15%），前5个月装修+爬坡无分红，实际7个月满额分红约48万，累计收回约48万<br>
-      • <strong>第2年（纯收益期）：</strong>月分红约5.0万（可分配纯利×11%），全年累计约60万，累计收回约108万（已回本）<br>
-      • <strong>第3年（纯收益期）：</strong>月分红约5.0万，全年累计约60万，累计收回约168万<br>
-      • <strong>3年总分红：约168万，投资回报率约168%</strong><br><br>
-
+      • <strong>回本前（开业第6-11个月）：</strong>月分红约18.3万（可分配纯利×40%），6个月累计约109.5万，已收回本金<br>
+      • <strong>回本后（第12-36个月）：</strong>月分红约4.6万（可分配纯利×10%），25个月累计约114万，纯收益<br>
+      • <strong>3年总分红：约224万，投资回报率约224%</strong><br><br>
+      <strong>📌 本金安全兜底机制：</strong><br>
+      • <strong>资产处置权：</strong>若门店连续6个月亏损且流动资金低于10万，投资人有权发起停业清算，店内设备、装修残值按出资比例优先偿付投资人剩余本金<br>
+      • <strong>资金监管：</strong>100万投资款进入三方监管对公账户，装修、采购、付款全部走对公，凭发票和合同支取，老板无法私自挪用<br>
+      • <strong>最差情况：</strong>有设备资产兜底，本金亏损上限可控，远优于自己开店踩坑<br><br>
       <strong>📌 投资人义务（不能只拿钱，需适度参与）：</strong>
       <ol style="margin:4px 0 0 20px;font-size:0.85rem;">
         <li><strong>每月经营分析会：</strong>参加线上/线下月度经营会，审阅财务报表，了解门店运行状况——这是投资人的基本责任，不是可选项</li>
@@ -2930,62 +2939,62 @@
       <div class="role-card investor">
         <div class="role-icon">💰</div>
         <div class="role-title">投资人</div>
-        <div class="role-sub">出资100万 · 阶梯分红 · 第1年15%/第2-3年11%</div>
+        <div class="role-sub">出资100万 · 回本前40%加速 · 回本后10%享收益</div>
 
         <div class="metric">
-          <span class="label">月均分红</span>
-          <span class="value">第1年 <span data-model="investor_dividend_num">50387</span>元</span>
+          <span class="label">月分红（回本前40%）</span>
+          <span class="value"><span data-model="investor_dividend_num">182,560</span>元</span>
         </div>
         <div class="metric">
-          <span class="label"></span>
-          <span class="value">第2-3年 <span data-model="steady_investor_dividend_wan">约5.0万</span></span>
+          <span class="label">月分红（回本后10%）</span>
+          <span class="value"><span data-model="investor_dividend_post_num">45,640</span>元</span>
         </div>
         <div class="divider"></div>
         <div class="metric">
           <span class="label">第1年分红</span>
-          <span class="value"><span data-model="investor_year1_dividend_wan">约77万</span></span>
+          <span class="value"><span data-model="investor_year1_dividend_wan">约109万</span></span>
         </div>
         <div class="metric">
           <span class="label">3年总分红</span>
-          <span class="value large"><span data-model="investor_total_3y_wan">约189万</span></span>
+          <span class="value large"><span data-model="investor_total_3y_wan">约224万</span></span>
         </div>
         <div class="metric">
           <span class="label">投资回报率</span>
-          <span class="value large" style="color:#ffd700;"><span data-model="investor_roi_3y">189%</span></span>
+          <span class="value large" style="color:#ffd700;"><span data-model="investor_roi_3y">224%</span></span>
         </div>
         <div class="metric">
           <span class="label">回本周期</span>
-          <span class="value"><span data-model="realistic_payback">约24个月</span>（含装修+爬坡）</span>
+          <span class="value"><span data-model="realistic_payback">约11个月</span>（从开业算起）</span>
         </div>
-        <div class="tag">无需参与日常经营</div>
+        <div class="tag">本金安全兜底 · 资产处置权</div>
       </div>
 
       <!-- 房东卡片 -->
       <div class="role-card landlord">
         <div class="role-icon">🏠</div>
         <div class="role-title">房东</div>
-        <div class="role-sub">提供场地 · 利润阈值分成 · 零固定租金</div>
+        <div class="role-sub">提供场地 · 超额累进分成 · 零固定租金</div>
 
         <div class="metric">
           <span class="label">月均分成收入</span>
-          <span class="value large">约5.1万（利润≥30万阈值）</span>
+          <span class="value large">约6.1万（超额累进）</span>
         </div>
         <div class="metric">
-          <span class="label">利润阈值</span>
-          <span class="value large">利润阈值触发（≥30万→12% / &lt;30万→8%）</span>
+          <span class="label">分成规则</span>
+          <span class="value large">超额累进（30万以内10% / 超出部分20%）</span>
         </div>
         <div class="divider"></div>
         <div class="metric">
           <span class="label">年分成收入</span>
-          <span class="value">第1年约61万</span>
+          <span class="value">约73万</span>
         </div>
         <div class="metric">
           <span class="label">3年分成总收入</span>
-          <span class="value large" style="color:#ffd700;">约184万</span>
+          <span class="value large" style="color:#ffd700;">约220万</span>
         </div>
         <div class="metric">
           <span class="label">月均（3年平均）</span>
-          <span class="value">约5.1万/月</span>
+          <span class="value">约6.1万/月</span>
         </div>
         <div class="tag">零风险 · 亏损无分成</div>
       </div>
@@ -2994,7 +3003,7 @@
       <div class="role-card operator">
         <div class="role-icon">👑</div>
         <div class="role-title">老板（项目组织者）</div>
-        <div class="role-sub">不投钱 · 纯运营管理 · 全权决策</div>
+        <div class="role-sub">不投钱 · 后端运营管理 · 承担经营风险</div>
 
         <div class="metric">
           <span class="label">月均纯利</span>
@@ -3024,9 +3033,9 @@
 
     <div class="highlight-box" style="margin-top:20px;background:#f0f8fc;">
       <strong>📌 快速决策参考：</strong><br>
-      • <strong>投资人视角：</strong>100万投入，3年回报约<span data-model="investor_total_3y_wan">189万</span>，年化回报率约70%。适合追求高收益、能接受约16个月回本等待期的财务投资人。<br>
-      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，利润阈值触发分成（≥30万→12%，&lt;30万→8%），月均约5.1万，3年共约184万。适合持有商业物业、愿共担风险的资产方。<br>
-      • <strong>老板视角：</strong>无需出资，3年可获纯利约<span data-model="operator_total_3y_wan">1,159万</span>。适合有餐饮运营经验、能调动资源的项目组织者。
+      • <strong>投资人视角：</strong>100万投入，3年回报约<span data-model="investor_total_3y_wan">224万</span>，年化回报率约75%。回本前分40%加速回本，最快约12个月收回本金，之后享10%纯收益。适合追求高收益、能接受餐饮实体投资周期的财务投资人。<br>
+      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，超额累进分成（30万以内10%/超出部分20%），月均约6.1万，3年共约220万。适合持有商业物业、愿共担风险的资产方。<br>
+      • <strong>老板视角：</strong>无需出资，承担后端运营管理，3年可获纯利约<span data-model="operator_total_3y_wan">XXX万</span>。适合有餐饮运营经验、能调动供应链资源的项目组织者。
     </div>
   
 </div>
@@ -3039,7 +3048,7 @@
 <script>
 // 代码版本号：每次修改 HTML/JS 代码后递增此版本号
 // 用于判断代码是否比数据库更新，实现双向同步
-window.CODE_VERSION = '20260820-022';
+window.CODE_VERSION = '20260822-001';
 </script>
 <script src="business-model.js"></script>
 <script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>
