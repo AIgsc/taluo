@@ -20,45 +20,28 @@
   var varMode = false;
   var hasChanges = false;
 
-  // ==================== Toast 提示 ====================
-  function showToast(msg, isError) {
-    var el = document.getElementById('bp-toast');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'bp-toast';
-      document.body.appendChild(el);
-    }
-    el.textContent = msg;
-    el.style.cssText = 'position:fixed;bottom:80px;right:24px;z-index:99999;' +
-      'background:' + (isError ? '#e74c3c' : '#27ae60') + ';color:#fff;' +
-      'padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;' +
-      'box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:opacity 0.3s;' +
-      'max-width:320px;opacity:1;';
-    clearTimeout(el._timer);
-    el._timer = setTimeout(function() { el.style.opacity = '0'; }, 3000);
-  }
-
-  // ==================== 创建工具栏（右上角固定） ====================
+  // ==================== 创建浮动工具栏 ====================
   function createToolbar() {
     var bar = document.createElement('div');
     bar.id = 'bp-toolbar';
     bar.innerHTML =
       '<button id="bp-edit-btn" class="bp-btn bp-btn-edit">编辑文字</button>' +
       '<button id="bp-var-btn" class="bp-btn bp-btn-var">编辑变量</button>' +
-      '<button id="bp-save-btn" class="bp-btn bp-btn-save" style="display:none">保存修改</button>';
+      '<button id="bp-save-btn" class="bp-btn bp-btn-save" style="display:none">保存修改</button>' +
+      '<span id="bp-status" class="bp-status"></span>';
 
     var style = document.createElement('style');
     style.textContent =
       '#bp-toolbar{' +
-        'position:fixed;top:100px;right:24px;z-index:9999;' +
-        'display:flex;align-items:center;gap:8px;' +
-        'background:rgba(26,82,118,0.92);padding:8px 12px;border-radius:10px;' +
-        'box-shadow:0 2px 12px rgba(0,0,0,0.2);' +
-        'backdrop-filter:blur(4px);transition:opacity 0.3s;touch-action:manipulation;' +
+        'position:sticky;top:0;z-index:9999;background:#1a5276;color:#fff;padding:12px 24px;' +
+        'border-radius:0;box-shadow:0 2px 8px rgba(0,0,0,0.15);' +
+        'display:flex;align-items:center;justify-content:center;gap:12px;font-size:14px;' +
+        'flex-wrap:wrap;transition:opacity 0.3s;touch-action:manipulation;' +
+        'width:100%;box-sizing:border-box;' +
       '}' +
       '#bp-toolbar .bp-btn{' +
-        'border:none;padding:8px 16px;border-radius:6px;cursor:pointer;' +
-        'font-size:13px;font-weight:600;transition:all 0.2s;white-space:nowrap;' +
+        'border:none;padding:10px 20px;border-radius:8px;cursor:pointer;' +
+        'font-size:15px;font-weight:600;transition:all 0.2s;' +
         'touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.2);' +
       '}' +
       '#bp-toolbar .bp-btn-edit{background:#5dade2;color:#fff;}' +
@@ -67,6 +50,7 @@
       '#bp-toolbar .bp-btn-var:hover{background:#6c3483;}' +
       '#bp-toolbar .bp-btn-save{background:#27ae60;color:#fff;}' +
       '#bp-toolbar .bp-btn-save:hover{background:#1e8449;}' +
+      '#bp-toolbar .bp-status{font-size:12px;color:rgba(255,255,255,0.7);}' +
       '.bp-editing{outline:2px dashed #5dade2 !important;outline-offset:2px !important;border-radius:4px !important;cursor:text !important;user-select:text !important;-webkit-user-select:text !important;-webkit-touch-callout:default !important;}' +
       '.bp-editing:hover{background:rgba(93,173,226,0.05) !important;}' +
       '.bp-saving{opacity:0.5;pointer-events:none;}' +
@@ -89,7 +73,7 @@
       '.bp-recalc-note{font-size:11px;color:#888;margin-top:4px;}';
 
     document.head.appendChild(style);
-    document.body.appendChild(bar);
+    document.body.insertBefore(bar, document.body.firstChild);
 
     document.getElementById('bp-edit-btn').addEventListener('click', toggleEdit);
     document.getElementById('bp-var-btn').addEventListener('click', toggleVarModal);
@@ -109,6 +93,10 @@
     document.getElementById('bp-save-btn').style.display = editMode || varMode ? 'inline-block' : 'none';
     document.getElementById('bp-var-btn').disabled = editMode;
     document.getElementById('bp-var-btn').style.opacity = editMode ? '0.5' : '1';
+
+    if (!editMode) {
+      document.getElementById('bp-status').textContent = '';
+    }
   }
 
   // ==================== 变量编辑弹窗 ====================
@@ -120,7 +108,8 @@
 
     var model = window.BusinessModel;
     if (!model) {
-      showToast('错误：BusinessModel 未加载', true);
+      document.getElementById('bp-status').textContent = '错误：BusinessModel 未加载';
+      document.getElementById('bp-status').style.color = '#e74c3c';
       return;
     }
 
@@ -192,7 +181,7 @@
       varMode = false;
       document.getElementById('bp-var-btn').textContent = '编辑变量';
       document.getElementById('bp-save-btn').style.display = 'none';
-      showToast('已关闭');
+      document.getElementById('bp-status').textContent = '';
     };
 
     document.getElementById('bp-var-apply').addEventListener('click', applyVarChanges);
@@ -247,7 +236,8 @@
 
     model.setInputs(inputs);
     hasChanges = true;
-    showToast('变量已更新，正在保存...');
+    document.getElementById('bp-status').textContent = '变量已更新，点击保存';
+    document.getElementById('bp-status').style.color = 'rgba(255,255,255,0.9)';
 
     // 自动触发保存
     saveContent();
@@ -356,6 +346,7 @@
   async function saveContent() {
     var content = collectContent();
     var saveBtn = document.getElementById('bp-save-btn');
+    var status = document.getElementById('bp-status');
 
     // 收集模型变量
     var modelInputs = null;
@@ -366,12 +357,14 @@
 
     var keys = Object.keys(content);
     if (keys.length === 0 && !modelInputs) {
-      showToast('保存失败：未找到可编辑内容', true);
+      status.textContent = '保存失败：未找到可编辑内容';
+      status.style.color = '#e74c3c';
       return;
     }
 
     saveBtn.disabled = true;
     saveBtn.textContent = '保存中...';
+    status.textContent = '';
 
     try {
       var body = { content: content, code_version: CODE_VERSION };
@@ -389,21 +382,28 @@
         var result = await res.json();
         hasChanges = false;
         if (result.github && !result.github.synced) {
-          showToast('保存成功，但 GitHub 同步失败', true);
+          status.textContent = '保存成功，但 GitHub 同步失败';
+          status.style.color = '#e67e22';
         } else {
-          showToast('保存成功！已同步到数据库');
+          status.textContent = '保存成功！已同步到数据库';
+          status.style.color = '#27ae60';
         }
         if (varMode) {
           closeVarModal();
         }
       } else {
-        showToast('保存失败，请重试', true);
+        status.textContent = '保存失败，请重试';
+        status.style.color = '#e74c3c';
       }
     } catch (e) {
-      showToast('保存失败：网络错误', true);
+      status.textContent = '保存失败：网络错误';
+      status.style.color = '#e74c3c';
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = '保存修改';
+      setTimeout(function() {
+        status.textContent = '';
+      }, 3000);
     }
   }
 
@@ -425,7 +425,7 @@
       if (e.target.closest && e.target.closest('[data-edit]')) {
         if (!hasChanges && editMode) {
           hasChanges = true;
-          showToast('已修改，点击保存');
+          document.getElementById('bp-status').textContent = '已修改，点击保存';
         }
       }
     });
