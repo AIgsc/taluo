@@ -271,6 +271,7 @@
         total_fee_num: totalFee,
         dividend_base: formatNum(dividendBase) + '元',
         dividend_base_num: dividendBase,
+        dividend_base_display: formatNum(dividendBase),
         // 投资人分红（第1年15%）
         investor_dividend: formatNum(investorDividendYear1) + '元',
         investor_dividend_num: investorDividendYear1,
