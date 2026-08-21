@@ -2284,8 +2284,8 @@
       <strong>团队编制：</strong>38人<br>
       <strong>投资人回本：</strong><span data-model="investor_payback">15个月</span>（分红<span data-model="investor_pct">15%</span>（第1年）/ <span data-model="investor_pct_year2">11%</span>（第2-3年），年化收益约85%）<br>
       <strong>合伙期限：</strong><span data-model="investor_term">36个月</span>（3年，期满自动终止，<span data-model="investor_total_3y">约289万</span>总回报，<span data-model="investor_roi_3y">361%</span>）<br>
-      <strong>老板月纯利：</strong>第1-12月 <span data-model="operator_income">334,800元</span>/月（约<span data-model="operator_income_wan">33.5万</span>）· 第13月起 <span data-model="post_amort_operator_income">376,530元</span>/月（约<span data-model="post_amort_operator_income_wan">37.7万</span>）<br>
-      <strong>老板年纯利：</strong>第1年 <span data-model="operator_year1_wan">约402万</span> · 第2年起 <span data-model="operator_year2_wan">约452万</span>
+      <strong>老板月纯利：</strong>第1-12月约<span data-model="operator_income_wan">47.3万</span>/月 · 第13月起 <span data-model="post_amort_operator_income">376,530元</span>/月（约<span data-model="post_amort_operator_income_wan">37.7万</span>）<br>
+      <strong>老板年纯利：</strong>第1年约<span data-model="operator_year1_wan">568万</span> · 第2年起 <span data-model="operator_year2_wan">约452万</span>
     </div>
     <div class="version">版本 V11.3 · 老板不投钱 · 角色定位修正</div>
   
@@ -2398,60 +2398,23 @@
       <div class="section-num">四</div>
       <h2>项目利润测算</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:8px;">以下为稳定月销<span data-model="monthly_revenue">180万</span>场景，按经营考核口径（设备<span data-model="equipment_investment_wan">54万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月分摊）计算。</p>
+    <p class="fs-085 color-gray" style="margin-bottom:8px;">以下为稳定月销<span data-model="monthly_revenue">180万</span>场景，按经营考核口径（设备<span data-model="equipment_investment_wan">50万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月分摊）计算。</p>
     <div class="data-grid">
       <div class="data-card"><div class="label">月度总营收</div><div class="value green"><span data-model="monthly_revenue_num">1,800,000元</span></div></div>
       <div class="data-card"><div class="label">经营口径月度总支出</div><div class="value"><span data-model="total_operating_expense">1,196,000元</span></div></div>
     </div>
     <div class="highlight-box green" style="text-align:center;">
       <strong style="font-size:1.2rem;">经营口径月度利润：<span data-model="operating_profit_display">604,000</span> 元</strong>
-      <br><span style="font-size:0.85rem;color:#555;">（含硬件分摊<span data-model="equipment_amortization_short">44,000</span>元/月，未扣服务商及三方分成；现金净利润为<span data-model="cash_net_profit_display">648,000</span>元）</span>
+      <br><span style="font-size:0.85rem;color:#555;">（含硬件分摊<span data-model="equipment_amortization_short">41,667</span>元/月，未扣服务商及三方分成；现金净利润为<span data-model="cash_net_profit_display">648,000</span>元）</span>
     </div>
     <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
       <strong>📌 利润口径说明：</strong><br>
       • 经营口径利润 = 营收 − 房租 − 人工 − 食材 − 水电 − 营销 − 杂费 − 硬件分摊<br>
-      • 硬件分摊 = <span data-model="equipment_investment_plain">540,000</span> ÷ <span data-model="equipment_amortization_months_plain">12</span> = <span data-model="equipment_amortization_short">44,000</span>元/月（仅第1-12个月，第13个月起归零，利润回升至<span data-model="cash_net_profit_num">648,000</span>）<br>
+      • 硬件分摊 = <span data-model="equipment_investment_plain">500,000</span> ÷ <span data-model="equipment_amortization_months_plain">12</span> = <span data-model="equipment_amortization_short">41,667</span>元/月（仅第1-12个月，第13个月起归零，利润回升至<span data-model="cash_net_profit_num">648,000</span>）<br>
       • 现金净利润 = <span data-model="cash_net_profit_num">648,000</span>元（未扣硬件分摊，因为设备全款已一次性在开业月支付）
     </div>
   
 </div>
-
-<!-- ==================== ★ 悲观情景测算（补充） ==================== -->
-  <div class="section" style="border-left:4px solid #c0392b;">
-    <div class="section-header">
-      <div class="section-num" style="background:#c0392b;">⚠</div>
-      <h2 style="color:#c0392b;">悲观情景测算（风控补充）</h2>
-    </div>
-    <p class="fs-085 color-gray" style="margin-bottom:8px;">
-      ⚠️ 以上为理想最优模型。以下模拟食材成本上升至48% + 增加营销推广后，真实利润大幅缩水。
-      所有数据均为现金口径（不扣设备摊销）。
-    </p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th style="width:55%;">项目</th><th style="width:45%;text-align:right;">金额（元）</th></tr></thead>
-        <tbody>
-          <tr><td>月营收（不变）</td><td style="text-align:right;"><span data-model="monthly_revenue_num">1,800,000</span></td></tr>
-          <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 悲观情景支出（现金口径，无固定租金） ——</td></tr>
-          <tr><td>① 全员人工工资</td><td style="text-align:right;"><span data-model="labor_cost_plain">180,000</span></td></tr>
-          <tr><td>② ⚠️ 食材成本（上涨至48%：<span data-model="monthly_revenue">180万</span>×48%）</td><td style="text-align:right;color:#c0392b;"><span data-model="pessimistic_food_cost">864,000</span></td></tr>
-          <tr><td>③ 水电燃气耗材维保</td><td style="text-align:right;"><span data-model="utility_cost_plain">48,000</span></td></tr>
-          <tr><td>④ 营销推广（营收3%）</td><td style="text-align:right;"><span data-model="marketing_cost_num">54,000</span></td></tr>
-          <tr><td>⑤ 运营杂费</td><td style="text-align:right;"><span data-model="misc_cost_plain">60,000</span></td></tr>
-          <tr class="total-row"><td><strong>悲观情境现金总支出</strong></td><td style="text-align:right;color:#c0392b;"><strong><span data-model="pessimistic_total_expense_num">1,206,000</span></strong></td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="data-grid" style="margin-top:12px;">
-      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">悲观现金净利润</div><div class="value" style="color:#c0392b;"><span data-model="pessimistic_operating_profit_num">594,000 元</span></div></div>
-      <div class="data-card" style="border:1px solid #c0392b;"><div class="label">运营方实得（三方分成后）</div><div class="value" style="color:#c0392b;"><span data-model="pessimistic_operator_income_wan">约 23.9 万</span></div></div>
-    </div>
-    <div class="highlight-box" style="border-left:4px solid #c0392b;background:#fff5f5;">
-      <strong>⚠️ 悲观 vs 理想对比（现金口径）：</strong><br>
-      理想模型运营方月实得≈<span data-model="operator_income_wan">34.4万</span> → 悲观模型≈<span data-model="pessimistic_operator_income_wan">23.9万</span>，<strong>每月少<span data-model="pessimistic_vs_ideal_diff">10.5万</span>，年累计少<span data-model="pessimistic_vs_ideal_annual">126万</span></strong>。<br>
-      投资人回本约<span data-model="pessimistic_payback">约30个月（投资人）</span>。<br>
-      <strong>建议：</strong>实际操作中应按悲观情景做预算预留，才能在真实经营中游刃有余。
-    </div>
-  </div>
 
 <!-- ==================== 五、回本周期测算 ==================== -->
   <div class="section" id="s11" data-edit="s11">
@@ -2480,8 +2443,8 @@
     <div class="highlight-box">
       <strong>角色说明：</strong><br>
       • <strong>投资人：</strong>出资80万（装修设备50万+流动资金30万），按纯利12%分红，约15个月回本，3年累计回报约204万（255%）<br>
-      • <strong>老板（项目组织者）：</strong>不投钱，全程负责运营管理，月均纯利约34.4万（第1-12月）/ 37.7万（第13月起），年收入约413-452万<br>
-      • <strong>房东：</strong>纯利润分成模式，月均约5万，3年共约186万<br>
+      • <strong>老板（项目组织者）：</strong>不投钱，全程负责运营管理，月均纯利约47.3万（第1-12月）/ 37.7万（第13月起），年收入约568-452万<br>
+      • <strong>房东：</strong>净利润×12%分成，月均约7.8万，3年共约280万<br>
       <strong>三方各取所需，共同把项目做好，缺一不可。</strong>
     </div>
 </div>
@@ -2498,7 +2461,7 @@
       <li><strong>房租风险低：</strong>无固定租金，纯利润分成，亏损无额外压力</li>
       <li><strong>设备风险低：</strong>植物油火锅无电路隐患，设备简单、故障率极低；设备按12个月分摊计入经营支出，提前损毁则剩余未分摊部分一次性计入当月</li>
       <li><strong>客源风险低：</strong>短视频同城引流+自驾团建刚需，不依赖自然客流</li>
-      <li><strong>食材风险低 + 谨慎提示：</strong>农贸市场拿货，供应链短、损耗低、价格优势大。但海鲜自助客流波动大，客流低谷期食材损耗率会上升，建议按48%成本率做预算预留（详见悲观情景测算）</li>
+      <li><strong>食材风险低 + 谨慎提示：</strong>农贸市场拿货，供应链短、损耗低、价格优势大。但海鲜自助客流波动大，客流低谷期食材损耗率会上升，建议按48%成本率做预算预留</li>
       <li><strong>营销风险：</strong>短视频同城引流为主要获客渠道，每月需持续投入营收约3%做推广，不可中断</li>
       <li><strong>三方分账合同风险：</strong>合同中必须明确「经营纯利」定义，统一扣除服务商4%后再计算分红，避免后期纠纷</li>
     </ul>
@@ -2556,12 +2519,11 @@
       <div class="section-num">八</div>
       <h2>房东合作模式</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:12px;">双向择优：max(营业额×8%, 现金净利润×12%) · 零固定租金 · 风险共担</p>
+    <p class="fs-085 color-gray" style="margin-bottom:12px;">零固定房租 · 场地入股 · 风险共担 · 双向择优</p>
     <ul class="info-list">
-      <li><strong>零固定租金：</strong>月度双向择优结算：① 流水保底：当月营业额×8%；② 利润分红：当月现金净利润×12%，取高值</li>
-      <li><strong>分成规则：</strong>max(当月营业额×8%, 当月现金净利润×12%) = 房东当月分成收入</li>
-      <li><strong>风险共担：</strong>门店亏损则房东无分成，零压力</li>
-      <li><strong>房东配合：</strong>全套注册、办证、场地使用证明</li>
+      <li><strong>合作方式：</strong>零固定房租，场地入股、风险共担，门店亏损当月房东无分成</li>
+      <li><strong>月度双向择优结算：</strong>① 净利润×8%保底；② 净利润×12%分红，取高值</li>
+      <li><strong>房东义务：</strong>负责场地合规、消防对接、物业协调</li>
     </ul>
     <div class="highlight-box green">
       <strong>纯利润法定公式（写进合同，请严格按以下顺序）：</strong><br>
@@ -2569,8 +2531,8 @@
       <strong>② 优先扣除运营部门费用：</strong>总营业额 × <span data-model="operation_pct">4%</span>（流水抽成），随自主流量体系搭建逐渐收回服务商费用，运营部门维持6%<br>
       <strong>③ 扣除两费后的经营纯利：</strong>总营业额 − 服务商费用 − 运营部门费用 − 人工 − 全部食材采购 − 水电燃气 − 耗材 − 维修 − 保洁垃圾 − 运营所有杂费 − 营销推广<br>
       <strong>④ 投资人分红（共担风险）：</strong>经营纯利 × <span data-model="investor_pct">15%</span>（第1-12月）/ <span data-model="investor_pct_year2">11%</span>（第13-36月）<br>
-      <strong>⑤ 房东双向择优分成（共担风险）：</strong>max(营业额×8%, 现金净利润×12%)<br>
-      <strong>⑥ 项目运营方实得：</strong>经营纯利 − 投资人分红 − 房东利润分成<br>
+      <strong>⑤ 房东双向择优分成（共担风险）：</strong>净利润×12%（双向择优，取高值）<br>
+      <strong>⑥ 项目运营方实得：</strong>经营纯利 − 投资人分红 − 房东分成<br>
       <span style="color:#c0392b;font-size:0.85rem;">⚠️ 合同必须明确服务商4%为优先扣除项，否则会导致分成计算纠纷。</span>
     </div>
   
@@ -2581,11 +2543,11 @@
 
     <div class="section-header">
       <div class="section-num">九</div>
-      <h2>装修与开业全套预算（54万全包）</h2>
+      <h2>装修与开业全套预算（50万全包）</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:12px;">装修模式：极简工业风（黑顶不吊顶、原地面复用、快装墙面、二手设备）<br>说明：以下54万为<strong>开业前全部投入</strong>，仅食材采购单独计算，其余所有项目均在此预算内。</p>
+    <p class="fs-085 color-gray" style="margin-bottom:12px;">装修模式：极简工业风（黑顶不吊顶、原地面复用、快装墙面、二手设备）<br>说明：以下50万为<strong>开业前全部投入</strong>，仅食材采购单独计算，其余所有项目均在此预算内。</p>
 
-    <div class="sub-title-sm">一、硬装改造类（共 323,000元）</div>
+    <div class="sub-title-sm">一、硬装改造类（共 300,000元）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:60%;">项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
@@ -2600,7 +2562,7 @@
       </table>
     </div>
 
-    <div class="sub-title-sm">二、设备家具类（共 160,000元）</div>
+    <div class="sub-title-sm">二、设备家具类（共 155,000元）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:60%;">项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
@@ -2613,7 +2575,7 @@
       </table>
     </div>
 
-    <div class="sub-title-sm">三、开业配套采购类（共 57,000元）</div>
+    <div class="sub-title-sm">三、开业配套采购类（共 45,000元）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:60%;">项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
@@ -2631,21 +2593,21 @@
       <table>
         <thead><tr><th style="width:60%;">汇总</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
         <tbody>
-          <tr><td>硬装改造类（①–⑥）</td><td style="text-align:right;">323,000</td></tr>
-          <tr><td>设备家具类（⑦–⑩）</td><td style="text-align:right;">160,000</td></tr>
-          <tr><td>开业配套采购类（⑪–⑮）</td><td style="text-align:right;">57,000</td></tr>
-          <tr class="total-row"><td><strong>总投资（严格封顶）</strong></td><td style="text-align:right;"><strong>540,000 元</strong></td></tr>
+          <tr><td>硬装改造类（①–⑥）</td><td style="text-align:right;">300,000</td></tr>
+          <tr><td>设备家具类（⑦–⑩）</td><td style="text-align:right;">155,000</td></tr>
+          <tr><td>开业配套采购类（⑪–⑮）</td><td style="text-align:right;">45,000</td></tr>
+          <tr class="total-row"><td><strong>总投资（严格封顶）</strong></td><td style="text-align:right;"><strong>500,000 元</strong></td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="highlight-box orange">
       <strong>预算说明：</strong><br>
-      • 硬装从原200,000后厨改造中优化15,000，墙板从70,000降至50,000，排风从45,000降至40,000，共挤出约30,000<br>
-      • 挤出预算用于新增：门头招牌30,000 + 餐具15,000 + 小料台8,000 + 厨房工具10,000 + 办公采购12,000 + 开业杂项12,000 = 87,000<br>
-      • 海鲜池系统40,000元，从预算优化中挤出<br>
-      • 桌椅+小火锅从62,400降至58,000，合计54万严格封顶<br>
-      • <strong>仅食材采购单独计算，其余所有开业前投入均已包含</strong>
+      • 硬装改造从原323,000优化至300,000（后厨改造、墙板、排风等项目优化挤出约23,000）<br>
+      • 设备家具从160,000优化至155,000（桌椅+小火锅优化）<br>
+      • 开业配套采购从57,000优化至45,000（精简办公杂项）<br>
+      • 海鲜池维生系统40,000元保留在设备家具类中<br>
+      • <strong>仅食材采购单独计算，其余所有开业前投入均已包含，合计50万严格封顶</strong>
     </div>
 
     <!-- ========== 设备台账：12个月分摊 ========== -->
@@ -2666,14 +2628,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>硬装改造类（①–⑥）</td><td style="text-align:right;"><span data-model="hard_asset_plain">323,000</span></td><td style="text-align:right;">12</td><td style="text-align:right;"><span data-model="hard_amort_plain">26,917</span></td><td>开业月 ～ 第11个月</td></tr>
-          <tr><td>设备家具类（⑦–⑩）</td><td style="text-align:right;"><span data-model="furniture_asset_plain">160,000</span></td><td style="text-align:right;">12</td><td style="text-align:right;"><span data-model="furniture_amort_plain">13,333</span></td><td>开业月 ～ 第11个月</td></tr>
-          <tr><td>开业配套采购类（⑪–⑮）</td><td style="text-align:right;"><span data-model="supplies_asset_plain">57,000</span></td><td style="text-align:right;">12</td><td style="text-align:right;"><span data-model="supplies_amort_plain">4,750</span></td><td>开业月 ～ 第11个月</td></tr>
+          <tr><td>硬装改造类（①–⑥）</td><td style="text-align:right;"><span data-model="hard_asset_plain">300,000</span></td><td style="text-align:right;">12</td><td style="text-align:right;"><span data-model="hard_amort_plain">25,000</span></td><td>开业月 ～ 第11个月</td></tr>
+          <tr><td>设备家具类（⑦–⑩）</td><td style="text-align:right;"><span data-model="furniture_asset_plain">155,000</span></td><td style="text-align:right;">12</td><td style="text-align:right;"><span data-model="furniture_amort_plain">12,917</span></td><td>开业月 ～ 第11个月</td></tr>
+          <tr><td>开业配套采购类（⑪–⑮）</td><td style="text-align:right;"><span data-model="supplies_asset_plain">45,000</span></td><td style="text-align:right;">12</td><td style="text-align:right;"><span data-model="supplies_amort_plain">3,750</span></td><td>开业月 ～ 第11个月</td></tr>
           <tr class="total-row">
             <td><strong>合计（设备台账总金额）</strong></td>
-            <td style="text-align:right;"><strong><span data-model="equipment_investment_plain">540,000</span></strong></td>
+            <td style="text-align:right;"><strong><span data-model="equipment_investment_plain">500,000</span></strong></td>
             <td style="text-align:right;"><strong><span data-model="payback_months">12</span></strong></td>
-            <td style="text-align:right;color:#2e86c1;"><strong><span data-model="equipment_amortization_num">44,000</span></strong></td>
+            <td style="text-align:right;color:#2e86c1;"><strong><span data-model="equipment_amortization_num">41,667</span></strong></td>
             <td>第12个月起分摊结束，经营支出不再含设备</td>
           </tr>
         </tbody>
@@ -2698,9 +2660,9 @@
       <h2>整体落地执行计划</h2>
     </div>
     <ol class="step-list">
-      <li><strong>房东签约定稿</strong> — 零固定租金+纯利润分成模式锁定（房东纯利润11%分成）</li>
+      <li><strong>房东签约定稿</strong> — 零固定租金+净利润×12%分成模式锁定</li>
       <li><strong>投资人确认项目</strong> — 锁定投资与分红机制</li>
-      <li><strong>施工队进场</strong> — 按80万预算完成全套装修+开业采购</li>
+      <li><strong>施工队进场</strong> — 按50万预算完成全套装修+开业采购</li>
       <li><strong>设备进场安装</strong> — 空调、排风、新风、桌椅、门脸全部到位</li>
       <li><strong>全员招聘定岗培训</strong></li>
       <li><strong>证照落地</strong> — 消防、环评、食品证、营业执照全部办结</li>
@@ -2759,7 +2721,7 @@
     <p class="fs-085 color-gray" style="margin-bottom:8px;">
       以下为稳定月销<span data-model="monthly_revenue">180万</span>场景的两套独立核算报表。<br>
       <strong>① 现金流水</strong>（看手上实际剩多少钱）— 设备全款只在付款月出现一次，其余月份为0。<br>
-      <strong>② 经营考核口径</strong>（评门店赚不赚钱）— 设备<span data-model="equipment_investment_wan">54万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月，每月分摊<span data-model="equipment_amortization_short">44,000</span>元，连续12个月，第13个月起归零。
+      <strong>② 经营考核口径</strong>（评门店赚不赚钱）— 设备<span data-model="equipment_investment_wan">50万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月，每月分摊<span data-model="equipment_amortization_short">41,667</span>元，连续12个月，第13个月起归零。
     </p>
 
     <!-- 现金流水 -->
@@ -2782,7 +2744,7 @@
       </table>
     </div>
     <p class="fs-085 color-gray" style="margin-bottom:12px;">
-      ⚡ 设备付款月（开业首个完整月）：现金总支出 = <span data-model="cash_total_expense_num">1,152,000</span> + <span data-model="equipment_investment_plain">540,000</span>（设备全款）= <strong><span data-model="equipment_month_expense_num">1,692,000</span></strong>，现金净利润 = <strong><span data-model="equipment_month_profit_num">108,000</span></strong>。
+      ⚡ 设备付款月（开业首个完整月）：现金总支出 = <span data-model="cash_total_expense_num">1,152,000</span> + <span data-model="equipment_investment_plain">500,000</span>（设备全款）= <strong><span data-model="equipment_month_expense_num">1,652,000</span></strong>，现金净利润 = <strong><span data-model="equipment_month_profit_num">148,000</span></strong>。
     </p>
 
     <!-- 经营考核口径 -->
@@ -2798,7 +2760,7 @@
           <tr><td>③ 水电物业（同现金）</td><td style="text-align:right;"><span data-model="utility_cost_plain">48,000</span></td></tr>
           <tr><td>④ 营销推广（同现金）</td><td style="text-align:right;"><span data-model="marketing_cost">54,000</span></td></tr>
           <tr><td>⑤ 其他运营杂费（同现金）</td><td style="text-align:right;"><span data-model="misc_cost">60,000</span></td></tr>
-          <tr><td>⑥ 🛠 设备月度分摊支出（<span data-model="equipment_investment_wan">54万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月）</td><td style="text-align:right;color:#2e86c1;font-weight:700;"><span data-model="equipment_amortization">44,000</span></td></tr>
+          <tr><td>⑥ 🛠 设备月度分摊支出（<span data-model="equipment_investment_wan">50万</span>÷<span data-model="equipment_amortization_months_plain">12</span>个月）</td><td style="text-align:right;color:#2e86c1;font-weight:700;"><span data-model="equipment_amortization">41,667</span></td></tr>
           <tr class="total-row"><td><strong>经营口径月度总支出</strong></td><td style="text-align:right;"><strong><span data-model="total_operating_expense">1,196,000</span></strong></td></tr>
           <tr style="background:#e8f8f5;"><td><strong>✅ 经营口径月度利润</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="operating_profit">604,000</span></strong></td></tr>
         </tbody>
@@ -2806,9 +2768,9 @@
     </div>
     <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
       <strong>📌 两套口径差异说明：</strong><br>
-      • 现金净利润 <span data-model="cash_net_profit_num">648,000</span> &gt; 经营口径利润 <span data-model="operating_profit_num">604,000</span>，差额 = 设备月度分摊 <span data-model="equipment_amortization_num">44,000</span>。<br>
+      • 现金净利润 <span data-model="cash_net_profit_num">648,000</span> &gt; 经营口径利润 <span data-model="operating_profit_num">604,000</span>，差额 = 设备月度分摊 <span data-model="equipment_amortization_num">41,667</span>。<br>
       • 现金看的是"手上实际剩多少钱"；经营口径看的是"这个店每个月赚不赚钱"（含设备消耗）。<br>
-      • 第1-12个月：经营口径每月多一笔<span data-model="equipment_amortization_num">44,000</span>的硬件分摊支出；第13个月起分摊结束，经营口径利润回升至<span data-model="cash_net_profit_num">648,000</span>。<br>
+      • 第1-12个月：经营口径每月多一笔<span data-model="equipment_amortization_num">41,667</span>的硬件分摊支出；第13个月起分摊结束，经营口径利润回升至<span data-model="cash_net_profit_num">648,000</span>。<br>
       • <strong>三方分账统一使用现金净利润为基数</strong>（不扣设备摊销，确保各方利益一致）。
     </div>
   
@@ -2824,11 +2786,12 @@
     <p class="fs-085 color-gray" style="margin-bottom:12px;">最终合同定稿 · 无争议 · 法定结算顺序<br>⚠️ 三方分红基数统一使用<b>现金净利润</b>（不扣设备摊销）。</p>
     <div class="sub-title-sm">分账顺序（出资人·房东·项目组织者）</div>
     <ol class="step-list">
+      <li><strong>扣全部运营成本：</strong>人工、食材、水电、营销、杂费（不含设备摊销）</li>
       <li><strong>优先扣除：</strong>服务商费（营业额4%）</li>
       <li><strong>优先扣除：</strong>运营部门费（营业额4%）</li>
       <li><strong>弥补往期亏损：</strong>如有亏损，先弥补再分红</li>
       <li><strong>投资人分红：</strong>第1-12月现金净利润×<span data-model="investor_pct">15%</span>，第13-36月现金净利润×<span data-model="investor_pct_year2">11%</span></li>
-      <li><strong>房东分成：</strong>max(营业额×8%, 现金净利润×12%)</li>
+      <li><strong>房东分成：</strong>净利润×12%（双向择优，取高值）</li>
       <li><strong>剩余全部：</strong>归运营方所有</li>
     </ol>
     <div class="sub-title-sm">当月具体分账明细（月销<span data-model="monthly_revenue">180万</span>稳定状态，现金净利润口径，不扣设备摊销）</div>
@@ -2841,17 +2804,17 @@
           <tr><td>③ 现金净利润（扣两费后）</td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><span data-model="cash_net_profit_num">648,000元</span></td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 三方分红（全部以现金净利润为基数） ——</td></tr>
           <tr><td>④ 投资人分红（第1年：<span data-model="cash_net_profit_num">648,000</span>×<span data-model="investor_pct">15%</span>）</td><td style="text-align:right;"><span data-model="investor_dividend">97,200元</span></td></tr>
-          <tr><td>⑤ 房东分成：max(营业额×8%, 现金净利润×12%)</td><td style="text-align:right;"><span data-model="landlord_dividend">144,000元</span></td></tr>
-          <tr class="total-row"><td><strong>⑥ 项目运营方月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income">334,800元</span></strong></td></tr>
+          <tr><td>⑤ 房东分成：净利润×12%（双向择优，取高值）</td><td style="text-align:right;"><span data-model="landlord_dividend">77,760元</span></td></tr>
+          <tr class="total-row"><td><strong>⑥ 项目运营方月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income">473,040元</span></strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="highlight-box" style="border-left:4px solid #8e44ad;">
       <strong>📌 利润基数定义（写进合同）：</strong><br>
       「现金净利润」= 总营业额 − 服务商费用(<span data-model="service_fee_pct">4%</span>) − 运营部门费用(<span data-model="operation_pct">4%</span>) − 人工 − 食材 − 水电 − 营销 − 杂费（不扣设备摊销）<br>
-      投资人分红基数 = 现金净利润；房东分红基数 = 现金净利润（取高值保底）。<br>
+      投资人分红基数 = 现金净利润；房东分红基数 = 现金净利润（双向择优，取高值）。<br>
       <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「现金净利润」定义，否则结算时各执一词，产生纠纷。</span><br>
-      <span style="color:#2e86c1;">📌 第1-12月：现金净利润≈<span data-model="cash_net_profit_num">648,000</span>元，投资人分<span data-model="investor_pct">15%</span>≈97,200元，房东取max(营业额×8%=144,000, 现金净利润×12%=77,760)=144,000元，运营方≈334,800元。</span>
+      <span style="color:#2e86c1;">📌 第1-12月：现金净利润≈<span data-model="cash_net_profit_num">648,000</span>元，投资人分<span data-model="investor_pct">15%</span>≈97,200元，房东分净利润×12%≈77,760元，运营方≈473,040元。</span>
     </div>
 
     <div class="sub-title" style="margin-top:24px;">📋 投资人退出机制</div>
@@ -2945,7 +2908,7 @@
       <div class="role-card investor">
         <div class="role-icon">💰</div>
         <div class="role-title">投资人</div>
-        <div class="role-sub">出资80万 · 财务合伙人 · 15%/11%分红</div>
+        <div class="role-sub">出资80万 · 财务合伙人 · 第1年15%/第2-3年11%</div>
 
         <div class="metric">
           <span class="label">月均分红</span>
@@ -2979,28 +2942,28 @@
       <div class="role-card landlord">
         <div class="role-icon">🏠</div>
         <div class="role-title">房东</div>
-        <div class="role-sub">提供场地 · max(营业额×8%, 现金净利润×12%) · 无固定租金</div>
+        <div class="role-sub">提供场地 · 净利润×12%分成 · 零固定租金</div>
 
         <div class="metric">
           <span class="label">月均分成收入</span>
-          <span class="value large">约 <span data-model="landlord_dividend_num">144,000</span>元</span>
+          <span class="value large">约 <span data-model="landlord_dividend_num">77,760</span>元</span>
         </div>
         <div class="metric">
-          <span class="label"></span>
-          <span class="value large">≈144,000元（取高值）</span>
+          <span class="label">净利润×12%</span>
+          <span class="value large">≈77,760元</span>
         </div>
         <div class="divider"></div>
         <div class="metric">
           <span class="label">年分成收入</span>
-          <span class="value">第1年 <span data-model="landlord_year1_total_wan">约173万</span></span>
+          <span class="value">第1年约93万</span>
         </div>
         <div class="metric">
           <span class="label">3年分成总收入</span>
-          <span class="value large" style="color:#ffd700;"><span data-model="landlord_total_3y_wan">约518万</span></span>
+          <span class="value large" style="color:#ffd700;">约280万</span>
         </div>
         <div class="metric">
           <span class="label">月均（3年平均）</span>
-          <span class="value">约14.4万/月</span>
+          <span class="value">约7.8万/月</span>
         </div>
         <div class="tag">零风险 · 亏损无分成</div>
       </div>
@@ -3013,7 +2976,7 @@
 
         <div class="metric">
           <span class="label">月均纯利</span>
-          <span class="value large">第1年 <span data-model="operator_income_wan">33.5万</span></span>
+          <span class="value large">第1年 <span data-model="operator_income_wan">47.3万</span></span>
         </div>
         <div class="metric">
           <span class="label"></span>
@@ -3022,7 +2985,7 @@
         <div class="divider"></div>
         <div class="metric">
           <span class="label">第1年纯利</span>
-          <span class="value"><span data-model="operator_year1_wan">约413万</span></span>
+          <span class="value"><span data-model="operator_year1_wan">约568万</span></span>
         </div>
         <div class="metric">
           <span class="label">3年总纯利</span>
@@ -3040,7 +3003,7 @@
     <div class="highlight-box" style="margin-top:20px;background:#f0f8fc;">
       <strong>📌 快速决策参考：</strong><br>
       • <strong>投资人视角：</strong>80万投入，3年回报约<span data-model="investor_total_3y_wan">204万</span>，年化回报率约85%。适合追求高收益、能接受15个月回本等待期的财务投资人。<br>
-      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，月均分成约<span data-model="landlord_dividend_num">49,000</span>元，3年共约<span data-model="landlord_total_3y_wan">186万</span>。适合持有商业物业、愿共担风险的资产方。<br>
+      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，净利润×12%分成，月均约7.8万，3年共约280万。适合持有商业物业、愿共担风险的资产方。<br>
       • <strong>老板视角：</strong>无需出资，3年可获纯利约<span data-model="operator_total_3y_wan">1,149万</span>。适合有餐饮运营经验、能调动资源的项目组织者。
     </div>
   </div>
@@ -3053,7 +3016,7 @@
 <script>
 // 代码版本号：每次修改 HTML/JS 代码后递增此版本号
 // 用于判断代码是否比数据库更新，实现双向同步
-window.CODE_VERSION = '20260820-021';
+window.CODE_VERSION = '20260820-022';
 </script>
 <script src="business-model.js"></script>
 <script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>

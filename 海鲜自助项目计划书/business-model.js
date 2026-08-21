@@ -31,7 +31,7 @@
       equipmentInvestment: 500000, // 装修设备投资 元
 
       // 成本参数
-      foodCostPct: 45,          // 食材成本率 %
+      foodCostPct: 48,          // 食材成本率 %（固定48%）
       rent: 0,                  // 房租 元/月（房东无固定租金，改为利润分成）
       laborCost: 180000,        // 人工成本 元/月（38人，含社保餐宿）
       marketingPct: 3,          // 营销费率 %
@@ -42,8 +42,7 @@
       operationPct: 4,          // 运营部门分成（成交额%）%
       investorPctYear1: 15,     // 投资人分红 - 第1-12月 %
       investorPct: 11,          // 投资人分红 - 第13-36月 %
-      landlordRevenuePct: 8,    // 房东流水保底（营业额%）%
-      landlordProfitPct: 12,    // 房东利润分红（纯利用%）%
+      landlordProfitPct: 12,    // 房东利润分红（净利润×12%）%
       paybackMonths: 12,        // 硬件分摊月数
       partnerTermMonths: 36,    // 投资人合伙期限（月）
 
@@ -94,23 +93,9 @@
       // 投资人：第1-12月 15%，第13-36月 11%
       var investorDividendYear1 = Math.round(dividendBase * i.investorPctYear1 / 100);
       var investorDividend = Math.round(dividendBase * i.investorPct / 100);
-      // 房东：max(营业额×8%, 现金净利润×12%)
-      var landlordByRevenue = Math.round(monthlyRevenue * i.landlordRevenuePct / 100);
-      var landlordByProfit = Math.round(dividendBase * i.landlordProfitPct / 100);
-      var landlordDividend = Math.max(landlordByRevenue, landlordByProfit);
+      // 房东：净利润×12%（月度双向择优，净利润×8%保底，×12%分红，取高值即12%）
+      var landlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
       var operatorIncome = dividendBase - investorDividend - landlordDividend;
-
-      // 悲观情景：食材涨至48%，水电涨至72000
-      var pessimisticFoodCost = Math.round(monthlyRevenue * 0.48);
-      var pessimisticCashExpense = i.laborCost + pessimisticFoodCost + i.rent + marketingCost + 72000;
-      var pessimisticCashNetProfit = monthlyRevenue - pessimisticCashExpense;
-      var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
-      var pessimisticDividendBase = pessimisticCashNetProfit - pessimisticFee;
-      var pessimisticInvestorDividend = Math.round(pessimisticDividendBase * i.investorPctYear1 / 100);
-      var pessimisticLandlordByRevenue = Math.round(monthlyRevenue * i.landlordRevenuePct / 100);
-      var pessimisticLandlordByProfit = Math.round(pessimisticDividendBase * i.landlordProfitPct / 100);
-      var pessimisticLandlordDiv = Math.max(pessimisticLandlordByRevenue, pessimisticLandlordByProfit);
-      var pessimisticOperatorIncome = pessimisticDividendBase - pessimisticInvestorDividend - pessimisticLandlordDiv;
 
       // 回本相关（老板不投钱，无需计算回本周期）
 
@@ -188,11 +173,6 @@
       var investorYear3 = postAmortInvestorDividend * 12;
       var investorTotalReturn3y = investorYear1 + investorYear2 + investorYear3;
       var investorROI = (investorTotalReturn3y / i.totalInvestment * 100).toFixed(0);
-
-      // ========== 悲观 vs 理想对比 ==========
-      var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
-      var pessimisticVsIdealAnnual = pessimisticVsIdealMonthly * 12;
-      var pessimisticPaybackPeriod = '约18个月（投资人）';
 
       // ========== 人均薪酬 ==========
       var avgSalary = Math.round(i.laborCost / i.staffCount);
@@ -343,12 +323,10 @@
         investor_dividend: formatNum(investorDividendYear1) + '元',
         investor_dividend_num: investorDividendYear1,
         investor_pct: '15%（第1-12月）/ 11%（第13-36月）',
-        // 房东：max(营业额×8%, 纯利×12%)
+        // 房东：净利润×12%
         landlord_dividend: formatNum(landlordDividend) + '元',
         landlord_dividend_num: landlordDividend,
-        landlord_by_revenue: formatNum(landlordByRevenue) + '元',
-        landlord_by_profit: formatNum(landlordByProfit) + '元',
-        landlord_pct: '8%（流水保底）/ 12%（利润分红），取高值',
+        landlord_pct: '12%（净利润分红）',
         operator_income: formatNum(operatorIncome) + '元',
         operator_income_num: operatorIncome,
         operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
@@ -357,22 +335,7 @@
         operator_year1_wan: '约' + ((operatorIncome * 12) / 10000).toFixed(0) + '万',
         operator_year2_wan: '约' + ((postAmortOperatorIncome * 12) / 10000).toFixed(0) + '万',
 
-        // ===== 10. 悲观情景（完整） =====
-        pessimistic_food_cost: formatNum(pessimisticFoodCost) + '元',
-        pessimistic_food_cost_num: pessimisticFoodCost,
-        pessimistic_food_cost_pct: '48%',
-        pessimistic_total_expense: formatNum(pessimisticCashExpense) + '元',
-        pessimistic_total_expense_num: pessimisticCashExpense,
-        pessimistic_operating_profit: formatNum(pessimisticCashNetProfit) + '元',
-        pessimistic_operating_profit_num: pessimisticCashNetProfit,
-        pessimistic_dividend_base: formatNum(pessimisticDividendBase) + '元',
-        pessimistic_operator_income: '约 ' + (pessimisticOperatorIncome / 10000).toFixed(1) + ' 万',
-        pessimistic_operator_income_wan: (pessimisticOperatorIncome / 10000).toFixed(1) + '万',
-        pessimistic_operator_income_plain: pessimisticOperatorIncome,
-        pessimistic_vs_ideal_diff: (pessimisticVsIdealMonthly / 10000).toFixed(1) + '万',
-        pessimistic_vs_ideal_diff_plain: pessimisticVsIdealMonthly,
-        pessimistic_vs_ideal_annual: (pessimisticVsIdealAnnual / 10000).toFixed(0) + '万',
-        pessimistic_payback: pessimisticPaybackPeriod,
+        // ===== 10. （已删除悲观情景，食材成本固定48%） =====
 
         // ===== 11. 回本周期（老板不投钱，仅显示投资人数据） =====
         payback_months: i.paybackMonths,
@@ -546,10 +509,10 @@
         var i = Object.assign({
           area: 2000, price: 169, dailyRevenue: 60000,
           totalInvestment: 800000, equipmentInvestment: 500000,
-          foodCostPct: 45, rent: 0, laborCost: 180000,
+          foodCostPct: 48, rent: 0, laborCost: 180000,
           marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
           operationPct: 4, investorPctYear1: 15, investorPct: 11,
-          landlordRevenuePct: 8, landlordProfitPct: 12,
+          landlordProfitPct: 12,
           paybackMonths: 12,
           tableCount: 120, seatsPerTable: 2.8, staffCount: 38,
           utilityCost: 60000, kitchenStaff: 22, kitchenCost: 105000,
@@ -569,22 +532,8 @@
         var dividendBase = cashNetProfit - totalFee;
         var investorDividendYear1 = Math.round(dividendBase * i.investorPctYear1 / 100);
         var investorDividend = Math.round(dividendBase * i.investorPct / 100);
-        var landlordByRevenue = Math.round(monthlyRevenue * i.landlordRevenuePct / 100);
-        var landlordByProfit = Math.round(dividendBase * i.landlordProfitPct / 100);
-        var landlordDividend = Math.max(landlordByRevenue, landlordByProfit);
+        var landlordDividend = Math.round(dividendBase * i.landlordProfitPct / 100);
         var operatorIncome = dividendBase - investorDividend - landlordDividend;
-
-        // 悲观情景（食材涨至48%，水电涨至72000）
-        var pessimisticFoodCost = Math.round(monthlyRevenue * 0.48);
-        var pessimisticCashExpense = i.laborCost + pessimisticFoodCost + i.rent + marketingCost + 72000;
-        var pessimisticCashNetProfit = monthlyRevenue - pessimisticCashExpense;
-        var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
-        var pessimisticDividendBase = pessimisticCashNetProfit - pessimisticFee;
-        var pessimisticInvestorDividend = Math.round(pessimisticDividendBase * i.investorPctYear1 / 100);
-        var pessimisticLandlordByRevenue = Math.round(monthlyRevenue * i.landlordRevenuePct / 100);
-        var pessimisticLandlordByProfit = Math.round(pessimisticDividendBase * i.landlordProfitPct / 100);
-        var pessimisticLandlordDiv = Math.max(pessimisticLandlordByRevenue, pessimisticLandlordByProfit);
-        var pessimisticOperatorIncome = pessimisticDividendBase - pessimisticInvestorDividend - pessimisticLandlordDiv;
 
         // 周度营收（各天均衡6万）
         var monThuDaily = i.dailyRevenue;
@@ -635,11 +584,7 @@
         var furnitureAsset = Math.round(i.equipmentInvestment * 0.24);
         var suppliesAsset = i.equipmentInvestment - hardAsset - furnitureAsset;
 
-        // 悲观对比
-        var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
-        var pessimisticVsIdealAnnual = pessimisticVsIdealMonthly * 12;
-
-        // 回本（老板不投钱，仅查看投资人数据）
+        // 试营业推演（3个月逐渐上升）
 
         return {
           // 原始中间值
@@ -672,16 +617,6 @@
           satTurnover: (satCustomers / tableCapacity),
           sunTurnover: (sunCustomers / tableCapacity),
           tableCapacity: tableCapacity,
-
-          // 悲观
-          pessimisticFoodCost: pessimisticFoodCost,
-          pessimisticCashExpense: pessimisticCashExpense,
-          pessimisticCashNetProfit: pessimisticCashNetProfit,
-          pessimisticFee: pessimisticFee,
-          pessimisticDividendBase: pessimisticDividendBase,
-          pessimisticOperatorIncome: pessimisticOperatorIncome,
-          pessimisticVsIdealMonthly: pessimisticVsIdealMonthly,
-          pessimisticVsIdealAnnual: pessimisticVsIdealAnnual,
 
           // 试营业
           trial1MonthlyRev: trial1MonthlyRev, trial1Expense: trial1Expense,
