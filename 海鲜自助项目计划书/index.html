@@ -2511,10 +2511,10 @@
       <div class="section-num">八</div>
       <h2>房东合作模式</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:12px;">利润阈值触发分成 · 零固定租金 · 风险共担；每月按纯利润阈值自动切换8%/12%</p>
+    <p class="fs-085 color-gray" style="margin-bottom:12px;">双向择优分成模式 · 零固定租金 · 风险共担；每月按「流水保底/利润分红」取高值结算</p>
     <ul class="info-list">
       <li><strong>合作方式：</strong>零固定房租，场地入股、风险共担，门店亏损当月房东无分成</li>
-      <li><strong>利润阈值触发结算：</strong>① 保本分红：可分配纯利 × 8%（当月纯利润 < 30万时）；② 利润分红：可分配纯利 × 12%（当月纯利润 ≥ 30万时）；每月按实际利润自动切换</li>
+      <li><strong>双向择优结算：</strong>① 流水保底：月度总营业额 × 8%；② 利润分红：月度可分配纯利 × 12%；每月取更高金额结算</li>
       <li><strong>房东义务：</strong>负责场地合规、消防对接、物业协调</li>
     </ul>
     <div class="highlight-box green">
@@ -2523,7 +2523,7 @@
       <strong>② 优先扣除服务商费用：</strong>总营业额 × 4%<br>
       <strong>③ 弥补往期累计亏损</strong><br>
       <strong>④ 投资人阶梯分红</strong><br>
-      <strong>⑤ 房东利润阈值触发分成</strong><br>
+      <strong>⑤ 房东双向择优分成</strong><br>
       <strong>⑥ 剩余全部纯利归项目运营方</strong><br>
     </div>
   
@@ -2735,7 +2735,7 @@
       <li><strong>优先扣除：</strong>运营部门费（营业额4%）</li>
       <li><strong>弥补往期亏损：</strong>如有亏损，先弥补再分红</li>
       <li><strong>投资人阶梯分红：</strong>第1–12个月分可分配纯利<span data-model="investor_pct">15%</span>，第13–36个月分可分配纯利<span data-model="investor_pct_year2">11%</span></li>
-      <li><strong>房东分成：</strong>利润阈值触发（纯利润≥30万/月→12%，<30万/月→8%）</li>
+      <li><strong>房东分成：</strong>净利润×12%（双向择优，取高值）</li>
       <li><strong>剩余全部：</strong>归运营方所有</li>
     </ol>
     <div class="sub-title-sm">当月具体分账明细（月销<span data-model="monthly_revenue">180万</span>稳定状态，现金净利润口径）</div>
@@ -2748,7 +2748,7 @@
           <tr><td>③ 现金净利润（扣两费后）</td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><span data-model="cash_net_profit_num">648,000元</span></td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 三方分红（全部以现金净利润为基数） ——</td></tr>
           <tr><td>④ 投资人分红（第1年：<span data-model="cash_net_profit_num">648,000</span>×<span data-model="investor_pct">约8.3%</span>）</td><td style="text-align:right;"><span data-model="investor_dividend">54,000元</span></td></tr>
-          <tr><td>⑤ 房东分成：利润阈值触发（≥30万/月→12%，<30万/月→8%）</td><td style="text-align:right;"><span data-model="landlord_dividend">77,760元</span></td></tr>
+          <tr><td>⑤ 房东分成：净利润×12%（双向择优，取高值）</td><td style="text-align:right;"><span data-model="landlord_dividend">77,760元</span></td></tr>
           <tr class="total-row"><td><strong>⑥ 项目运营方月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income">516,240元</span></strong></td></tr>
         </tbody>
       </table>
@@ -2756,9 +2756,9 @@
     <div class="highlight-box" style="border-left:4px solid #8e44ad;">
       <strong>📌 利润基数定义（写进合同）：</strong><br>
       「现金净利润」= 总营业额 − 服务商费用(<span data-model="service_fee_pct">4%</span>) − 运营部门费用(<span data-model="operation_pct">4%</span>) − 人工 − 食材 − 水电 − 营销 − 杂费<br>
-      投资人分红基数 = 现金净利润；房东分红基数 = 现金净利润（利润阈值触发型，≥30万/月→12%，<30万/月→8%）。<br>
+      投资人分红基数 = 现金净利润；房东分红基数 = 现金净利润（双向择优，取高值）。<br>
       <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「现金净利润」定义，否则结算时各执一词，产生纠纷。</span><br>
-      <span style="color:#2e86c1;">📌 第1-12月：现金净利润≈<span data-model="cash_net_profit_num">648,000</span>元，投资人分<span data-model="investor_pct">15%</span>≈54,000元，房东分（纯利润≥30万，按12%）≈77,760元，运营方≈516,240元。</span>
+      <span style="color:#2e86c1;">📌 第1-12月：现金净利润≈<span data-model="cash_net_profit_num">648,000</span>元，投资人分<span data-model="investor_pct">15%</span>≈54,000元，房东分净利润×12%≈77,760元，运营方≈516,240元。</span>
     </div>
 
     <div class="sub-title" style="margin-top:24px;">📋 投资人退出机制</div>
@@ -2886,15 +2886,15 @@
       <div class="role-card landlord">
         <div class="role-icon">🏠</div>
         <div class="role-title">房东</div>
-        <div class="role-sub">提供场地 · 利润阈值触发分成 · 零固定租金</div>
+        <div class="role-sub">提供场地 · 双向择优分成 · 零固定租金</div>
 
         <div class="metric">
           <span class="label">月均分成收入</span>
           <span class="value large">约14.4万（流水保底执行）</span>
         </div>
         <div class="metric">
-          <span class="label">利润阈值触发</span>
-          <span class="value large">≤30万→8% / ≥30万→12%</span>
+          <span class="label">双向择优</span>
+          <span class="value large">流水保底/利润分红取高值</span>
         </div>
         <div class="divider"></div>
         <div class="metric">
@@ -2947,7 +2947,7 @@
     <div class="highlight-box" style="margin-top:20px;background:#f0f8fc;">
       <strong>📌 快速决策参考：</strong><br>
       • <strong>投资人视角：</strong>100万投入，3年回报约<span data-model="investor_total_3y_wan">195万</span>，年化回报率约65%。适合追求高收益、能接受约18个月回本等待期的财务投资人。<br>
-      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，利润阈值触发分成（≥30万→12%，<30万→8%），月均约14.4万，3年共约520万。适合持有商业物业、愿共担风险的资产方。<br>
+      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，双向择优分成，月均约14.4万（流水保底执行），3年共约520万。适合持有商业物业、愿共担风险的资产方。<br>
       • <strong>老板视角：</strong>无需出资，3年可获纯利约<span data-model="operator_total_3y_wan">870万</span>。适合有餐饮运营经验、能调动资源的项目组织者。
     </div>
   </div>
