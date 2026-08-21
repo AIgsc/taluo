@@ -33,11 +33,11 @@
     var style = document.createElement('style');
     style.textContent =
       '#bp-toolbar{' +
-        'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
-        'z-index:9999;background:#1a5276;color:#fff;padding:12px 24px;' +
-        'border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);' +
+        'position:relative;z-index:9999;background:#1a5276;color:#fff;padding:12px 24px;' +
+        'border-radius:0;box-shadow:0 2px 8px rgba(0,0,0,0.15);' +
         'display:flex;align-items:center;gap:12px;font-size:14px;' +
         'transition:opacity 0.3s;touch-action:manipulation;' +
+        'margin:0 0 16px 0;' +
       '}' +
       '#bp-toolbar .bp-btn{' +
         'border:none;padding:10px 20px;border-radius:8px;cursor:pointer;' +
@@ -73,7 +73,7 @@
       '.bp-recalc-note{font-size:11px;color:#888;margin-top:4px;}';
 
     document.head.appendChild(style);
-    document.body.appendChild(bar);
+    document.body.insertBefore(bar, document.body.firstChild);
 
     document.getElementById('bp-edit-btn').addEventListener('click', toggleEdit);
     document.getElementById('bp-var-btn').addEventListener('click', toggleVarModal);
