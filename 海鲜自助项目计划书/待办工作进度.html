@@ -417,6 +417,22 @@
   </div>
 </div>
 
+<!-- Edit Todo Modal -->
+<div class="modal-overlay" id="editTodoModal">
+  <div class="modal">
+    <h3>编辑待办事项</h3>
+    <div class="modal-sub">修改任务标题或描述</div>
+    <label for="editTodoTitle">任务标题 <span style="color:var(--danger);">*</span></label>
+    <input id="editTodoTitle" type="text" placeholder="输入任务标题…" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;margin-bottom:12px;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    <label for="editTodoDesc">任务描述</label>
+    <textarea id="editTodoDesc" placeholder="可选：描述任务的具体内容…" style="min-height:80px;"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeEditTodoModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEditTodo()">保存修改</button>
+    </div>
+  </div>
+</div>
+
 <!-- Add Todo Modal -->
 <div class="modal-overlay" id="addTodoModal">
   <div class="modal">
@@ -717,6 +733,8 @@ function render() {
       var rCount = (item.reports || []).length;
       html += '      <button onclick="openReportModal(\'' + item.id + '\')" title="行动报告"><i class="fas fa-file-alt"></i></button>';
       if (rCount > 0) html += '      <span class="report-count" onclick="openReportModal(\'' + item.id + '\')">' + rCount + '份</span>';
+      html += '      <button onclick="openEditTodoModal(\'' + item.id + '\')" title="编辑"><i class="fas fa-edit"></i></button>';
+      html += '      <button onclick="deleteTodo(\'' + item.id + '\')" title="删除" style="color:var(--danger);"><i class="fas fa-trash-alt"></i></button>';
       html += '    </div>';
       html += '  </div>';
     });
@@ -781,8 +799,9 @@ function selectStatus(el) {
   var itemEl = el.closest('.todo-item');
   if (!itemEl) return;
   var itemId = itemEl.getAttribute('data-item-id');
-  var item = findItem(itemId);
-  if (!item) return;
+  var found = findItem(itemId);
+  if (!found) return;
+  var item = found.item;
   var newStatus = el.value;
   if (item.status === newStatus) return;
   var oldStatus = item.status;
@@ -860,17 +879,68 @@ function findItem(itemId) {
   for (var ci = 0; ci < appData.categories.length; ci++) {
     for (var ii = 0; ii < appData.categories[ci].items.length; ii++) {
       if (appData.categories[ci].items[ii].id === itemId) {
-        return appData.categories[ci].items[ii];
+        return { item: appData.categories[ci].items[ii], catIdx: ci, itemIdx: ii };
       }
     }
   }
   return null;
 }
 
+// ==================== 编辑待办 ====================
+var editingItemId = null;
+
+function openEditTodoModal(itemId) {
+  var found = findItem(itemId);
+  if (!found) return;
+  editingItemId = itemId;
+  document.getElementById('editTodoTitle').value = found.item.title;
+  document.getElementById('editTodoDesc').value = found.item.desc || '';
+  document.getElementById('editTodoModal').classList.add('show');
+  setTimeout(function() { document.getElementById('editTodoTitle').focus(); }, 300);
+}
+
+function closeEditTodoModal() {
+  document.getElementById('editTodoModal').classList.remove('show');
+  editingItemId = null;
+}
+
+function saveEditTodo() {
+  if (!editingItemId) return;
+  var title = document.getElementById('editTodoTitle').value.trim();
+  if (!title) { showToast('请输入任务标题'); document.getElementById('editTodoTitle').focus(); return; }
+  var desc = document.getElementById('editTodoDesc').value.trim();
+  var found = findItem(editingItemId);
+  if (!found) return;
+  found.item.title = title;
+  found.item.desc = desc || '';
+  closeEditTodoModal();
+  render();
+  scheduleSave();
+  showToast('已更新：「' + title + '」');
+}
+
+// ==================== 删除待办 ====================
+function deleteTodo(itemId) {
+  if (!confirm('确定要删除这条待办事项吗？\n此操作不可撤销。')) return;
+  for (var ci = 0; ci < appData.categories.length; ci++) {
+    var cat = appData.categories[ci];
+    for (var ii = 0; ii < cat.items.length; ii++) {
+      if (cat.items[ii].id === itemId) {
+        cat.items.splice(ii, 1);
+        render();
+        scheduleSave();
+        showToast('待办已删除');
+        return;
+      }
+    }
+  }
+}
+
 // ==================== 报告功能 ====================
 function openReportModal(itemId) {
-  currentReportItem = findItem(itemId);
-  if (!currentReportItem) return;
+  var found = findItem(itemId);
+  if (!found) return;
+  currentReportItem = found.item;
   document.getElementById('modalTitle').textContent = '行动报告：' + currentReportItem.title;
   document.getElementById('modalSub').textContent = '记录该步骤的进展、结果和遇到的问题';
   document.getElementById('reportContent').value = '';
@@ -1064,6 +1134,10 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('addTodoModal').addEventListener('click', function(e) {
     if (e.target === this) closeAddTodoModal();
   });
+  // Close edit-todo modal on overlay click
+  document.getElementById('editTodoModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditTodoModal();
+  });
   // Ctrl+Enter to submit report (desktop only)
   document.getElementById('reportContent').addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.key === 'Enter') { saveReport(); }
@@ -1071,6 +1145,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Enter in add-todo title: move focus to description (mobile-friendly)
   document.getElementById('addTodoTitle').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTodoDesc').focus(); }
+  });
+  // Enter in edit-todo title: move focus to description
+  document.getElementById('editTodoTitle').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('editTodoDesc').focus(); }
   });
 });
 </script>
