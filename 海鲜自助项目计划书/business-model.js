@@ -32,8 +32,11 @@
       // 核心参数
       area: 2000,               // 总面积 ㎡
       price: 169,               // 人均定价 元
-      // 周度营收 - 工作日低/周末高，周总营收保持 ~180万/月
-      monThuRev: 35100,         // 周一至周四日均营收 元（208人×169元）
+      // 周度营收 - 7天独立填写，周总营收保持 ~180万/月
+      monRev: 35100,            // 周一日均营收 元（208人×169元）
+      tueRev: 35100,            // 周二日均营收 元
+      wedRev: 35100,            // 周三日均营收 元
+      thuRev: 35100,            // 周四日均营收 元
       friRev: 93200,            // 周五日均营收 元（551人×169元）
       satRev: 93200,            // 周六日均营收 元
       sunRev: 93200,            // 周日日均营收 元
@@ -82,8 +85,8 @@
 
       var i = BusinessModel.inputs;
 
-      // ========== 日均营收 = 4个单日加权平均 ==========
-      var dailyRevenue = (i.monThuRev * 4 + i.friRev + i.satRev + i.sunRev) / 7;
+      // ========== 日均营收 = 7天加权平均 ==========
+      var dailyRevenue = (i.monRev + i.tueRev + i.wedRev + i.thuRev + i.friRev + i.satRev + i.sunRev) / 7;
 
       // ========== 基础计算 ==========
       var monthlyRevenue = Math.round(dailyRevenue * 30);
@@ -227,20 +230,29 @@
       trial3Profit = trial3Profit - trial3Fee;
 
       // ========== 周度营收分解 ==========
-      var monThuDaily = i.monThuRev;
+      var monDaily = i.monRev;
+      var tueDaily = i.tueRev;
+      var wedDaily = i.wedRev;
+      var thuDaily = i.thuRev;
       var friDaily = i.friRev;
       var satDaily = i.satRev;
       var sunDaily = i.sunRev;
-      var weeklyTotal = monThuDaily * 4 + friDaily + satDaily + sunDaily;
+      var weeklyTotal = monDaily + tueDaily + wedDaily + thuDaily + friDaily + satDaily + sunDaily;
 
-      var monThuCustomers = Math.round(monThuDaily / i.price);
+      var monCustomers = Math.round(monDaily / i.price);
+      var tueCustomers = Math.round(tueDaily / i.price);
+      var wedCustomers = Math.round(wedDaily / i.price);
+      var thuCustomers = Math.round(thuDaily / i.price);
       var friCustomers = Math.round(friDaily / i.price);
       var satCustomers = Math.round(satDaily / i.price);
       var sunCustomers = Math.round(sunDaily / i.price);
-      var weeklyCustomers = monThuCustomers * 4 + friCustomers + satCustomers + sunCustomers;
+      var weeklyCustomers = monCustomers + tueCustomers + wedCustomers + thuCustomers + friCustomers + satCustomers + sunCustomers;
 
       var tableCapacity = i.tableCount * i.seatsPerTable;
-      var monThuTurnover = (monThuCustomers / tableCapacity);
+      var monTurnover = (monCustomers / tableCapacity);
+      var tueTurnover = (tueCustomers / tableCapacity);
+      var wedTurnover = (wedCustomers / tableCapacity);
+      var thuTurnover = (thuCustomers / tableCapacity);
       var friTurnover = (friCustomers / tableCapacity);
       var satTurnover = (satCustomers / tableCapacity);
       var sunTurnover = (sunCustomers / tableCapacity);
@@ -290,8 +302,14 @@
         monthly_revenue_raw: monthlyRevenue,
         weekly_revenue: formatWan(Math.round(monthlyRevenue / 4.3)),
 
-        mon_thu_wan: (monThuDaily / 10000).toFixed(1) + '万',
-        mon_thu_plain: monThuDaily,
+        mon_wan: (monDaily / 10000).toFixed(1) + '万',
+        mon_plain: monDaily,
+        tue_wan: (tueDaily / 10000).toFixed(1) + '万',
+        tue_plain: tueDaily,
+        wed_wan: (wedDaily / 10000).toFixed(1) + '万',
+        wed_plain: wedDaily,
+        thu_wan: (thuDaily / 10000).toFixed(1) + '万',
+        thu_plain: thuDaily,
         fri_wan: (friDaily / 10000).toFixed(1) + '万',
         fri_plain: friDaily,
         sat_wan: (satDaily / 10000).toFixed(1) + '万',
@@ -299,8 +317,14 @@
         sun_wan: (sunDaily / 10000).toFixed(1) + '万',
         sun_plain: sunDaily,
 
-        mon_thu_customers: formatNum(monThuCustomers) + '人',
-        mon_thu_customers_plain: monThuCustomers,
+        mon_customers: formatNum(monCustomers) + '人',
+        mon_customers_plain: monCustomers,
+        tue_customers: formatNum(tueCustomers) + '人',
+        tue_customers_plain: tueCustomers,
+        wed_customers: formatNum(wedCustomers) + '人',
+        wed_customers_plain: wedCustomers,
+        thu_customers: formatNum(thuCustomers) + '人',
+        thu_customers_plain: thuCustomers,
         fri_customers: formatNum(friCustomers) + '人',
         fri_customers_plain: friCustomers,
         sat_customers: formatNum(satCustomers) + '人',
@@ -310,7 +334,10 @@
         weekly_customers: formatNum(weeklyCustomers) + '人',
         weekly_customers_plain: weeklyCustomers,
 
-        mon_thu_turnover: monThuTurnover.toFixed(2) + '次',
+        mon_turnover: monTurnover.toFixed(2) + '次',
+        tue_turnover: tueTurnover.toFixed(2) + '次',
+        wed_turnover: wedTurnover.toFixed(2) + '次',
+        thu_turnover: thuTurnover.toFixed(2) + '次',
         fri_turnover: friTurnover.toFixed(2) + '次',
         sat_turnover: satTurnover.toFixed(2) + '次',
         sun_turnover: sunTurnover.toFixed(2) + '次',
@@ -544,7 +571,10 @@
     displayKeyMap: {
       'area': 'area',
       'price': 'price',
-      'mon_thu_plain': 'monThuRev',
+      'mon_plain': 'monRev',
+      'tue_plain': 'tueRev',
+      'wed_plain': 'wedRev',
+      'thu_plain': 'thuRev',
       'fri_plain': 'friRev',
       'sat_plain': 'satRev',
       'sun_plain': 'sunRev',
