@@ -1,568 +1,1391 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>待办工作进度 · 黄辛庄海鲜自助</title>
+<title>海鲜自助项目 · 待办工作进度</title>
+<script>
+document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getItem('bp_auth')==='1')return;var o=document.createElement('div');o.id='bp-pwd-overlay';o.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;width:100vw;position:fixed;top:0;left:0;z-index:99999;background:linear-gradient(135deg,#0f1923,#1a2a3a);font-family:sans-serif;"><div style="background:#1e3348;padding:40px;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.5);text-align:center;max-width:360px;width:90%;"><h2 style="color:#fff;margin:0 0 8px 0;font-size:20px;">🔒 访问密码</h2><p style="color:#aaa;font-size:13px;margin:0 0 20px 0;">请输入密码查看此页面</p><input type="password" id="bp-pwd-input" style="width:100%;padding:12px;border:2px solid #2a4a6a;border-radius:8px;background:#0f1923;color:#fff;font-size:16px;text-align:center;outline:none;box-sizing:border-box;" placeholder="输入密码"><button onclick="checkPwd()" style="width:100%;padding:12px;border:none;border-radius:8px;background:#27ae60;color:#fff;font-size:16px;font-weight:600;cursor:pointer;margin-top:12px;">确认</button><p id="bp-pwd-error" style="color:#e74c3c;font-size:13px;margin:10px 0 0 0;display:none;">密码错误，请重试</p></div></div>';document.body.appendChild(o);setTimeout(function(){var e=document.getElementById('bp-pwd-input');if(e)e.focus();},100);document.addEventListener('keydown',function(e){if(e.key==='Enter')checkPwd();});window.checkPwd=function(){var e=document.getElementById('bp-pwd-input'),msg=document.getElementById('bp-pwd-error');if(e.value==='123'){sessionStorage.setItem('bp_auth','1');var o=document.getElementById('bp-pwd-overlay');if(o)o.remove();}else{msg.style.display='block';e.value='';e.focus();}};});</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { font-size: 16px; }
+  html { font-size: 15px; }
+  :root[data-widget-theme="dark"], :root[data-theme="dark"] {
+    --bg: #0f1923;
+    --bg2: #162230;
+    --bg3: #1a2d3d;
+    --card: #1e3348;
+    --card-hover: #243c52;
+    --text: #e0e8f0;
+    --text2: #8a9bb5;
+    --border: #2a4055;
+    --accent: #2e86c1;
+    --accent2: #1a8a3a;
+    --warn: #f39c12;
+    --danger: #c0392b;
+    --purple: #8e44ad;
+    --orange: #e67e22;
+  }
   body {
     font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-    background: #e8f4f8;
-    color: #1a2a3a;
-    line-height: 1.8;
-    padding: 20px;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    min-height: 100vh;
   }
-  .container { max-width: 800px; margin: 0 auto; }
+  .container { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
 
-  /* 头部 */
+  /* Header */
   .header {
-    background: linear-gradient(160deg, #0c2d4a 0%, #1a5276 40%, #2e86c1 100%);
-    color: #fff;
-    padding: 40px 24px 36px;
     text-align: center;
-    border-radius: 12px 12px 0 0;
-    position: relative;
-    overflow: hidden;
+    padding: 30px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
   }
-  .header h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: 2px; margin-bottom: 6px; }
-  .header .subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+  .header h1 { font-size: 1.5rem; color: #fff; }
+  .header p { font-size: 0.85rem; color: var(--text2); margin-top: 4px; }
   .header .stats {
-    margin-top: 16px;
-    display: flex; justify-content: center; gap: 24px;
-    font-size: 0.8rem;
+    display: flex; justify-content: center; gap: 20px;
+    margin-top: 12px; font-size: 0.8rem;
   }
-  .header .stats span { background: rgba(255,255,255,0.1); padding: 4px 14px; border-radius: 12px; }
-  .header .stats .num { color: #ffd700; font-weight: 700; }
+  .header .stats span { color: var(--text2); }
+  .header .stats strong { color: #fff; }
 
-  /* 主体卡片 */
-  .main { background: #fff; border-radius: 0 0 12px 12px; padding: 20px 16px; margin-bottom: 20px; }
-
-  /* 阶段标题 */
-  .phase {
-    margin-bottom: 20px;
-    border: 1px solid #e8e8e8;
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .phase-header {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 14px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    user-select: none;
-  }
-  .phase-header .icon { font-size: 1.1rem; }
-  .phase-header .count {
-    margin-left: auto;
-    font-size: 0.75rem;
-    font-weight: 400;
-    background: rgba(0,0,0,0.06);
-    padding: 2px 10px;
-    border-radius: 10px;
-  }
-  .phase-header .arrow { font-size: 0.7rem; transition: transform 0.2s; margin-left: 6px; }
-  .phase-header .arrow.open { transform: rotate(90deg); }
-
-  /* 阶段颜色 */
-  .phase-signing .phase-header { background: #faf5ff; color: #8e44ad; }
-  .phase-preparation .phase-header { background: #fffaf0; color: #e67e22; }
-  .phase-operation .phase-header { background: #f0faf4; color: #27ae60; }
-  .phase-risk .phase-header { background: #fff5f5; color: #c0392b; }
-
-  /* 待办列表 */
-  .todo-list { list-style: none; }
-  .todo-item {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 10px 14px 10px 10px;
-    border-top: 1px solid #f0f0f0;
-    font-size: 0.85rem;
-    transition: background 0.15s;
-  }
-  .todo-item:hover { background: #fafafa; }
-  .todo-item input[type="checkbox"] {
-    margin-top: 5px;
-    width: 16px; height: 16px;
-    accent-color: #2e86c1;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .todo-item .content { flex: 1; }
-  .todo-item .title { font-weight: 600; }
-  .todo-item .desc { font-size: 0.78rem; color: #888; margin-top: 1px; }
-  .todo-item .meta {
-    display: flex; gap: 8px; align-items: center;
-    margin-top: 4px; font-size: 0.72rem;
-  }
-  .tag {
-    display: inline-block;
-    padding: 1px 8px; border-radius: 8px;
-    font-size: 0.68rem; font-weight: 600;
-  }
-  .tag-urgent { background: #ffe0e0; color: #c0392b; }
-  .tag-important { background: #fff3d6; color: #d68910; }
-  .tag-normal { background: #e8f4fd; color: #2e86c1; }
-  .tag-monthly { background: #e8f8e8; color: #27ae60; }
-  .tag-done { background: #d5f5e3; color: #1e8449; }
-
-  .todo-item.completed .title { text-decoration: line-through; color: #999; }
-  .todo-item.completed { background: #f9fdf9; }
-
-  /* 进度条 */
+  /* Progress bar */
   .progress-bar {
-    height: 4px; background: #e8e8e8; border-radius: 2px;
-    margin: 8px 14px 4px;
-    overflow: hidden;
+    height: 6px; background: var(--border); border-radius: 3px;
+    margin: 12px 0 0; overflow: hidden;
   }
   .progress-bar .fill {
-    height: 100%; border-radius: 2px;
-    transition: width 0.5s;
+    height: 100%; background: linear-gradient(90deg, var(--accent2), #2ecc71);
+    border-radius: 3px; transition: width 0.5s ease;
   }
 
-  /* 底部提示 */
-  .footer-note {
-    margin-top: 16px;
-    padding: 12px 14px;
-    background: #fffbe6;
-    border: 1px solid #f5d76e;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    color: #7d6608;
+  /* Today's Focus */
+  .today-focus {
+    background: linear-gradient(135deg, rgba(46,134,193,0.08), rgba(26,138,58,0.05));
+    border: 1px solid rgba(46,134,193,0.2);
+    border-radius: 12px; margin-bottom: 16px; overflow: hidden;
   }
-  .footer-note strong { color: #b7950b; }
-
-  /* 搜索/筛选 */
-  .filters {
-    display: flex; gap: 8px; flex-wrap: wrap;
-    margin-bottom: 16px;
+  .today-focus-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 16px; cursor: pointer; user-select: none;
   }
-  .filter-btn {
-    padding: 4px 14px;
-    border: 1px solid #ddd;
-    border-radius: 16px;
-    background: #fff;
-    font-size: 0.78rem; cursor: pointer;
-    transition: all 0.15s;
+  .today-focus-header .tf-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #3498db);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; flex-shrink: 0;
   }
-  .filter-btn.active { background: #2e86c1; color: #fff; border-color: #2e86c1; }
-  .filter-btn:hover { border-color: #2e86c1; }
-
-  /* 进度数字 */
-  .progress-text {
-    text-align: right;
-    font-size: 0.72rem; color: #999;
-    padding: 0 14px 4px;
+  .today-focus-header .tf-title { flex: 1; font-weight: 600; font-size: 0.95rem; color: #fff; }
+  .today-focus-header .tf-count { font-size: 0.75rem; padding: 3px 10px; border-radius: 10px; background: var(--accent); color: #fff; }
+  .today-focus-header .tf-toggle { color: var(--text2); transition: transform 0.2s; font-size: 0.8rem; }
+  .today-focus-header .tf-toggle.open { transform: rotate(180deg); }
+  .today-focus-body { display: none; }
+  .today-focus-body.open { display: block; }
+  .today-focus-empty {
+    padding: 24px 16px; text-align: center; color: var(--text2); font-size: 0.85rem;
   }
-
+  .today-focus-group {
+    border-top: 1px solid rgba(46,134,193,0.08);
+  }
+  .today-focus-group .tfg-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px 4px; font-size: 0.8rem; color: var(--text2); font-weight: 500;
+  }
+  .today-focus-group .tfg-header .tfg-icon { font-size: 0.85rem; }
+  .today-focus-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px 6px 24px; transition: background 0.15s;
+  }
+  .today-focus-item:hover { background: rgba(46,134,193,0.05); }
+  .today-focus-item .tfi-status { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .today-focus-item .tfi-status.pending { background: var(--text2); }
+  .today-focus-item .tfi-status.in-progress { background: var(--warn); }
+  .today-focus-item .tfi-status.blocked { background: var(--danger); }
+  .today-focus-item .tfi-title { flex: 1; font-size: 0.85rem; color: var(--text); }
+  .today-focus-item .tfi-title.done { text-decoration: line-through; color: var(--text2); }
+  .today-focus-item select.status-select { min-width: 76px; padding: 2px 20px 2px 8px; font-size: 0.72rem; }
   @media (max-width: 600px) {
-    body { padding: 10px; }
+    .today-focus-item { padding: 8px 12px 8px 20px; }
+    .today-focus-item select.status-select { min-width: 84px; padding: 4px 22px 4px 8px; font-size: 0.75rem; }
+    .today-focus-header { padding: 12px; }
+    .today-focus-group .tfg-header { padding: 6px 12px 2px; }
+  }
+
+  /* Category */
+  .category {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .category:hover { border-color: var(--accent); }
+  .category-header {
+    display: flex; align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    gap: 10px;
+  }
+  .category-header .drag-handle {
+    cursor: grab; color: var(--text2); font-size: 1rem;
+    padding: 4px; flex-shrink: 0;
+  }
+  .category-header .drag-handle:active { cursor: grabbing; }
+  .category-header .cat-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; flex-shrink: 0;
+  }
+  .category-header .cat-name {
+    flex: 1; font-weight: 600; font-size: 0.95rem; color: #fff;
+  }
+  .category-header .cat-count {
+    font-size: 0.75rem; color: var(--text2);
+    padding: 2px 8px; background: var(--bg2); border-radius: 10px;
+  }
+  .category-header .cat-toggle {
+    color: var(--text2); transition: transform 0.2s;
+    font-size: 0.8rem;
+  }
+  .category-header .cat-toggle.open { transform: rotate(180deg); }
+
+  .category-body { display: none; }
+  .category-body.open { display: block; }
+
+  /* Item */
+  .todo-item {
+    display: flex; align-items: flex-start;
+    padding: 10px 16px 10px 20px;
+    border-top: 1px solid var(--border);
+    gap: 10px;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .todo-item:hover { background: var(--card-hover); }
+  .todo-item.status-pending { border-left-color: rgba(138,155,181,0.3); }
+  .todo-item.status-in-progress { border-left-color: var(--warn); }
+  .todo-item.status-completed { border-left-color: var(--accent2); }
+  .todo-item.status-blocked { border-left-color: var(--danger); }
+  .todo-item .item-drag {
+    cursor: grab; color: var(--text2); font-size: 0.85rem;
+    padding: 4px 2px; flex-shrink: 0; margin-top: 2px;
+  }
+  .todo-item .item-drag:active { cursor: grabbing; }
+  .todo-item .item-body { flex: 1; min-width: 0; }
+  .todo-item .item-title {
+    font-size: 0.9rem; color: #fff; font-weight: 500;
+  }
+  .todo-item .item-title.done-text { text-decoration: line-through; color: var(--text2); }
+  .todo-item .item-desc {
+    font-size: 0.78rem; color: var(--text2);
+    margin-top: 2px; line-height: 1.5;
+  }
+  .todo-item .item-meta {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 6px; flex-wrap: wrap;
+  }
+  .todo-item .item-meta .badge {
+    font-size: 0.68rem; padding: 1px 8px; border-radius: 8px;
+  }
+  .badge.pending { background: var(--bg2); color: var(--text2); }
+  .badge.in-progress { background: rgba(243,156,18,0.15); color: var(--warn); }
+  .badge.completed { background: rgba(26,138,58,0.15); color: var(--accent2); }
+  .badge.blocked { background: rgba(192,57,43,0.15); color: var(--danger); }
+
+  select.status-select {
+    appearance: none; -webkit-appearance: none; -moz-appearance: none;
+    padding: 3px 22px 3px 10px; font-size: 0.75rem; font-weight: 500;
+    border-radius: 6px; cursor: pointer; outline: none;
+    min-width: 82px; transition: all 0.25s ease;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238a9bb5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 6px center; background-size: 10px 6px;
+  }
+  select.status-select:hover { box-shadow: 0 0 0 1px var(--accent); }
+  select.status-select:focus { box-shadow: 0 0 0 2px rgba(46,134,193,0.3); }
+  select.status-select option {
+    padding: 6px 10px; font-size: 0.8rem;
+  }
+  select.status-select.pending {
+    background-color: rgba(138,155,181,0.08); color: var(--text2); border: 1px solid rgba(138,155,181,0.25);
+  }
+  select.status-select.pending:hover { background-color: rgba(138,155,181,0.15); border-color: var(--text2); }
+  select.status-select.in-progress {
+    background-color: rgba(243,156,18,0.1); color: var(--warn); border: 1px solid rgba(243,156,18,0.35);
+  }
+  select.status-select.in-progress:hover { background-color: rgba(243,156,18,0.18); border-color: var(--warn); }
+  select.status-select.completed {
+    background-color: rgba(26,138,58,0.1); color: var(--accent2); border: 1px solid rgba(26,138,58,0.35);
+  }
+  select.status-select.completed:hover { background-color: rgba(26,138,58,0.18); border-color: var(--accent2); }
+  select.status-select.blocked {
+    background-color: rgba(192,57,43,0.1); color: var(--danger); border: 1px solid rgba(192,57,43,0.35);
+  }
+  select.status-select.blocked:hover { background-color: rgba(192,57,43,0.18); border-color: var(--danger); }
+
+  .todo-item .item-actions {
+    display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+  }
+  .todo-item .item-actions button {
+    background: none; border: none; color: var(--text2);
+    cursor: pointer; padding: 4px 6px; border-radius: 4px;
+    font-size: 0.8rem; transition: all 0.15s;
+  }
+  .todo-item .item-actions button:hover {
+    background: var(--bg2); color: #fff;
+  }
+  .todo-item .item-actions .report-count {
+    font-size: 0.75rem; color: var(--accent);
+    padding: 2px 6px; background: rgba(46,134,193,0.1);
+    border-radius: 8px; cursor: pointer;
+  }
+  .todo-item .item-actions .report-count:hover { background: rgba(46,134,193,0.2); }
+
+  /* Priority badge */
+  .priority-badge { font-size: 0.65rem; padding: 1px 8px; border-radius: 8px; font-weight: 600; white-space: nowrap; }
+  .priority-badge.urgent { background: rgba(192,57,43,0.15); color: var(--danger); }
+  .priority-badge.high { background: rgba(230,126,34,0.15); color: var(--orange); }
+  .priority-badge.medium { background: rgba(46,134,193,0.15); color: var(--accent); }
+  .priority-badge.low { background: rgba(138,155,181,0.15); color: var(--text2); }
+
+  /* Assignee */
+  .assignee-tag { font-size: 0.68rem; color: var(--purple); display: inline-flex; align-items: center; gap: 3px; }
+  .assignee-tag i { font-size: 0.6rem; }
+
+  /* Date display */
+  .date-tag { font-size: 0.68rem; color: var(--text2); display: inline-flex; align-items: center; gap: 3px; }
+  .date-tag i { font-size: 0.6rem; }
+  .date-tag.overdue { color: var(--danger); font-weight: 600; }
+  .date-tag.overdue i { color: var(--danger); }
+
+  /* Overdue item highlight */
+  .todo-item.is-overdue { border-left-color: var(--danger) !important; background: rgba(192,57,43,0.03); }
+  .todo-item.is-overdue .item-title { color: #e8a0a0; }
+  .today-focus-item.is-overdue .tfi-title { color: #e8a0a0; }
+
+  /* Quick date buttons */
+  .date-quick-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 3px 10px; font-size: 0.72rem; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg2); color: var(--text2); transition: all 0.15s;
+    font-family: inherit; line-height: 1.4;
+  }
+  .date-quick-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Status quick menu */
+  .status-menu {
+    display: none; position: absolute; z-index: 10;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    min-width: 120px;
+  }
+  .status-menu.show { display: block; }
+  .status-menu .opt {
+    padding: 6px 12px; cursor: pointer; border-radius: 4px;
+    font-size: 0.8rem; color: var(--text); transition: background 0.1s;
+  }
+  .status-menu .opt:hover { background: var(--card-hover); }
+
+  /* Modal */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 100;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 12px; max-width: 520px; width: 100%;
+    max-height: 80vh; overflow-y: auto;
+    padding: 24px;
+  }
+  .modal h3 { font-size: 1rem; color: #fff; margin-bottom: 4px; }
+  .modal .modal-sub { font-size: 0.8rem; color: var(--text2); margin-bottom: 16px; }
+  .modal label { display: block; font-size: 0.85rem; color: var(--text2); margin-bottom: 4px; }
+  .modal textarea {
+    width: 100%; min-height: 100px; padding: 10px;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 6px; color: #fff; font-size: 0.85rem;
+    font-family: inherit; resize: vertical; margin-bottom: 12px;
+  }
+  .modal textarea:focus { outline: none; border-color: var(--accent); }
+  .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal .btn {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.85rem; transition: all 0.15s;
+  }
+  .modal .btn-primary { background: var(--accent); color: #fff; }
+  .modal .btn-primary:hover { background: #3498db; }
+  .modal .btn-cancel { background: var(--bg2); color: var(--text2); }
+  .modal .btn-cancel:hover { background: var(--border); color: #fff; }
+
+  /* Reports list in modal */
+  .report-list { margin-bottom: 16px; }
+  .report-item {
+    background: var(--bg2); border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 8px;
+    position: relative;
+  }
+  .report-item .r-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .report-item .r-header .r-info { flex: 1; }
+  .report-item .r-date { font-size: 0.72rem; color: var(--text2); }
+  .report-item .r-content { font-size: 0.85rem; color: var(--text); margin-top: 4px; white-space: pre-wrap; }
+  .report-item .r-author { font-size: 0.72rem; color: var(--accent); margin-top: 4px; }
+  .report-item .r-delete {
+    background: none; border: none; color: var(--text2);
+    cursor: pointer; font-size: 0.75rem; padding: 4px 6px;
+    border-radius: 4px; transition: all 0.15s; flex-shrink: 0;
+    opacity: 0;
+  }
+  .report-item:hover .r-delete { opacity: 1; }
+  .report-item .r-delete:hover { background: rgba(192,57,43,0.2); color: var(--danger); }
+  .no-reports { font-size: 0.8rem; color: var(--text2); text-align: center; padding: 20px 0; }
+
+  /* Add item button */
+  .add-item-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 16px; cursor: pointer;
+    border-top: 1px dashed var(--border);
+    color: var(--text2); font-size: 0.8rem;
+    transition: all 0.2s; user-select: none;
+  }
+  .add-item-btn:hover { background: var(--card-hover); color: var(--accent); border-top-color: var(--accent); }
+  .add-item-btn i { font-size: 0.7rem; }
+
+  /* Sortable ghost */
+  .sortable-ghost {
+    opacity: 0.4; background: var(--accent) !important;
+  }
+  .sortable-chosen { background: var(--card-hover) !important; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 20px; border-radius: 8px;
+    font-size: 0.8rem; z-index: 200;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Floating Add Button */
+  .fab-add {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--accent); color: #fff; border: none;
+    font-size: 1.4rem; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(46,134,193,0.4);
+    transition: all 0.25s ease; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fab-add:hover { background: #3498db; transform: scale(1.1); box-shadow: 0 6px 20px rgba(46,134,193,0.5); }
+  .fab-add:active { transform: scale(0.95); }
+  @media (min-width: 601px) { .fab-add { display: none; } }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 12px 10px 80px; }
     .header h1 { font-size: 1.2rem; }
-    .header .stats { flex-wrap: wrap; gap: 8px; }
-    .todo-item { padding: 8px 10px; }
+    .header .stats { flex-wrap: wrap; gap: 6px 14px; font-size: 0.75rem; }
+    .todo-item { padding: 12px 12px 12px 14px; }
+    .category-header { padding: 12px 12px; }
+    .todo-item .item-actions button { padding: 8px 10px; font-size: 0.9rem; }
+    .todo-item .item-actions .report-count { padding: 6px 10px; font-size: 0.8rem; }
+    select.status-select { min-width: 90px; padding: 6px 24px 6px 10px; font-size: 0.8rem; }
+    .add-item-btn { padding: 14px 16px; font-size: 0.85rem; }
+    .modal { padding: 20px 16px; max-height: 90vh; border-radius: 12px 12px 0 0; margin-top: auto; }
+    .modal-overlay { padding: 0; align-items: flex-end; }
+    .modal .btn { padding: 12px 24px; font-size: 0.9rem; min-width: 80px; }
+    .modal .btn-row { gap: 12px; }
+    .report-item .r-delete { opacity: 1; padding: 8px 10px; }
+    .category-header .cat-icon { width: 32px; height: 32px; font-size: 0.9rem; }
+    .todo-item .item-drag { padding: 8px 4px; }
+    .todo-item .item-drag i { font-size: 0.85rem !important; }
   }
 </style>
 </head>
 <body>
-
 <div class="container">
 
-  <!-- 头部 -->
   <div class="header">
-    <h1>📋 待办工作进度</h1>
-    <div class="subtitle">黄辛庄 2000㎡ 海鲜自助 · 实战数据落地清单</div>
-    <div class="stats">
-      <span>总待办 <span class="num" id="total-count">0</span></span>
-      <span>已完成 <span class="num" id="done-count">0</span></span>
-      <span>完成率 <span class="num" id="done-pct">0%</span></span>
+    <h1><i class="fas fa-clipboard-list" style="color:var(--accent);margin-right:8px;"></i>项目落地待办进度</h1>
+    <p>海鲜火锅自助 · 黄辛庄农贸市场店 · 从0到1全流程</p>
+    <div class="stats" id="statsBar">
+      <span>总任务: <strong id="totalCount">0</strong></span>
+      <span><span style="color:var(--accent2);">●</span> 已完成: <strong id="doneCount" style="color:var(--accent2);">0</strong></span>
+      <span><span style="color:var(--warn);">●</span> 进行中: <strong id="progressCount" style="color:var(--warn);">0</strong></span>
+      <span><span style="color:var(--danger);">●</span> 受阻: <strong id="blockedCount" style="color:var(--danger);">0</strong></span>
+      <span>进度: <strong id="pctDisplay" style="color:var(--accent);">0%</strong></span>
     </div>
+    <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
   </div>
 
-  <div class="main">
+  <div id="categoryList"></div>
 
-    <!-- 筛选 -->
-    <div class="filters">
-      <button class="filter-btn active" data-filter="all">全部</button>
-      <button class="filter-btn" data-filter="undone">未完成</button>
-      <button class="filter-btn" data-filter="done">已完成</button>
+  <div class="toast" id="toast"></div>
+  <button class="fab-add" onclick="openAddTodoModal()" title="新增待办"><i class="fas fa-plus"></i></button>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <h3 id="modalTitle">行动报告</h3>
+    <div class="modal-sub" id="modalSub">记录该步骤的进展和结果</div>
+    <div class="report-list" id="reportList"></div>
+    <label for="reportContent">添加新报告</label>
+    <textarea id="reportContent" placeholder="写下你的行动报告…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeReportModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveReport()">提交报告</button>
     </div>
+  </div>
+</div>
 
-    <!-- ===== 一、签约启动阶段 ===== -->
-    <div class="phase phase-signing" data-phase="signing">
-      <div class="phase-header">
-        <span class="icon">🔐</span>
-        <span>一、签约启动阶段 — 直接决定合同有效性与预算底线</span>
-        <span class="count" id="signing-count">0/0</span>
-        <span class="arrow">▶</span>
+<!-- Edit Todo Modal -->
+<div class="modal-overlay" id="editTodoModal">
+  <div class="modal">
+    <h3>编辑待办事项</h3>
+    <div class="modal-sub">修改任务标题、描述、负责人、优先级、时间计划</div>
+    <label for="editTodoTitle">任务标题 <span style="color:var(--danger);">*</span></label>
+    <input id="editTodoTitle" type="text" placeholder="输入任务标题…" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;margin-bottom:12px;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    <label for="editTodoDesc">任务描述</label>
+    <textarea id="editTodoDesc" placeholder="可选：描述任务的具体内容…" style="min-height:80px;"></textarea>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;">
+        <label for="editTodoAssignee">负责人</label>
+        <input id="editTodoAssignee" type="text" placeholder="负责人姓名" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       </div>
-      <div class="progress-bar"><div class="fill" id="signing-bar" style="width:0%;background:#8e44ad;"></div></div>
-      <ul class="todo-list" id="signing-list">
-        <!-- 投资与工程类 -->
-        <li class="todo-item" data-id="s1">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">硬件工程真实报价 — 6项核心工程</div>
-            <div class="desc">消防改造、电力增容、排烟下水、海鲜池维生系统、冷库、中央空调。原计划书70万为目标封顶值，需施工方现场勘测后正式报价，直接决定总投资是否突破100万阈值</div>
-            <div class="meta"><span class="tag tag-urgent">签约前</span><span style="color:#888;">责任人：老板+施工方</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="s2">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">流动资金实际额度确认</div>
-            <div class="desc">原预设30万，需根据真实筹备周期、供应商账期、开业营销预算、月度固定支出规模最终确认，是项目现金流安全垫的核心</div>
-            <div class="meta"><span class="tag tag-urgent">签约前</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="s3">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">二手设备采购成交价</div>
-            <div class="desc">厨房设备、桌椅、空调、冷库等二手资产，需实际看货、议价后确定最终价格，替换预算表中的估算值</div>
-            <div class="meta"><span class="tag tag-important">签约前</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-        <!-- 合作分账类 -->
-        <li class="todo-item" data-id="s4">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">房东分成规则写入合同</div>
-            <div class="desc">超额累进档位阈值（30万）、分档比例（10%/20%）、亏损期是否收取场地占用费及具体金额，需和房东谈判后敲定原文写入合同</div>
-            <div class="meta"><span class="tag tag-urgent">签约前</span><span style="color:#888;">责任人：老板+房东</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="s5">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">投资人核心条款签约</div>
-            <div class="desc">实际出资金额、回本触发阈值、回本前后分红比例、合伙期限（36个月）、提前回购计算公式、退出机制细节，需与投资人最终签约时确认</div>
-            <div class="meta"><span class="tag tag-urgent">签约前</span><span style="color:#888;">责任人：老板+投资人</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="s6">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">流量合作费率签约</div>
-            <div class="desc">抖音服务商4%、运营部门4%的正式合同，明确服务范围、投流是否额外计费等边界条款</div>
-            <div class="meta"><span class="tag tag-urgent">签约前</span><span style="color:#888;">责任人：老板+服务商</span></div>
-          </div>
-        </li>
-        <!-- 场地与合规类 -->
-        <li class="todo-item" data-id="s7">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">场地实际可用面积测量</div>
-            <div class="desc">2000㎡为标称面积，需扣除公摊、立柱、不可改造区域，按真实使用面积重新核算餐位、后厨、仓储占比</div>
-            <div class="meta"><span class="tag tag-important">签约前</span><span style="color:#888;">责任人：老板+物业</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="s8">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">场地基础条件勘测</div>
-            <div class="desc">原有电力容量、消防主系统资质、排烟管道接口、给排水条件，必须现场勘测确认，直接决定改造工程量与费用</div>
-            <div class="meta"><span class="tag tag-important">签约前</span><span style="color:#888;">责任人：老板+施工方</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="s9">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">证照办理成本与周期确认</div>
-            <div class="desc">食品经营许可证、消防验收、环评、营业执照的实际办理周期与代办费用，按当地监管要求和第三方报价</div>
-            <div class="meta"><span class="tag tag-important">签约前</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-      </ul>
-    </div>
-
-    <!-- ===== 二、筹备与爬坡阶段 ===== -->
-    <div class="phase phase-preparation" data-phase="preparation">
-      <div class="phase-header">
-        <span class="icon">🔧</span>
-        <span>二、筹备与爬坡阶段 — 影响开业节奏与首月盈亏</span>
-        <span class="count" id="prep-count">0/0</span>
-        <span class="arrow">▶</span>
+      <div style="flex:1;min-width:120px;">
+        <label for="editTodoPriority">优先级</label>
+        <select id="editTodoPriority" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;cursor:pointer;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <option value="urgent" style="color:var(--danger);">紧急</option>
+          <option value="high" style="color:var(--orange);">高</option>
+          <option value="medium" style="color:var(--accent);">中</option>
+          <option value="low" style="color:var(--text2);">低</option>
+        </select>
       </div>
-      <div class="progress-bar"><div class="fill" id="prep-bar" style="width:0%;background:#e67e22;"></div></div>
-      <ul class="todo-list" id="prep-list">
-        <li class="todo-item" data-id="p1">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">各岗位真实薪资确认</div>
-            <div class="desc">总厨、海鲜加工、前厅主管等核心岗位月薪，按北京房山当地招聘市场真实行情填写。原21.56万/月为满编测算值，需按实际到岗人数核算</div>
-            <div class="meta"><span class="tag tag-important">筹备期</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="p2">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">社保缴纳基数与包吃住成本</div>
-            <div class="desc">按北京房山当地政策确定社保缴纳基数（原预设5000元/人/月），以及包吃住的实际成本</div>
-            <div class="meta"><span class="tag tag-important">筹备期</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="p3">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">高峰兼职规则制定</div>
-            <div class="desc">周末、节假日兼职人员的数量、时薪与排班机制，按当地劳务市场价格确定（原预设月均3万）</div>
-            <div class="meta"><span class="tag tag-normal">筹备期</span><span style="color:#888;">责任人：前厅主管</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="p4">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">筹备期人工成本核算</div>
-            <div class="desc">招聘、培训期间的到岗人数与薪资发放标准，按实际招聘进度填写（原预设12万）</div>
-            <div class="meta"><span class="tag tag-important">筹备期</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="p5">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">最终客单价体系定价</div>
-            <div class="desc">169元为建议正价，需根据周边竞品价格、试营业反馈，最终确认工作日价、周末价、团购价、儿童价等完整定价体系</div>
-            <div class="meta"><span class="tag tag-important">筹备期</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="p6">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">开业营销预算确定</div>
-            <div class="desc">抖音投流、达人探店、开业活动的实际预算，从运营部门费中列支，按真实投放计划填写（原预设5万）</div>
-            <div class="meta"><span class="tag tag-normal">筹备期</span><span style="color:#888;">责任人：运营部门</span></div>
-          </div>
-        </li>
-      </ul>
     </div>
-
-    <!-- ===== 三、稳态运营每月更新 ===== -->
-    <div class="phase phase-operation" data-phase="operation">
-      <div class="phase-header">
-        <span class="icon">📊</span>
-        <span>三、稳态运营后每月必须更新 — 直接影响分账与经营决策</span>
-        <span class="count" id="oper-count">0/0</span>
-        <span class="arrow">▶</span>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;">
+        <label for="editTodoStartDate">计划开始日期</label>
+        <input id="editTodoStartDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoStartDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoStartDate',1)">明天</button>
+        </div>
       </div>
-      <div class="progress-bar"><div class="fill" id="oper-bar" style="width:0%;background:#27ae60;"></div></div>
-      <ul class="todo-list" id="oper-list">
-        <li class="todo-item" data-id="o1">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">分日客流与翻台率（每月更新）</div>
-            <div class="desc">工作日/周末的实际到店人数、核销金额、翻台率，替代原测算值，是所有利润计算的底层基础</div>
-            <div class="meta"><span class="tag tag-monthly">每月</span><span style="color:#888;">责任人：前厅主管</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="o2">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">月度实际总营收（每月更新）</div>
-            <div class="desc">按抖音核销、线下收银的真实到账金额填写，区分账面营业额与实际可支配现金流</div>
-            <div class="meta"><span class="tag tag-monthly">每月</span><span style="color:#888;">责任人：财务</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="o3">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">真实食材成本率（每月更新）</div>
-            <div class="desc">原预设48%，需每月按实际采购额、食材损耗、期末库存核算真实成本率。海鲜、榴莲损耗波动大，直接影响利润基数</div>
-            <div class="meta"><span class="tag tag-monthly">每月</span><span class="tag tag-urgent">核心</span><span style="color:#888;">责任人：后厨+财务</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="o4">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">月度水电燃气杂费（每月更新）</div>
-            <div class="desc">按真实缴费账单填写，2000㎡带海鲜池、冷库，能耗随季节波动较大</div>
-            <div class="meta"><span class="tag tag-monthly">每月</span><span style="color:#888;">责任人：财务</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="o5">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">月度实际营销支出（每月更新）</div>
-            <div class="desc">投流、达人、活动的真实花费，每月核对8%流量费（抖音服务商4%+运营部门4%）的实际使用情况</div>
-            <div class="meta"><span class="tag tag-monthly">每月</span><span style="color:#888;">责任人：运营部门</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="o6">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">投资人累计分红额更新（每月更新）</div>
-            <div class="desc">作为40%/10%比例切换的唯一触发依据，必须精确记账，每月更新</div>
-            <div class="meta"><span class="tag tag-monthly">每月</span><span class="tag tag-urgent">核心</span><span style="color:#888;">责任人：财务</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="o7">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">累计盈亏台账更新（每月更新）</div>
-            <div class="desc">用于弥补往期亏损的核算，直接决定当月是否具备分红条件</div>
-            <div class="meta"><span class="tag tag-monthly">每月</span><span style="color:#888;">责任人：财务</span></div>
-          </div>
-        </li>
-      </ul>
-    </div>
-
-    <!-- ===== 四、风险兜底类 ===== -->
-    <div class="phase phase-risk" data-phase="risk">
-      <div class="phase-header">
-        <span class="icon">⚠️</span>
-        <span>四、风险兜底类 — 需落地核实</span>
-        <span class="count" id="risk-count">0/0</span>
-        <span class="arrow">▶</span>
+      <div style="flex:1;min-width:140px;">
+        <label for="editTodoDueDate">截止日期</label>
+        <input id="editTodoDueDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoDueDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('editTodoDueDate',1)">明天</button>
+        </div>
       </div>
-      <div class="progress-bar"><div class="fill" id="risk-bar" style="width:0%;background:#c0392b;"></div></div>
-      <ul class="todo-list" id="risk-list">
-        <li class="todo-item" data-id="r1">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">流动资金预警线重新测算</div>
-            <div class="desc">原预设10万，需根据月度固定支出规模重新测算安全阈值</div>
-            <div class="meta"><span class="tag tag-important">开业前</span><span style="color:#888;">责任人：老板+财务</span></div>
-          </div>
-        </li>
-        <li class="todo-item" data-id="r2">
-          <input type="checkbox">
-          <div class="content">
-            <div class="title">核心设备残值市场调研</div>
-            <div class="desc">海鲜池、冷库、空调等大件设备的二手回收市场价，用于清算场景的本金兜底测算</div>
-            <div class="meta"><span class="tag tag-normal">开业前</span><span style="color:#888;">责任人：老板</span></div>
-          </div>
-        </li>
-      </ul>
     </div>
-
-    <!-- 核心根数据提醒 -->
-    <div class="footer-note">
-      <strong>🔥 三大核心根数据</strong> — 整个计划书所有测算的假设根基，落地时必须第一时间用真实数据替换：<br>
-      1. <strong>工程真实报价</strong> → 直接决定总投资是否突破100万阈值<br>
-      2. <strong>食材实际成本率</strong> → 直接影响利润基数<br>
-      3. <strong>月度真实客流营收</strong> → 所有利润计算的底层基础
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeEditTodoModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEditTodo()">保存修改</button>
     </div>
+  </div>
+</div>
 
-  </div><!-- /.main -->
-</div><!-- /.container -->
+<!-- Add Todo Modal -->
+<div class="modal-overlay" id="addTodoModal">
+  <div class="modal">
+    <h3>新增待办事项</h3>
+    <div class="modal-sub" id="addTodoSub">在下方填写新任务信息</div>
+    <label for="addTodoCat">所属分类</label>
+    <select id="addTodoCat" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;margin-bottom:12px;outline:none;cursor:pointer;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></select>
+    <label for="addTodoTitle">任务标题 <span style="color:var(--danger);">*</span></label>
+    <input id="addTodoTitle" type="text" placeholder="输入任务标题…" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;margin-bottom:12px;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+    <label for="addTodoDesc">任务描述</label>
+    <textarea id="addTodoDesc" placeholder="可选：描述任务的具体内容…" style="min-height:80px;"></textarea>
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;">
+        <label for="addTodoAssignee">负责人</label>
+        <input id="addTodoAssignee" type="text" placeholder="负责人姓名" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <label for="addTodoPriority">优先级</label>
+        <select id="addTodoPriority" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;cursor:pointer;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <option value="urgent" style="color:var(--danger);">紧急</option>
+          <option value="high" style="color:var(--orange);">高</option>
+          <option value="medium" selected style="color:var(--accent);">中</option>
+          <option value="low" style="color:var(--text2);">低</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:140px;">
+        <label for="addTodoStartDate">计划开始日期</label>
+        <input id="addTodoStartDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoStartDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoStartDate',1)">明天</button>
+        </div>
+      </div>
+      <div style="flex:1;min-width:140px;">
+        <label for="addTodoDueDate">截止日期</label>
+        <input id="addTodoDueDate" type="date" style="width:100%;padding:10px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:0.85rem;font-family:inherit;outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <div style="margin-top:4px;display:flex;gap:4px;">
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoDueDate',0)">今天</button>
+          <button type="button" class="date-quick-btn" onclick="setQuickDate('addTodoDueDate',1)">明天</button>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-cancel" onclick="closeAddTodoModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveAddTodo()">添加任务</button>
+    </div>
+  </div>
+</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script>
-(function() {
-  'use strict';
+// ==================== 数据定义 ====================
+var DEFAULT_DATA = {
+  schema_version: 2,
+  categories: [
+    { id: 'cat_1', name: '房东洽谈', icon: '🏠', sort_order: 1, items: [
+      { id: 'it_1_1', title: '通过中介/线上平台寻找合适场地', desc: '在58同城、安居客、本地中介等渠道寻找2000㎡左右适合做餐饮的场地，关注位置、人流、停车条件', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_1_2', title: '实地考察场地', desc: '考察面积、结构、水电容量、消防设施、排烟条件、停车位数量、周边客流', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_1_3', title: '谈判房东合作模式', desc: '按零固定租金+超额累进分成模式谈判（30万以内10%、超出部分20%），房东无需承担固定租金压力，门店亏损则无分成', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_1_4', title: '签订合作意向书', desc: '明确超额累进分成模式（30万以内10%、超出部分20%）、场地使用范围、配合办证义务等核心条款，无押金无固定租金', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_1_5', title: '签订正式合作合同', desc: '律师审核合同条款，明确超额累进分成（30万以内10%、超出部分20%）、双方权利义务、违约责任、续约优先权', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_1_6', title: '办理场地交接手续', desc: '交接钥匙、水电燃气过户、物业交接单签字确认', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_1_7', title: '准备淡季分账方案预案', desc: '准备淡季场景（可分配纯利<30万）的分账说明，用于房东沟通：利润25万时房东分2.5万、投资人分3.75万、老板实得18.75万，各方同步让利', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_1_8', title: '确认房东超额累进分成方案', desc: '将房东分成改为超额累进制（30万以内10%、超出部分20%），消除跳档漏洞，写入合同和分账制度', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_2', name: '投资人对接', icon: '💰', sort_order: 2, items: [
+      { id: 'it_2_1', title: '制作并提交商业计划书', desc: '完成商业计划书，包含项目概述、财务测算、分账机制、退出方案', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_2_2', title: '与投资人面谈项目细节', desc: '详细讲解项目盈利模型、风险控制、分账机制及退出方案', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_2_3', title: '协商投资金额及分红比例', desc: '按100万总投资（硬件70万+流动资金30万）、回本前40%/回本后10%分红比例、3年合伙期限的方案协商', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_2_4', title: '签订投资合伙协议', desc: '律师起草协议，明确分红、退出机制、参与义务、合同条款', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_2_5', title: '投资人资金到账', desc: '确认100万投资款打入对公账户', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_2_6', title: '召开第一次合伙人会议', desc: '明确双方职责、沟通机制、月度经营会安排', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_2_7', title: '商业计划书数据版本核对', desc: '逐项核对商业计划书各章节数据（总投资100万、回本约12个月、3年回报214万、房东超额累进10%/20%等），确保全页数值统一', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_2_8', title: '市场客流数据验证', desc: '调研黄辛庄农贸市场10公里范围内消费人口密度、客群画像，验证日均355人/169元客单价的可行性，出具市场调研报告', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_3', name: '施工公司', icon: '🔨', sort_order: 3, items: [
+      { id: 'it_3_1', title: '联系3家以上施工公司现场勘测并报价', desc: '邀请施工公司现场勘测，获取详细报价单和施工周期', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_3_2', title: '对比报价方案及施工资质', desc: '对比价格、施工周期、资质证书、过往案例、质保条款', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_3_3', title: '确定施工公司并签订施工合同', desc: '明确施工范围、工期、付款方式、验收标准、质保期', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_3_4', title: '提交装修图纸至物业/消防审批', desc: '准备装修图纸、结构安全证明，提交物业和消防部门审批', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_3_5', title: '施工进场：拆除工程', desc: '原场地拆除、垃圾清运', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_3_6', title: '水电改造工程', desc: '给排水管道铺设、强弱电布线、开关插座定位', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_3_7', title: '防水工程', desc: '厨房、卫生间等区域防水施工及闭水试验', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_3_8', title: '地面/墙面/吊顶工程', desc: '地砖铺设、墙面处理、吊顶安装', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_3_9', title: '厨房排烟及通风系统安装', desc: '排烟管道、油烟净化器、新风系统安装', status: 'pending', sort_order: 9, reports: [] },
+      { id: 'it_3_10', title: '空调系统安装', desc: '中央空调/分体空调安装调试', status: 'pending', sort_order: 10, reports: [] },
+      { id: 'it_3_11', title: '门头招牌制作安装', desc: '门头设计、招牌制作、夜间亮化', status: 'pending', sort_order: 11, reports: [] },
+      { id: 'it_3_12', title: '施工中期验收', desc: '检查水电隐蔽工程、防水等中期节点', status: 'pending', sort_order: 12, reports: [] },
+      { id: 'it_3_13', title: '施工竣工验收', desc: '全面验收，列出整改清单，施工方整改后复验', status: 'pending', sort_order: 13, reports: [] },
+      { id: 'it_3_14', title: '保洁开荒', desc: '全面深度清洁，为设备进场和开业做准备', status: 'pending', sort_order: 14, reports: [] },
+      { id: 'it_3_15', title: '燃气报装申请', desc: '联系燃气公司提交报装申请，预约现场勘测和施工，餐饮自助燃气用量大，需提前规划', status: 'pending', sort_order: 15, reports: [] },
+      { id: 'it_3_16', title: '燃气验收及通气', desc: '燃气管道安装完成后申请验收，取得燃气验收合格证明后方可通气点火', status: 'pending', sort_order: 16, reports: [] },
+    ]},
+    { id: 'cat_4', name: '开业手续办理', icon: '📄', sort_order: 4, items: [
+      { id: 'it_4_1', title: '办理营业执照（工商注册）', desc: '确定经营范围，准备注册材料，提交工商登记', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_4_2', title: '办理食品经营许可证', desc: '提交食品安全管理制度、布局图、设备清单等材料，接受现场核查', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_4_3', title: '办理消防安全检查合格证', desc: '提交消防验收材料，接受消防部门现场检查', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_4_4', title: '办理环保审批（排烟/排水）', desc: '油烟净化、污水处理方案审批，取得环保许可', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_4_5', title: '办理员工健康证', desc: '组织全体员工到指定医院办理健康证', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_4_6', title: '办理税务登记', desc: '完成税务登记，核定税种，了解税收优惠政策', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_4_7', title: '开通银行对公账户', desc: '预约银行开户，准备营业执照等材料', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_4_8', title: '办理社保/公积金开户', desc: '为员工开通社保和公积金账户', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_4_9', title: '门头牌匾审批', desc: '向城管部门提交门头牌匾设计方案审批，很多城市门头需城管审批通过后方可制作安装', status: 'pending', sort_order: 9, reports: [] },
+    ]},
+    { id: 'cat_5', name: '抖音美团服务商', icon: '📱', sort_order: 5, items: [
+      { id: 'it_5_1', title: '联系抖音本地生活服务商', desc: '通过抖音官方渠道或推荐，联系本地生活服务商', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_5_2', title: '联系美团/大众点评业务经理', desc: '联系美团区域业务经理，了解入驻条件和费用', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_5_3', title: '对比服务商报价及服务内容', desc: '对比各服务商的佣金比例、推广资源、服务范围', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_5_4', title: '签订服务合作协议', desc: '明确服务内容、佣金比例、结算周期、数据权限', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_5_5', title: '完成门店线上入驻', desc: '在抖音、美团、大众点评完成门店信息注册和审核', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_5_6', title: '上架团购套餐及定价', desc: '设计自助餐团购套餐，确定价格策略，上架到平台', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_5_7', title: '测试下单及核销流程', desc: '模拟用户下单、到店核销、评价全流程，确保顺畅', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_5_8', title: '对接收银系统打通', desc: '确保收银系统与抖音/美团订单数据自动同步', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_6', name: '供应商及客户经理对接', icon: '🤝', sort_order: 6, items: [
+      { id: 'it_6_1', title: '联系银行办理商家收款码', desc: '办理微信、支付宝、银联三合一收款码', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_6_2', title: '安装POS机及收银系统', desc: '采购/租赁POS机，安装收银软件，培训员工使用', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_6_3', title: '对接农贸市场食材供应商', desc: '联系市场内海鲜、肉类、蔬菜等供应商，建立供货关系', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_6_4', title: '联系酒水饮料供应商', desc: '对接啤酒、白酒、饮料供应商，谈好供货价和结算方式', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_6_5', title: '对接海鲜/冻品供应商', desc: '寻找优质海鲜和冻品供应商，确保货源稳定', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_6_6', title: '办理门店商业保险', desc: '购买财产险、公众责任险、食品安全险', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+    { id: 'cat_7', name: '团队组建招聘', icon: '👥', sort_order: 7, items: [
+      { id: 'it_7_1', title: '制定人员编制方案', desc: '确定48人编制：前厅20人（含店长/主管/服务员/收银）、后厨28人（含厨师长/厨师/帮厨/洗碗）', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_7_2', title: '发布招聘信息', desc: '在BOSS直聘、58同城、门店海报等多渠道发布招聘信息', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_7_3', title: '面试前厅服务人员', desc: '面试服务员、收银员、迎宾等前厅岗位', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_7_4', title: '面试后厨人员', desc: '面试厨师、帮厨、洗碗工等后厨岗位', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_7_5', title: '确定核心岗位人选', desc: '确定店长、厨师长、前厅主管等核心岗位', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_7_6', title: '办理入职手续及签订合同', desc: '签订劳动合同，收集身份证、健康证等材料', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_7_7', title: '岗前培训', desc: '培训服务流程、菜品知识、食品安全规范、收银系统操作', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_7_8', title: '制定排班制度及薪酬方案', desc: '确定排班轮休制度、绩效考核方案、薪酬发放流程', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_7_9', title: '员工宿舍安排', desc: '如门店提供住宿，需提前安排员工宿舍选址、租赁、床具采购及入住管理', status: 'pending', sort_order: 9, reports: [] },
+    ]},
+    { id: 'cat_8', name: '食材设备采购', icon: '🛒', sort_order: 8, items: [
+      { id: 'it_8_1', title: '采购厨房设备', desc: '灶台、冰柜、冷藏柜、排烟设备、消毒柜、洗碗机等', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_8_2', title: '采购餐具及桌椅', desc: '120套餐具、桌椅、锅具、烤盘等用餐设备', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_8_3', title: '采购收银系统及硬件', desc: '收银电脑/平板、扫码枪、小票打印机、网络设备', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_8_4', title: '采购监控系统及网络设备', desc: '门店监控摄像头、路由器、交换机、WiFi覆盖', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_8_5', title: '采购员工工服及用品', desc: '厨师服、服务员围裙、工牌、手套、口罩等', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_8_6', title: '采购开业首批食材及调料', desc: '海鲜、肉类、蔬菜、火锅底料、调料等首批备货', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_8_7', title: '采购办公用品及杂项', desc: '办公用品、清洁用品、紧急药品等', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_8_8', title: '预算缺口分析与成本优化', desc: '对标北京市场行情，评估消防/电力预算缺口，制定分阶段施工+二手设备替代方案，确保100万封顶', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_9', name: '菜单设计与定价', icon: '📋', sort_order: 9, items: [
+      { id: 'it_9_1', title: '确定菜品结构', desc: '确定海鲜区、火锅区、烧烤区、热菜区、饮品区、水果区的菜品搭配', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_9_2', title: '设计菜单定价策略', desc: '确定169元/位自助定价，儿童/老人优惠价', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_9_3', title: '制作菜单', desc: '设计制作纸质菜单和电子扫码菜单', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_9_4', title: '试菜及菜品调整', desc: '邀请内部人员和亲友试菜，调整口味和出品', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_9_5', title: '确定最终菜单及出品标准', desc: '确定最终菜品清单、出品标准、摆盘要求', status: 'pending', sort_order: 5, reports: [] },
+    ]},
+    { id: 'cat_10', name: '营销预热', icon: '📢', sort_order: 10, items: [
+      { id: 'it_10_1', title: '创建抖音/小红书/快手账号', desc: '注册门店官方账号，完善资料和头像', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_10_2', title: '拍摄门店装修过程及预热视频', desc: '记录装修过程、展示环境、制造期待感', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_10_3', title: '设计开业活动方案', desc: '首周优惠、转发抽奖、进店送礼等活动策划', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_10_4', title: '制作宣传物料', desc: '传单、海报、易拉宝、桌牌等宣传物料设计制作', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_10_5', title: '联系本地KOL/美食博主探店', desc: '邀请本地美食博主来店体验并发布推广内容', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_10_6', title: '投放抖音同城流量广告', desc: '设置投放预算、目标人群、投放内容', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_10_7', title: '建立私域流量群', desc: '创建微信群，积累潜在客户，提前发布开业信息', status: 'pending', sort_order: 7, reports: [] },
+    ]},
+    { id: 'cat_11', name: '试营业', icon: '🧪', sort_order: 11, items: [
+      { id: 'it_11_1', title: '邀请亲友试吃（内部测试）', desc: '邀请亲友免费试吃，测试菜品口味和服务流程', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_11_2', title: '收集试吃反馈意见', desc: '收集菜品口味、服务态度、环境卫生等方面的反馈', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_11_3', title: '调整菜品及服务流程', desc: '根据反馈调整菜品口味、优化服务流程', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_11_4', title: '磨合团队配合', desc: '通过试营业实操，磨合前厅后厨配合、收银流程', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_11_5', title: '正式试营业（限量接待）', desc: '对外限量接待，收集真实顾客反馈，逐步完善', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_11_6', title: '试营业数据复盘', desc: '分析试营业期间营收、成本、客诉等数据，调整策略', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+    { id: 'cat_12', name: '正式开业', icon: '🎉', sort_order: 12, items: [
+      { id: 'it_12_1', title: '确定正式开业日期', desc: '选择吉日，提前一周对外公布开业信息', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_12_2', title: '举办开业庆典活动', desc: '剪彩仪式、舞狮表演或开业优惠活动', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_12_3', title: '邀请嘉宾、媒体、KOL到场', desc: '邀请投资人、合作伙伴、本地媒体到场见证', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_12_4', title: '开业促销活动执行', desc: '执行首周优惠、抽奖活动、赠品发放等', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_12_5', title: '首日营业数据总结', desc: '统计首日营业额、客流量、客单价、好评率', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_12_6', title: '开业后第一周运营复盘', desc: '全面复盘开业第一周数据，调整经营策略', status: 'pending', sort_order: 6, reports: [] },
+    ]},
+    { id: 'cat_13', name: '合同与法务', icon: '📋', sort_order: 13, items: [
+      { id: 'it_13_1', title: '投资人合伙协议起草与审核', desc: '委托律师起草投资合伙协议，明确分红比例、退出机制、参与义务、保密条款', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_13_2', title: '房东合作协议审核', desc: '律师审核合作合同，重点检查超额累进分成（30万以内10%、超出部分20%）、违约责任、续约优先权、场地使用范围、拆迁补偿条款', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_13_3', title: '施工合同审核与签订', desc: '明确施工范围、工期节点、付款方式、验收标准、质保期、违约赔偿', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_13_4', title: '劳动合同与保密协议签订', desc: '统一签订劳动合同，明确岗位职责、薪酬福利、保密义务、竞业限制', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_13_5', title: '供应商供货合同签订', desc: '与食材、酒水等供应商签订供货合同，明确价格、结算周期、质量标准、退换货条款', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_13_6', title: '抖音/美团服务协议审核', desc: '审核平台服务协议，重点关注佣金比例、结算周期、数据归属、违约责任', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_13_7', title: '保险合同签订', desc: '购买财产一切险、公众责任险、食品安全责任险，确认保障范围', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_13_8', title: '建立合同档案管理系统', desc: '所有合同原件归档，建立电子档案，设置到期提醒', status: 'pending', sort_order: 8, reports: [] },
+    ]},
+    { id: 'cat_14', name: '财务系统搭建', icon: '💳', sort_order: 14, items: [
+      { id: 'it_14_1', title: '选择会计软件或代账公司', desc: '对比金蝶、用友、浪潮等会计软件，或选择代账公司，确定服务内容和费用', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_14_2', title: '建立会计科目体系', desc: '设置收入、成本、费用、资产、负债等科目，确保与分账体系匹配', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_14_3', title: '开通电子发票系统', desc: '申请电子发票资质，配置开票系统，培训员工开票流程', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_14_4', title: '制定财务审批流程', desc: '明确采购审批、报销审批、付款审批的权限和流程', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_14_5', title: '建立月度结账流程', desc: '制定每月结账时间表：营收核对→成本核算→费用汇总→利润计算→分账执行', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_14_6', title: '安排税务申报事项', desc: '了解增值税、企业所得税、个税等税种申报要求，确定申报时间表', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_14_7', title: '建立现金流管理台账', desc: '每日记录营收、支出、银行余额，确保现金流健康', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_14_8', title: '建立成本核算模板', desc: '按食材、人工、房租、水电、营销等分类核算成本，每月对比预算', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_14_9', title: '建立角色收益速览数据模板', desc: '按投资人回本前40%/回本后10%分红、房东超额累进10%/20%分成、运营方实得的模式，制作月度收益速览表，包含月均收益、年收益、3年总收益', status: 'pending', sort_order: 9, reports: [] },
+      { id: 'it_14_10', title: '设计月度分账执行流程', desc: '每月5日出报表→10日前完成分账结算→三方确认对账→打款，明确各环节负责人', status: 'pending', sort_order: 10, reports: [] },
+      { id: 'it_14_11', title: '制定投资人退出方案文档', desc: '按方案A(期满终止)/B(提前回购)/C(续约合作)三种退出方式，准备合同条款和测算数据', status: 'pending', sort_order: 11, reports: [] },
+      { id: 'it_14_12', title: '备用金管理流程', desc: '制定门店备用金管理制度，明确备用金额度、使用范围、报销流程、盘点周期', status: 'pending', sort_order: 12, reports: [] },
+      { id: 'it_14_13', title: '食材账期与供应商结算流程', desc: '对接食材供应商签订月结30天账期协议，建立月初对账→月末结款流程，确保现金流顺畅', status: 'pending', sort_order: 13, reports: [] },
+    ]},
+    { id: 'cat_15', name: '经营数据分析系统', icon: '📊', sort_order: 15, items: [
+      { id: 'it_15_1', title: '设计日报表模板', desc: '包含：当日营收、客流量、客单价、各平台订单数、好评率、差评分析', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_15_2', title: '建立月报表体系', desc: '包含：月营收、月成本、月利润、同比环比分析、预算执行情况', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_15_3', title: '搭建成本分析模型', desc: '食材成本率、人工成本率、营销费用率、房租占比等核心指标分析', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_15_4', title: '建立分账对账表', desc: '每月分账数据：投资人回本前40%/回本后10%分红、房东超额累进10%/20%分成、运营方实得，三方确认对账', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_15_5', title: '建立财务透明度与审计机制', desc: '制定月度对账流程（5日出具报表→10日对账→15日打款）、半年第三方审计权、防跳档条款、连续亏损处理预案', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_15_6', title: '完成分账与财务管理制度文件', desc: '完善《分账与财务管理制度》全文（共7章23条），包含超额累进房东分成、月度对账流程、审计机制、违约处罚等，作为合同附件提交三方签字', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_15_7', title: '设定关键业绩指标（KPI）', desc: '日营收目标、翻台率、好评率、食材成本率、员工流失率等核心指标', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_15_8', title: '搭建数据看板', desc: '使用Excel或BI工具搭建可视化数据看板，关键指标一目了然', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_15_9', title: '建立月度经营分析会制度', desc: '每月召开经营分析会，复盘数据、发现问题、制定改进方案', status: 'pending', sort_order: 9, reports: [] },
+      { id: 'it_15_10', title: '每月生成角色收益速览报表', desc: '按投资人、房东、运营方三角色生成月度收益速览，包含当月收益、累计收益、回报率，用于三方沟通', status: 'pending', sort_order: 10, reports: [] },
+      { id: 'it_15_11', title: '建立分账对账确认流程', desc: '每月分账后，投资人、房东、运营方三方签字确认，存档备查', status: 'pending', sort_order: 11, reports: [] },
+    ]},
+  ]
+};
+var DATA_VERSION = 3; // 增: 版本3=新增负责人/优先级/开始日期/截止日期 + 超时提醒
 
-  // 统计更新
-  function updateStats() {
-    var allItems = document.querySelectorAll('.todo-item');
-    var doneItems = document.querySelectorAll('.todo-item.completed');
-    var total = allItems.length;
-    var done = doneItems.length;
-    document.getElementById('total-count').textContent = total;
-    document.getElementById('done-count').textContent = done;
-    document.getElementById('done-pct').textContent = total ? Math.round(done / total * 100) + '%' : '0%';
+// ==================== 状态管理 ====================
+var API_URL = '/api/todo';
+var appData = null;
+var currentReportItem = null;
+var debounceTimer = null;
+
+// ==================== 工具函数 ====================
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 4); }
+
+function statusText(s) {
+  return { pending: '待办', 'in-progress': '进行中', completed: '已完成', blocked: '受阻' }[s] || s;
+}
+
+function statusIcon(s) {
+  return { pending: 'far fa-circle', 'in-progress': 'fas fa-play', completed: 'fas fa-check-circle', blocked: 'fas fa-exclamation-circle' }[s];
+}
+
+var statusOpts = [
+  { value: 'pending', label: '待办', icon: '◯' },
+  { value: 'in-progress', label: '进行中', icon: '▶' },
+  { value: 'completed', label: '已完成', icon: '✓' },
+  { value: 'blocked', label: '受阻', icon: '✕' }
+];
+var statusColors = { pending: '#8a9bb5', 'in-progress': '#f39c12', completed: '#1a8a3a', blocked: '#c0392b' };
+var priorityLabels = { urgent: '紧急', high: '高', medium: '中', low: '低' };
+
+// ==================== 辅助函数 ====================
+function isOverdue(item) {
+  if (!item.dueDate || item.status === 'completed') return false;
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var due = new Date(item.dueDate);
+  due.setHours(0, 0, 0, 0);
+  return due < today;
+}
+
+function setQuickDate(inputId, offsetDays) {
+  var d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  var y = d.getFullYear();
+  var m = ('0' + (d.getMonth() + 1)).slice(-2);
+  var day = ('0' + d.getDate()).slice(-2);
+  document.getElementById(inputId).value = y + '-' + m + '-' + day;
+}
+
+function priorityColor(p) {
+  return { urgent: 'var(--danger)', high: 'var(--orange)', medium: 'var(--accent)', low: 'var(--text2)' }[p] || 'var(--text2)';
+}
+
+// ==================== 渲染 ====================
+function render() {
+  if (!appData) return;
+  var cats = appData.categories;
+  var total = 0, done = 0, progress = 0, blocked = 0;
+
+  cats.forEach(function(cat) {
+    cat.items.forEach(function(item) {
+      total++;
+      if (item.status === 'completed') done++;
+      if (item.status === 'in-progress') progress++;
+      if (item.status === 'blocked') blocked++;
+    });
+  });
+
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('progressCount').textContent = progress;
+  document.getElementById('blockedCount').textContent = blocked;
+  var pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('pctDisplay').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  var html = '';
+
+  // ====== 今日待办 ======
+  var todayPending = [];
+  cats.forEach(function(cat) {
+    var activeItems = cat.items.filter(function(i) {
+      return i.status === 'in-progress' || i.status === 'blocked' || (i.status === 'pending' && isOverdue(i));
+    });
+    if (activeItems.length > 0) {
+      todayPending.push({ cat: cat, items: activeItems });
+    }
+  });
+  var todayTotal = todayPending.reduce(function(sum, g) { return sum + g.items.length; }, 0);
+  html += '<div class="today-focus">';
+  html += '  <div class="today-focus-header" onclick="toggleTodayFocus(this)">';
+  html += '    <span class="tf-icon"><i class="fas fa-play" style="color:#fff;"></i></span>';
+  html += '    <span class="tf-title">进行中 & 超期任务</span>';
+  html += '    <span class="tf-count">' + todayTotal + '项</span>';
+  html += '    <span class="tf-toggle open"><i class="fas fa-chevron-down"></i></span>';
+  html += '  </div>';
+  html += '  <div class="today-focus-body open">';
+  if (todayTotal === 0) {
+    html += '    <div class="today-focus-empty">🎉 没有进行中或超期的任务需要关注</div>';
+  } else {
+    todayPending.forEach(function(group) {
+      html += '    <div class="today-focus-group">';
+      html += '      <div class="tfg-header"><span class="tfg-icon">' + group.cat.icon + '</span>' + group.cat.name + '</div>';
+      group.items.forEach(function(item) {
+        var doneCls = item.status === 'completed' ? 'done' : '';
+        var overdue = isOverdue(item);
+        var overdueCls = overdue ? 'is-overdue' : '';
+        var priCls = item.priority || 'medium';
+        html += '    <div class="today-focus-item ' + overdueCls + '" data-item-id="' + item.id + '">';
+        html += '      <span class="tfi-status ' + item.status + '"></span>';
+        html += '      <span class="tfi-title ' + doneCls + '">' + escHtml(item.title) + '</span>';
+        // Priority badge
+        var priLabel = priorityLabels[item.priority] || '中';
+        html += '      <span class="priority-badge ' + priCls + '" style="margin-left:4px;">' + priLabel + '</span>';
+        if (item.assignee) html += '      <span class="assignee-tag" style="margin-left:2px;"><i class="fas fa-user"></i>' + escHtml(item.assignee) + '</span>';
+        if (overdue) html += '      <span class="date-tag overdue" style="margin-left:4px;"><i class="far fa-clock"></i> 已超期</span>';
+        if (item.dueDate && !overdue) html += '      <span class="date-tag" style="margin-left:4px;font-size:0.65rem;">' + item.dueDate + '</span>';
+        html += '      <select class="status-select ' + item.status + '" onchange="selectStatusToday(this)">';
+        statusOpts.forEach(function(opt) {
+          var selected = item.status === opt.value ? ' selected' : '';
+          var color = statusColors[opt.value] || '#8a9bb5';
+          html += '<option value="' + opt.value + '"' + selected + ' style="color:' + color + ';font-weight:500;">' + opt.icon + ' ' + opt.label + '</option>';
+        });
+        html += '</select>';
+        html += '    </div>';
+      });
+      html += '    </div>';
+    });
   }
+  html += '  </div>';
+  html += '</div>';
 
-  // 更新阶段进度
-  function updatePhase(phaseId) {
-    var list = document.getElementById(phaseId + '-list');
-    var items = list.querySelectorAll('.todo-item');
-    var done = list.querySelectorAll('.todo-item.completed').length;
-    var total = items.length;
-    document.getElementById(phaseId + '-count').textContent = done + '/' + total;
-    var bar = document.getElementById(phaseId + '-bar');
-    if (bar) bar.style.width = total ? (done / total * 100) + '%' : '0%';
-  }
-
-  // 复选框切换
-  document.addEventListener('change', function(e) {
-    if (e.target.type === 'checkbox') {
-      var item = e.target.closest('.todo-item');
-      if (!item) return;
-      if (e.target.checked) {
-        item.classList.add('completed');
-      } else {
-        item.classList.remove('completed');
+  cats.forEach(function(cat, ci) {
+    var catDone = cat.items.filter(function(i) { return i.status === 'completed'; }).length;
+    var catTotal = cat.items.length;
+    html += '<div class="category" data-cat-id="' + cat.id + '">';
+    html += '  <div class="category-header" onclick="toggleCat(this)">';
+    html += '    <span class="drag-handle" onclick="event.stopPropagation()"><i class="fas fa-grip-lines"></i></span>';
+    html += '    <span class="cat-icon" style="background:rgba(46,134,193,0.15);">' + cat.icon + '</span>';
+    html += '    <span class="cat-name">' + cat.name + '</span>';
+    html += '    <span class="cat-count">' + catDone + '/' + catTotal + '</span>';
+    html += '    <span class="cat-toggle"><i class="fas fa-chevron-down"></i></span>';
+    html += '  </div>';
+    html += '  <div class="category-body">';
+    cat.items.forEach(function(item) {
+      var doneCls = item.status === 'completed' ? 'done' : '';
+      var doneText = item.status === 'completed' ? 'done-text' : '';
+      var overdue = isOverdue(item);
+      var overdueCls = overdue ? 'is-overdue' : '';
+      var priCls = item.priority || 'medium';
+      html += '  <div class="todo-item ' + overdueCls + ' status-' + item.status + '" data-item-id="' + item.id + '">';
+      html += '    <span class="item-drag" style="cursor:grab;"><i class="fas fa-grip-lines" style="font-size:0.7rem;"></i></span>';
+      html += '    <div class="item-body">';
+      html += '      <div class="item-title ' + doneText + '">' + escHtml(item.title) + '</div>';
+      if (item.desc) html += '      <div class="item-desc">' + escHtml(item.desc) + '</div>';
+      html += '      <div class="item-meta">';
+      html += '        <select class="status-select ' + item.status + '" onchange="selectStatus(this)">';
+      statusOpts.forEach(function(opt) {
+        var selected = item.status === opt.value ? ' selected' : '';
+        var color = statusColors[opt.value] || '#8a9bb5';
+        html += '<option value="' + opt.value + '"' + selected + ' style="color:' + color + ';font-weight:500;">' + opt.icon + ' ' + opt.label + '</option>';
+      });
+      html += '</select>';
+      // Priority badge
+      var priLabel = priorityLabels[item.priority] || '中';
+      html += '        <span class="priority-badge ' + priCls + '">' + priLabel + '</span>';
+      // Assignee
+      if (item.assignee) html += '        <span class="assignee-tag"><i class="fas fa-user"></i>' + escHtml(item.assignee) + '</span>';
+      // Start date
+      if (item.startDate) html += '        <span class="date-tag"><i class="far fa-calendar-alt"></i>' + item.startDate + '</span>';
+      // Due date
+      if (item.dueDate) {
+        var dueDateCls = overdue ? 'overdue' : '';
+        html += '        <span class="date-tag ' + dueDateCls + '"><i class="far fa-calendar-check"></i>' + item.dueDate + '</span>';
+        if (overdue) html += '        <span class="date-tag overdue"><i class="fas fa-exclamation-triangle"></i>已超期</span>';
       }
-      // 持久化
-      saveState();
-      // 更新统计
-      updateStats();
-      updatePhase('signing');
-      updatePhase('prep');
-      updatePhase('oper');
-      updatePhase('risk');
+      html += '      </div>';
+      html += '    </div>';
+      html += '    <div class="item-actions">';
+      var rCount = (item.reports || []).length;
+      html += '      <button onclick="openReportModal(\'' + item.id + '\')" title="行动报告"><i class="fas fa-file-alt"></i></button>';
+      if (rCount > 0) html += '      <span class="report-count" onclick="openReportModal(\'' + item.id + '\')">' + rCount + '份</span>';
+      html += '      <button onclick="openEditTodoModal(\'' + item.id + '\')" title="编辑"><i class="fas fa-edit"></i></button>';
+      html += '      <button onclick="deleteTodo(\'' + item.id + '\')" title="删除" style="color:var(--danger);"><i class="fas fa-trash-alt"></i></button>';
+      html += '    </div>';
+      html += '  </div>';
+    });
+    html += '    <div class="add-item-btn" onclick="openAddTodoModal(\'' + cat.id + '\')"><i class="fas fa-plus-circle"></i> 新增待办</div>';
+    html += '  </div>';
+    html += '</div>';
+  });
+
+  document.getElementById('categoryList').innerHTML = html;
+  // Restore collapsed state from localStorage
+  cats.forEach(function(cat) {
+    try {
+      var val = localStorage.getItem('todo_cat_collapsed_' + cat.id);
+      if (val === '0') { // 之前是展开状态
+        var catDiv = document.querySelector('[data-cat-id="' + cat.id + '"]');
+        if (catDiv) {
+          var body = catDiv.querySelector('.category-body');
+          var toggle = catDiv.querySelector('.cat-toggle');
+          if (body && toggle) {
+            body.classList.add('open');
+            toggle.classList.add('open');
+          }
+        }
+      }
+      // val === '1'（折叠）或 null（首次）：保持默认折叠状态，无需操作
+    } catch(e) {}
+  });
+  initSortable();
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toggleCat(header) {
+  var body = header.nextElementSibling;
+  var toggle = header.querySelector('.cat-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+  // Save collapse state to localStorage
+  var catDiv = header.closest('.category');
+  var catId = catDiv ? catDiv.getAttribute('data-cat-id') : null;
+  if (catId) {
+    var isOpen = body.classList.contains('open');
+    try { localStorage.setItem('todo_cat_collapsed_' + catId, isOpen ? '0' : '1'); } catch(e) {}
+  }
+}
+
+function toggleTodayFocus(header) {
+  var body = header.nextElementSibling;
+  var toggle = header.querySelector('.tf-toggle');
+  body.classList.toggle('open');
+  toggle.classList.toggle('open');
+}
+
+// ==================== 今日待办状态变更 ====================
+function selectStatusToday(el) {
+  var itemEl = el.closest('.today-focus-item');
+  if (!itemEl) return;
+  // Use data-item-id to find the item (not title matching)
+  var itemId = itemEl.getAttribute('data-item-id');
+  if (!itemId) return;
+  var newStatus = el.value;
+  var found = findItem(itemId);
+  if (!found) return;
+  found.item.status = newStatus;
+  scheduleSave();
+  showToast('状态已更新：' + statusText(newStatus));
+  // Re-render to update today-focus list
+  render();
+}
+
+// ==================== 状态选择（原生 select 下拉） ====================
+function selectStatus(el) {
+  var itemEl = el.closest('.todo-item');
+  if (!itemEl) return;
+  var itemId = itemEl.getAttribute('data-item-id');
+  var found = findItem(itemId);
+  if (!found) return;
+  var item = found.item;
+  var newStatus = el.value;
+  if (item.status === newStatus) return;
+  var oldStatus = item.status;
+  item.status = newStatus;
+  // Update select class and bg for visual feedback
+  el.className = 'status-select ' + newStatus;
+  // Update item left border color
+  itemEl.className = 'todo-item status-' + newStatus;
+  // Remove overdue class if completed
+  if (newStatus === 'completed') {
+    itemEl.classList.remove('is-overdue');
+  } else {
+    // Re-check overdue status
+    itemEl.classList.toggle('is-overdue', isOverdue(item));
+  }
+  // Update title strikethrough for completed
+  var titleEl = itemEl.querySelector('.item-title');
+  if (titleEl) {
+    titleEl.classList.toggle('done-text', newStatus === 'completed');
+  }
+  // Flash effect on select
+  el.style.transition = 'all 0.15s ease';
+  el.style.transform = 'scale(1.05)';
+  el.style.boxShadow = '0 0 12px rgba(46,134,193,0.4)';
+  setTimeout(function() {
+    el.style.transform = 'scale(1)';
+    el.style.boxShadow = 'none';
+  }, 200);
+  // 不调用 render()，避免 select 被销毁重建导致下拉异常
+  scheduleSave();
+  showToast('状态已更新：' + statusText(newStatus));
+}
+
+// ==================== 新增待办 ====================
+function openAddTodoModal(catId) {
+  var catSelect = document.getElementById('addTodoCat');
+  // 填充分类下拉
+  catSelect.innerHTML = '';
+  appData.categories.forEach(function(cat) {
+    var opt = document.createElement('option');
+    opt.value = cat.id;
+    opt.textContent = cat.icon + ' ' + cat.name;
+    if (catId && cat.id === catId) opt.selected = true;
+    catSelect.appendChild(opt);
+  });
+  document.getElementById('addTodoTitle').value = '';
+  document.getElementById('addTodoDesc').value = '';
+  document.getElementById('addTodoAssignee').value = '';
+  document.getElementById('addTodoPriority').value = 'medium';
+  document.getElementById('addTodoStartDate').value = '';
+  document.getElementById('addTodoDueDate').value = '';
+  document.getElementById('addTodoModal').classList.add('show');
+  setTimeout(function() { document.getElementById('addTodoTitle').focus(); }, 300);
+}
+
+function closeAddTodoModal() {
+  document.getElementById('addTodoModal').classList.remove('show');
+}
+
+function saveAddTodo() {
+  var catSelect = document.getElementById('addTodoCat');
+  var catId = catSelect.value;
+  if (!catId) { showToast('请选择所属分类'); return; }
+  var title = document.getElementById('addTodoTitle').value.trim();
+  if (!title) { showToast('请输入任务标题'); document.getElementById('addTodoTitle').focus(); return; }
+  var desc = document.getElementById('addTodoDesc').value.trim();
+  var assignee = document.getElementById('addTodoAssignee').value.trim();
+  var priority = document.getElementById('addTodoPriority').value;
+  var startDate = document.getElementById('addTodoStartDate').value;
+  var dueDate = document.getElementById('addTodoDueDate').value;
+  var cat = appData.categories.find(function(c) { return c.id === catId; });
+  if (!cat) return;
+  var maxOrder = 0;
+  cat.items.forEach(function(i) { if (i.sort_order > maxOrder) maxOrder = i.sort_order; });
+  cat.items.push({
+    id: genId(),
+    title: title,
+    desc: desc || '',
+    status: 'pending',
+    sort_order: maxOrder + 1,
+    reports: [],
+    assignee: assignee,
+    priority: priority,
+    startDate: startDate,
+    dueDate: dueDate
+  });
+  closeAddTodoModal();
+  render();
+  scheduleSave();
+  showToast('已添加任务：「' + title + '」');
+}
+
+function findItem(itemId) {
+  for (var ci = 0; ci < appData.categories.length; ci++) {
+    for (var ii = 0; ii < appData.categories[ci].items.length; ii++) {
+      if (appData.categories[ci].items[ii].id === itemId) {
+        return { item: appData.categories[ci].items[ii], catIdx: ci, itemIdx: ii };
+      }
+    }
+  }
+  return null;
+}
+
+// ==================== 编辑待办 ====================
+var editingItemId = null;
+
+function openEditTodoModal(itemId) {
+  var found = findItem(itemId);
+  if (!found) return;
+  editingItemId = itemId;
+  document.getElementById('editTodoTitle').value = found.item.title;
+  document.getElementById('editTodoDesc').value = found.item.desc || '';
+  document.getElementById('editTodoAssignee').value = found.item.assignee || '';
+  document.getElementById('editTodoPriority').value = found.item.priority || 'medium';
+  document.getElementById('editTodoStartDate').value = found.item.startDate || '';
+  document.getElementById('editTodoDueDate').value = found.item.dueDate || '';
+  document.getElementById('editTodoModal').classList.add('show');
+  setTimeout(function() { document.getElementById('editTodoTitle').focus(); }, 300);
+}
+
+function closeEditTodoModal() {
+  document.getElementById('editTodoModal').classList.remove('show');
+  editingItemId = null;
+}
+
+function saveEditTodo() {
+  if (!editingItemId) return;
+  var title = document.getElementById('editTodoTitle').value.trim();
+  if (!title) { showToast('请输入任务标题'); document.getElementById('editTodoTitle').focus(); return; }
+  var desc = document.getElementById('editTodoDesc').value.trim();
+  var assignee = document.getElementById('editTodoAssignee').value.trim();
+  var priority = document.getElementById('editTodoPriority').value;
+  var startDate = document.getElementById('editTodoStartDate').value;
+  var dueDate = document.getElementById('editTodoDueDate').value;
+  var found = findItem(editingItemId);
+  if (!found) return;
+  found.item.title = title;
+  found.item.desc = desc || '';
+  found.item.assignee = assignee;
+  found.item.priority = priority;
+  found.item.startDate = startDate;
+  found.item.dueDate = dueDate;
+  closeEditTodoModal();
+  render();
+  scheduleSave();
+  showToast('已更新：「' + title + '」');
+}
+
+// ==================== 删除待办 ====================
+function deleteTodo(itemId) {
+  if (!confirm('确定要删除这条待办事项吗？\n此操作不可撤销。')) return;
+  for (var ci = 0; ci < appData.categories.length; ci++) {
+    var cat = appData.categories[ci];
+    for (var ii = 0; ii < cat.items.length; ii++) {
+      if (cat.items[ii].id === itemId) {
+        cat.items.splice(ii, 1);
+        render();
+        scheduleSave();
+        showToast('待办已删除');
+        return;
+      }
+    }
+  }
+}
+
+// ==================== 报告功能 ====================
+function openReportModal(itemId) {
+  var found = findItem(itemId);
+  if (!found) return;
+  currentReportItem = found.item;
+  document.getElementById('modalTitle').textContent = '行动报告：' + currentReportItem.title;
+  document.getElementById('modalSub').textContent = '记录该步骤的进展、结果和遇到的问题';
+  document.getElementById('reportContent').value = '';
+  renderReports();
+  document.getElementById('reportModal').classList.add('show');
+}
+
+function closeReportModal() {
+  document.getElementById('reportModal').classList.remove('show');
+  currentReportItem = null;
+}
+
+function renderReports() {
+  var list = document.getElementById('reportList');
+  var reports = currentReportItem.reports || [];
+  if (reports.length === 0) {
+    list.innerHTML = '<div class="no-reports">暂无行动报告，添加第一条</div>';
+    return;
+  }
+  var html = '';
+  reports.forEach(function(r) {
+    var d = new Date(r.created_at);
+    var dateStr = d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    html += '<div class="report-item">';
+    html += '  <div class="r-header">';
+    html += '    <div class="r-info">';
+    html += '      <div class="r-date">' + dateStr + '</div>';
+    html += '      <div class="r-content">' + escHtml(r.content) + '</div>';
+    if (r.author) html += '      <div class="r-author">— ' + escHtml(r.author) + '</div>';
+    html += '    </div>';
+    html += '    <button class="r-delete" onclick="deleteReport(\'' + r.id + '\')" title="删除报告">✕</button>';
+    html += '  </div>';
+    html += '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function saveReport() {
+  var content = document.getElementById('reportContent').value.trim();
+  if (!content) { showToast('请填写报告内容'); return; }
+  if (!currentReportItem) return;
+  if (!currentReportItem.reports) currentReportItem.reports = [];
+  currentReportItem.reports.push({
+    id: genId(),
+    created_at: new Date().toISOString(),
+    content: content,
+    author: '运营方'
+  });
+  document.getElementById('reportContent').value = '';
+  renderReports();
+  render();
+  scheduleSave();
+  showToast('报告已保存');
+}
+
+function deleteReport(reportId) {
+  if (!currentReportItem || !currentReportItem.reports) return;
+  if (!confirm('确定删除这条报告吗？')) return;
+  currentReportItem.reports = currentReportItem.reports.filter(function(r) { return r.id !== reportId; });
+  renderReports();
+  render();
+  scheduleSave();
+  showToast('报告已删除');
+}
+
+// ==================== 拖拽排序 ====================
+function initSortable() {
+  // Category level
+  var catList = document.getElementById('categoryList');
+  if (catList._sortable) catList._sortable.destroy();
+  catList._sortable = Sortable.create(catList, {
+    handle: '.drag-handle',
+    animation: 200,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    onEnd: function() {
+      reorderCategories();
+      scheduleSave();
     }
   });
 
-  // 筛选
-  document.querySelectorAll('.filter-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-      this.classList.add('active');
-      var filter = this.dataset.filter;
-      document.querySelectorAll('.todo-item').forEach(function(item) {
-        switch (filter) {
-          case 'all': item.style.display = ''; break;
-          case 'done': item.style.display = item.classList.contains('completed') ? '' : 'none'; break;
-          case 'undone': item.style.display = !item.classList.contains('completed') ? '' : 'none'; break;
-        }
-      });
-    });
-  });
-
-  // 折叠展开
-  document.querySelectorAll('.phase-header').forEach(function(header) {
-    header.addEventListener('click', function() {
-      var list = this.nextElementSibling.nextElementSibling; // .progress-bar + .todo-list
-      if (!list || !list.classList.contains('todo-list')) return;
-      var arrow = this.querySelector('.arrow');
-      if (list.style.display === 'none') {
-        list.style.display = '';
-        if (arrow) arrow.classList.add('open');
-      } else {
-        list.style.display = 'none';
-        if (arrow) arrow.classList.remove('open');
+  // Item level within each category — only init on visible bodies
+  var bodies = document.querySelectorAll('.category-body');
+  bodies.forEach(function(body) {
+    if (body._sortable) body._sortable.destroy();
+    // Skip hidden bodies (collapsed categories) to avoid drag anomalies
+    if (window.getComputedStyle(body).display === 'none') return;
+    body._sortable = Sortable.create(body, {
+      handle: '.item-drag',
+      animation: 200,
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onEnd: function() {
+        reorderItems();
+        scheduleSave();
       }
     });
-    // 默认展开
-    var arrow = header.querySelector('.arrow');
-    if (arrow) arrow.classList.add('open');
   });
+}
 
-  // 持久化保存到 localStorage
-  function saveState() {
-    var state = {};
-    document.querySelectorAll('.todo-item').forEach(function(item) {
-      state[item.dataset.id] = item.querySelector('input[type="checkbox"]').checked;
+function reorderCategories() {
+  var catEls = document.querySelectorAll('.category');
+  catEls.forEach(function(el, idx) {
+    var catId = el.getAttribute('data-cat-id');
+    var cat = appData.categories.find(function(c) { return c.id === catId; });
+    if (cat) cat.sort_order = idx + 1;
+  });
+  appData.categories.sort(function(a, b) { return a.sort_order - b.sort_order; });
+}
+
+function reorderItems() {
+  var bodies = document.querySelectorAll('.category-body');
+  bodies.forEach(function(body) {
+    var catEl = body.closest('.category');
+    if (!catEl) return;
+    var catId = catEl.getAttribute('data-cat-id');
+    var cat = appData.categories.find(function(c) { return c.id === catId; });
+    if (!cat) return;
+    var itemEls = body.querySelectorAll('.todo-item');
+    itemEls.forEach(function(el, idx) {
+      var itemId = el.getAttribute('data-item-id');
+      var item = cat.items.find(function(i) { return i.id === itemId; });
+      if (item) item.sort_order = idx + 1;
     });
-    try {
-      localStorage.setItem('bp-todo-progress', JSON.stringify(state));
-    } catch(e) {}
-  }
+    cat.items.sort(function(a, b) { return a.sort_order - b.sort_order; });
+  });
+}
 
-  // 加载状态
-  function loadState() {
-    try {
-      var raw = localStorage.getItem('bp-todo-progress');
-      if (!raw) return;
-      var state = JSON.parse(raw);
-      document.querySelectorAll('.todo-item').forEach(function(item) {
-        var id = item.dataset.id;
-        if (state[id]) {
-          item.querySelector('input[type="checkbox"]').checked = true;
-          item.classList.add('completed');
+// ==================== 自动保存 ====================
+function scheduleSave() {
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(saveToServer, 1500);
+}
+
+function saveToServer() {
+  if (!appData) return;
+  fetch(API_URL + '/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: appData })
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    if (res.success) showToast('已自动保存');
+  }).catch(function(e) {
+    console.error('Save failed:', e);
+    showToast('⚠️ 保存失败，请检查网络连接');
+  });
+}
+
+function showToast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2000);
+}
+
+// ==================== 加载数据 ====================
+function loadData() {
+  // Phase 1: 先渲染本地数据，用户立刻看到内容
+  appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  appData.data_version = DATA_VERSION;
+  migrateItemFields();
+  render();
+
+  // Phase 2: 后台异步加载服务器数据，同步最新状态
+  fetch(API_URL)
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.data && res.data.categories && res.data.categories.length > 0) {
+        if (res.data.data_version === DATA_VERSION) {
+          appData = res.data;
+        } else {
+          console.log('数据版本不一致，使用最新 DEFAULT_DATA (v' + DATA_VERSION + ')');
+          appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+          appData.data_version = DATA_VERSION;
+          saveToServer();
         }
-      });
-    } catch(e) {}
-  }
+      } else {
+        appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        appData.data_version = DATA_VERSION;
+        saveToServer();
+      }
+      migrateItemFields();
+      render();
+    })
+    .catch(function(e) {
+      console.log('Load failed, using cached:', e);
+      // 本地数据已渲染，无需额外处理
+    });
+}
 
-  // 初始化
-  loadState();
-  updateStats();
-  updatePhase('signing');
-  updatePhase('prep');
-  updatePhase('oper');
-  updatePhase('risk');
-})();
+// ==================== 字段迁移兼容（新增字段时自动填充默认值） ====================
+function migrateItemFields() {
+  if (!appData || !appData.categories) return;
+  var changed = false;
+  for (var ci = 0; ci < appData.categories.length; ci++) {
+    var cat = appData.categories[ci];
+    if (!cat.items) continue;
+    for (var ii = 0; ii < cat.items.length; ii++) {
+      var item = cat.items[ii];
+      if (item.assignee === undefined) { item.assignee = ''; changed = true; }
+      if (item.priority === undefined) { item.priority = 'medium'; changed = true; }
+      if (item.startDate === undefined) { item.startDate = ''; changed = true; }
+      if (item.dueDate === undefined) { item.dueDate = ''; changed = true; }
+    }
+  }
+  if (changed) { scheduleSave(); }
+}
+
+// ==================== 启动 ====================
+document.addEventListener('DOMContentLoaded', function() {
+  loadData();
+  // Close report modal on overlay click
+  document.getElementById('reportModal').addEventListener('click', function(e) {
+    if (e.target === this) closeReportModal();
+  });
+  // Close add-todo modal on overlay click
+  document.getElementById('addTodoModal').addEventListener('click', function(e) {
+    if (e.target === this) closeAddTodoModal();
+  });
+  // Close edit-todo modal on overlay click
+  document.getElementById('editTodoModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditTodoModal();
+  });
+  // Ctrl+Enter to submit report (desktop only)
+  document.getElementById('reportContent').addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'Enter') { saveReport(); }
+  });
+  // Enter in add-todo title: move focus to description (mobile-friendly)
+  document.getElementById('addTodoTitle').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('addTodoDesc').focus(); }
+  });
+  // Enter in edit-todo title: move focus to description
+  document.getElementById('editTodoTitle').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('editTodoDesc').focus(); }
+  });
+});
 </script>
 </body>
 </html>
