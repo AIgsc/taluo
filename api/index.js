@@ -1297,18 +1297,18 @@ async function syncToGitHub(content, model, token) {
   console.log('已提交 ' + updatedCount + ' 个区块到 GitHub');
 }
 
-// ==================== 服务端计算引擎（与前端 business-model.js 完全一致） ====================
+// ==================== 服务端计算引擎（V2：与前端 business-model.js 完全一致，无设备分摊） ====================
 function calculateModel(inputs) {
   var i = Object.assign({
     area: 2000, price: 169, dailyRevenue: 60000,
-    totalInvestment: 800000, equipmentInvestment: 500000,
-    foodCostPct: 45, rent: 70000, laborCost: 243000,
-    marketingPct: 3, miscCost: 60000, serviceFeePct: 4,
-    operationPct: 4, investorPct: 10, landlordThreshold: 30000, landlordPct: 10,
-    paybackMonths: 12,
-    tableCount: 120, seatsPerTable: 2.8, staffCount: 48,
-    utilityCost: 48000, kitchenStaff: 28, kitchenCost: 139000,
-    frontStaff: 20, frontCost: 104000,
+    totalInvestment: 1000000, equipmentInvestment: 700000,
+    foodCostPct: 48, rent: 0, laborCost: 215600,
+    marketingPct: 0, miscCost: 60000, serviceFeePct: 4,
+    operationPct: 4, investorPctPrePayback: 40, investorPct: 10,
+    partnerTermMonths: 36,
+    tableCount: 120, seatsPerTable: 2.8, staffCount: 38,
+    utilityCost: 60000, kitchenStaff: 22, kitchenCost: 105000,
+    frontStaff: 16, frontCost: 75000,
     staffInitialCost: 200000, foodInitialCost: 100000
   }, inputs || {});
 
@@ -1320,89 +1320,148 @@ function calculateModel(inputs) {
     return w >= 10 ? Math.round(w) + '万' : w.toFixed(1) + '万';
   }
 
+  // ========== 基础计算（纯现金口径，无设备分摊） ==========
   var monthlyRevenue = Math.round(i.dailyRevenue * 30);
-  var equipmentAmort = Math.round(i.equipmentInvestment / i.paybackMonths);
   var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
   var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
-  var totalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
-  var operatingProfit = monthlyRevenue - totalExpense;
-  var cashNetProfit = operatingProfit + equipmentAmort;
+  var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
+  var cashNetProfit = monthlyRevenue - cashTotalExpense;
   var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
   var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
   var totalFee = serviceFee + operationFee;
-  var profitAfterFees = operatingProfit - totalFee;
-  var investorDividend = Math.round(profitAfterFees * i.investorPct / 100);
-  var landlordDividend = Math.round(Math.max(0, profitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
-  var operatorIncome = profitAfterFees - investorDividend - landlordDividend;
+  var dividendBase = cashNetProfit - totalFee;
 
-  var pessimisticFoodCost = Math.round(monthlyRevenue * 0.48);
-  var pessimisticTotalExpense = i.laborCost + pessimisticFoodCost + i.rent + marketingCost + i.miscCost + equipmentAmort;
-  var pessimisticOperatingProfit = monthlyRevenue - pessimisticTotalExpense;
-  var pessimisticFee = Math.round(monthlyRevenue * (i.serviceFeePct + i.operationPct) / 100);
-  var pessimisticProfitAfterFees = pessimisticOperatingProfit - pessimisticFee;
-  var pessimisticOperatorIncome = pessimisticProfitAfterFees - Math.round(pessimisticProfitAfterFees * 0.1) - Math.round(Math.max(0, pessimisticProfitAfterFees - 30000) * 0.1);
+  // ========== 投资人分红（回本前40%/回本后10%） ==========
+  var investorPrePayback = Math.round(dividendBase * i.investorPctPrePayback / 100);
+  var investorPostPayback = Math.round(dividendBase * i.investorPct / 100);
 
-  var avgMonthlyIncome = Math.round(operatorIncome * 0.7 + (operatorIncome * 0.5) * 0.3);
-  var paybackPeriod = Math.ceil(i.totalInvestment / Math.max(1, avgMonthlyIncome));
+  // ========== 房东超额累进（30万以内10%/超出部分20%） ==========
+  var landlordThreshold = 300000;
+  var landlordDividend;
+  if (dividendBase <= landlordThreshold) {
+    landlordDividend = Math.round(dividendBase * 10 / 100);
+  } else {
+    landlordDividend = Math.round(landlordThreshold * 10 / 100) + Math.round((dividendBase - landlordThreshold) * 20 / 100);
+  }
 
-  // 周度营收
-  var monThuDaily = Math.round(i.dailyRevenue * 0.583);
+  // ========== 三方分账 ==========
+  var operatorIncomePre = dividendBase - investorPrePayback - landlordDividend;
+  var operatorIncomePost = dividendBase - investorPostPayback - landlordDividend;
+
+  // ========== 投资人回本周期 ==========
+  var monthsToPayback = Math.ceil(i.totalInvestment / Math.max(1, investorPrePayback));
+  var realisticPayback = 5 + monthsToPayback;
+  var realisticPaybackFromInvestment = realisticPayback + 2;
+
+  // ========== 投资人3年逐月推演 ==========
+  var cumDividend = 0;
+  var paybackMonth = 0;
+  for (var m = 1; m <= i.partnerTermMonths; m++) {
+    var thisMonthDiv = 0;
+    if (m >= 6) {
+      if (cumDividend < i.totalInvestment) {
+        thisMonthDiv = investorPrePayback;
+        if (cumDividend + thisMonthDiv > i.totalInvestment) {
+          thisMonthDiv = i.totalInvestment - cumDividend;
+        }
+      } else {
+        thisMonthDiv = investorPostPayback;
+      }
+    }
+    cumDividend += thisMonthDiv;
+    if (cumDividend >= i.totalInvestment && paybackMonth === 0) {
+      paybackMonth = m;
+    }
+  }
+  if (paybackMonth === 0) paybackMonth = realisticPayback;
+  realisticPayback = paybackMonth;
+  realisticPaybackFromInvestment = paybackMonth + 2;
+
+  var year1Total = 0, year2Total = 0, year3Total = 0;
+  var mCum = 0;
+  for (var mm = 1; mm <= 36; mm++) {
+    var d = 0;
+    if (mm >= 6) {
+      if (mCum < i.totalInvestment) {
+        d = investorPrePayback;
+        if (mCum + d > i.totalInvestment) d = i.totalInvestment - mCum;
+      } else {
+        d = investorPostPayback;
+      }
+    }
+    mCum += d;
+    if (mm <= 12) year1Total += d;
+    else if (mm <= 24) year2Total += d;
+    else year3Total += d;
+  }
+  var investorTotalReturn3y = year1Total + year2Total + year3Total;
+  var investorROI = (investorTotalReturn3y / i.totalInvestment * 100).toFixed(0);
+
+  // ========== 老板3年各年收益 ==========
+  var opYear1 = 0, opYear2 = 0, opYear3 = 0;
+  var opCumInvestor = 0;
+  for (var om = 1; om <= 36; om++) {
+    var opDiv = 0;
+    if (om >= 6) {
+      var invThisMonth = 0;
+      if (opCumInvestor < i.totalInvestment) {
+        invThisMonth = investorPrePayback;
+        if (opCumInvestor + invThisMonth > i.totalInvestment) invThisMonth = i.totalInvestment - opCumInvestor;
+      } else {
+        invThisMonth = investorPostPayback;
+      }
+      opCumInvestor += invThisMonth;
+      opDiv = dividendBase - landlordDividend - invThisMonth;
+    }
+    if (om <= 12) opYear1 += opDiv;
+    else if (om <= 24) opYear2 += opDiv;
+    else opYear3 += opDiv;
+  }
+  var operatorTotal3y = opYear1 + opYear2 + opYear3;
+
+  // ========== 试营业推演 ==========
+  var trial1MonthlyRev = Math.round(monthlyRevenue * 0.50);
+  var trial1Expense = Math.round(monthlyRevenue * 0.75);
+  var trial1Profit = trial1MonthlyRev - trial1Expense;
+  var trial1Fee = Math.round(trial1MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
+  trial1Profit = trial1Profit - trial1Fee;
+
+  var trial2MonthlyRev = Math.round(monthlyRevenue * 0.67);
+  var trial2Expense = Math.round(monthlyRevenue * 0.78);
+  var trial2Profit = trial2MonthlyRev - trial2Expense;
+  var trial2Fee = Math.round(trial2MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
+  trial2Profit = trial2Profit - trial2Fee;
+
+  var trial3MonthlyRev = Math.round(monthlyRevenue * 0.83);
+  var trial3Expense = Math.round(monthlyRevenue * 0.82);
+  var trial3Profit = trial3MonthlyRev - trial3Expense;
+  var trial3Fee = Math.round(trial3MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
+  trial3Profit = trial3Profit - trial3Fee;
+
+  // ========== 周度营收 ==========
+  var monThuDaily = i.dailyRevenue;
   var friDaily = i.dailyRevenue;
-  var satDaily = Math.round(i.dailyRevenue * 2);
-  var sunDaily = Math.round(i.dailyRevenue * 1.667);
+  var satDaily = i.dailyRevenue;
+  var sunDaily = i.dailyRevenue;
   var weeklyTotal = monThuDaily * 4 + friDaily + satDaily + sunDaily;
   var monThuCustomers = Math.round(monThuDaily / i.price);
   var friCustomers = Math.round(friDaily / i.price);
   var satCustomers = Math.round(satDaily / i.price);
   var sunCustomers = Math.round(sunDaily / i.price);
   var weeklyCustomers = monThuCustomers * 4 + friCustomers + satCustomers + sunCustomers;
-  var tableCapacity = i.tableCount * i.seatsPerTable;
+  var tableCapacity = i.tableCount * 4;
 
-  // 试营业推演
-  var trial1MonthlyRev = Math.round(monthlyRevenue * 0.55);
-  var trial1Expense = Math.round(trial1MonthlyRev * 0.895);
-  var trial1Profit = trial1MonthlyRev - trial1Expense;
-  var trial1Fee = Math.round(trial1MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
-  var trial1AfterFees = trial1Profit - trial1Fee;
-
-  var trial2MonthlyRev = Math.round(monthlyRevenue * 0.72);
-  var trial2Expense = Math.round(trial2MonthlyRev * 0.799);
-  var trial2Profit = trial2MonthlyRev - trial2Expense;
-  var trial2Fee = Math.round(trial2MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
-  var trial2AfterFees = trial2Profit - trial2Fee;
-
-  // 现金流水
-  var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost;
+  // ========== 其他衍生值 ==========
+  var workingCapital = i.totalInvestment - i.equipmentInvestment;
   var equipmentMonthExpense = cashTotalExpense + i.equipmentInvestment;
   var equipmentMonthProfit = monthlyRevenue - equipmentMonthExpense;
-
-  // 设备分摊明细
-  var hardAsset = Math.round(i.equipmentInvestment * 0.646);
-  var furnitureAsset = Math.round(i.equipmentInvestment * 0.24);
-  var suppliesAsset = i.equipmentInvestment - hardAsset - furnitureAsset;
-  var hardAmort = Math.round(hardAsset / i.paybackMonths);
-  var furnitureAmort = Math.round(furnitureAsset / i.paybackMonths);
-  var suppliesAmort = Math.round(suppliesAsset / i.paybackMonths);
-
-  // 第13个月起
-  var postAmortTotalExpense = totalExpense - equipmentAmort;
-  var postAmortOperatingProfit = monthlyRevenue - postAmortTotalExpense;
-  var postAmortProfitAfterFees = postAmortOperatingProfit - totalFee;
-  var postAmortInvestorDividend = Math.round(postAmortProfitAfterFees * i.investorPct / 100);
-  var postAmortLandlordDividend = Math.round(Math.max(0, postAmortProfitAfterFees - i.landlordThreshold) * i.landlordPct / 100);
-  var postAmortOperatorIncome = postAmortProfitAfterFees - postAmortInvestorDividend - postAmortLandlordDividend;
-
-  // 悲观对比
-  var pessimisticVsIdealMonthly = operatorIncome - pessimisticOperatorIncome;
-  var pessimisticVsIdealAnnual = pessimisticVsIdealMonthly * 12;
-  var pessimisticPaybackPeriod = Math.ceil(paybackPeriod * 1.25);
-  var workingCapital = i.totalInvestment - i.equipmentInvestment;
   var avgSalary = Math.round(i.laborCost / i.staffCount);
-  var diningArea = Math.round(i.area * 0.475);
   var maxCapacity = Math.round(i.tableCount * 4);
+  var diningArea = Math.round(i.area * 0.475);
+  var tableAreaDetail = (Math.round(diningArea / i.tableCount * 10) / 10);
 
-  // 与前端 BusinessModel.values 完全一致
   return {
+    // ===== 面积 =====
     area: i.area + '㎡',
     area_plain: i.area,
     area_dining: diningArea + '㎡（47.5%）',
@@ -1414,13 +1473,15 @@ function calculateModel(inputs) {
     area_dining_plain: diningArea,
     table_count: i.tableCount + '张桌',
     table_count_plain: i.tableCount,
-    table_area: (Math.round(diningArea / i.tableCount * 10) / 10) + '㎡/桌',
+    table_area: tableAreaDetail + '㎡/桌',
     max_capacity: maxCapacity + '人',
     max_capacity_plain: maxCapacity,
 
+    // ===== 定价 =====
     price: i.price + '元/位',
     price_plain: i.price,
 
+    // ===== 营收 =====
     daily_revenue: formatWan(i.dailyRevenue),
     daily_revenue_plain: i.dailyRevenue,
     monthly_revenue: formatWan(monthlyRevenue),
@@ -1454,6 +1515,7 @@ function calculateModel(inputs) {
     weekly_total_plain: weeklyTotal,
     monthly_summary: '月均4.3周 × ' + formatWan(weeklyTotal) + '/周 ≈ ' + formatWan(monthlyRevenue) + '/月（日均约' + formatWan(i.dailyRevenue) + '）',
 
+    // ===== 投资 =====
     total_investment: formatWan(i.totalInvestment),
     total_investment_wan: (i.totalInvestment / 10000) + '万',
     total_investment_raw: i.totalInvestment,
@@ -1465,25 +1527,7 @@ function calculateModel(inputs) {
     staff_initial_cost_wan: formatWan(i.staffInitialCost),
     food_initial_cost_wan: formatWan(i.foodInitialCost),
 
-    equipment_amortization: formatNum(equipmentAmort) + '元/月',
-    equipment_amortization_num: equipmentAmort,
-    equipment_amortization_short: formatNum(equipmentAmort),
-    equipment_amortization_months: i.paybackMonths + '个月',
-    equipment_amortization_months_plain: i.paybackMonths,
-
-    hard_asset: formatNum(hardAsset) + '元',
-    hard_asset_plain: hardAsset,
-    hard_amort_amount: formatNum(hardAmort) + '元/月',
-    hard_amort_plain: hardAmort,
-    furniture_asset: formatNum(furnitureAsset) + '元',
-    furniture_asset_plain: furnitureAsset,
-    furniture_amort_amount: formatNum(furnitureAmort) + '元/月',
-    furniture_amort_plain: furnitureAmort,
-    supplies_asset: formatNum(suppliesAsset) + '元',
-    supplies_asset_plain: suppliesAsset,
-    supplies_amort_amount: formatNum(suppliesAmort) + '元/月',
-    supplies_amort_plain: suppliesAmort,
-
+    // ===== 成本（无设备分摊） =====
     food_cost: formatNum(foodCost) + '元',
     food_cost_num: foodCost,
     food_cost_pct: i.foodCostPct + '%',
@@ -1499,16 +1543,14 @@ function calculateModel(inputs) {
     utility_cost: formatNum(i.utilityCost) + '元',
     utility_cost_plain: i.utilityCost,
 
-    total_operating_expense: formatNum(totalExpense) + '元',
-    total_operating_expense_num: totalExpense,
-
-    operating_profit: formatNum(operatingProfit) + '元',
-    operating_profit_num: operatingProfit,
-    operating_profit_display: formatNum(operatingProfit),
+    // ===== 利润（纯现金口径） =====
+    cash_total_expense: formatNum(cashTotalExpense) + '元',
+    cash_total_expense_num: cashTotalExpense,
     cash_net_profit: formatNum(cashNetProfit) + '元',
     cash_net_profit_num: cashNetProfit,
     cash_net_profit_display: formatNum(cashNetProfit),
 
+    // ===== 两费 =====
     service_fee: formatNum(serviceFee) + '元',
     service_fee_num: serviceFee,
     service_fee_pct: i.serviceFeePct + '%',
@@ -1517,40 +1559,71 @@ function calculateModel(inputs) {
     operation_pct: i.operationPct + '%',
     total_fee: formatNum(totalFee) + '元',
     total_fee_num: totalFee,
-    profit_after_fees: formatNum(profitAfterFees) + '元',
-    profit_after_fees_num: profitAfterFees,
-    investor_dividend: formatNum(investorDividend) + '元',
-    investor_dividend_num: investorDividend,
-    investor_pct: i.investorPct + '%',
+
+    // ===== 分红基数 =====
+    dividend_base: formatNum(dividendBase) + '元',
+    dividend_base_num: dividendBase,
+    dividend_base_display: formatNum(dividendBase),
+
+    // ===== 投资人分红 =====
+    investor_dividend: formatNum(investorPrePayback) + '元',
+    investor_dividend_num: investorPrePayback,
+    investor_dividend_pre: formatNum(investorPrePayback) + '元',
+    investor_dividend_pre_num: investorPrePayback,
+    investor_dividend_post: formatNum(investorPostPayback) + '元',
+    investor_dividend_post_num: investorPostPayback,
+    investor_pct: '回本前40% / 回本后10%',
+    investor_pct_pre: '40%',
+    investor_pct_post: '10%',
+
+    // ===== 房东分红 =====
     landlord_dividend: formatNum(landlordDividend) + '元',
     landlord_dividend_num: landlordDividend,
-    landlord_threshold: formatNum(i.landlordThreshold),
-    landlord_pct: i.landlordPct + '%',
-    operator_income: formatNum(operatorIncome) + '元',
-    operator_income_num: operatorIncome,
-    operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
-    operator_income_wan_display: (operatorIncome / 10000).toFixed(1) + '万',
+    landlord_pct: '超额累进（30万以内10% / 超出部分20%）',
+    landlord_threshold: formatNum(landlordThreshold) + '元',
+    landlord_threshold_num: landlordThreshold,
+    landlord_pct_low: '10%（30万以内部分）',
+    landlord_pct_high: '20%（超出30万部分）',
 
-    pessimistic_food_cost: formatNum(pessimisticFoodCost) + '元',
-    pessimistic_food_cost_num: pessimisticFoodCost,
-    pessimistic_food_cost_pct: '48%',
-    pessimistic_total_expense: formatNum(pessimisticTotalExpense) + '元',
-    pessimistic_total_expense_num: pessimisticTotalExpense,
-    pessimistic_operating_profit: formatNum(pessimisticOperatingProfit) + '元',
-    pessimistic_operating_profit_num: pessimisticOperatingProfit,
-    pessimistic_profit_after_fees: formatNum(pessimisticProfitAfterFees) + '元',
-    pessimistic_operator_income: '约 ' + (pessimisticOperatorIncome / 10000).toFixed(1) + ' 万',
-    pessimistic_operator_income_wan: (pessimisticOperatorIncome / 10000).toFixed(1) + '万',
-    pessimistic_operator_income_plain: pessimisticOperatorIncome,
-    pessimistic_vs_ideal_diff: (pessimisticVsIdealMonthly / 10000).toFixed(1) + '万',
-    pessimistic_vs_ideal_diff_plain: pessimisticVsIdealMonthly,
-    pessimistic_vs_ideal_annual: (pessimisticVsIdealAnnual / 10000).toFixed(0) + '万',
-    pessimistic_payback: '约 ' + pessimisticPaybackPeriod + '-' + (pessimisticPaybackPeriod + 1) + ' 个月',
+    // ===== 运营方 =====
+    operator_income: formatNum(operatorIncomePre) + '元',
+    operator_income_num: operatorIncomePre,
+    operator_income_wan: (operatorIncomePre / 10000).toFixed(1) + '万',
+    operator_income_wan_display: (operatorIncomePre / 10000).toFixed(1) + '万',
+    operator_steady_income_wan: (operatorIncomePost / 10000).toFixed(1) + '万',
 
-    payback_months: i.paybackMonths,
-    payback_result: paybackPeriod + '个月',
-    payback_result_plain: paybackPeriod,
+    // ===== 回本周期 =====
+    payback_result: '老板不投钱，无需回本',
+    payback_result_plain: 0,
+    investor_payback: Math.ceil(i.totalInvestment / Math.max(1, investorPrePayback)) + '个月',
+    investor_payback_plain: Math.ceil(i.totalInvestment / Math.max(1, investorPrePayback)),
+    realistic_payback: realisticPayback + '个月（从开业算起）',
+    realistic_payback_plain: realisticPayback,
+    realistic_payback_from_investment: realisticPaybackFromInvestment + '个月（从出资日算起）',
 
+    // ===== 投资人合伙期限 =====
+    investor_term: i.partnerTermMonths + '个月',
+    investor_term_plain: i.partnerTermMonths,
+    investor_term_year: (i.partnerTermMonths / 12) + '年',
+    investor_year1_dividend_wan: (year1Total / 10000).toFixed(0) + '万',
+    investor_year2_dividend_wan: (year2Total / 10000).toFixed(0) + '万',
+    investor_year3_dividend_wan: (year3Total / 10000).toFixed(0) + '万',
+    investor_total_3y: formatWan(investorTotalReturn3y),
+    investor_total_3y_wan: (investorTotalReturn3y / 10000).toFixed(0) + '万',
+    investor_roi_3y: investorROI + '%',
+
+    // ===== 房东收益汇总 =====
+    landlord_monthly_income_wan: (landlordDividend / 10000).toFixed(1) + '万',
+    landlord_total_3y_wan: ((landlordDividend * 36) / 10000).toFixed(0) + '万',
+
+    // ===== 运营方收益汇总 =====
+    operator_total_3y: formatWan(operatorTotal3y),
+    operator_total_3y_wan: (operatorTotal3y / 10000).toFixed(0) + '万',
+    operator_year1: formatNum(opYear1) + '元',
+    operator_year1_wan: '约' + (opYear1 / 10000).toFixed(0) + '万',
+    operator_year2_wan: '约' + (opYear2 / 10000).toFixed(0) + '万',
+
+    // ===== 试营业推演 =====
     trial1_revenue_wan: formatWan(trial1MonthlyRev),
     trial1_revenue_plain: trial1MonthlyRev,
     trial1_expense_wan: (trial1Expense / 10000).toFixed(1) + '万',
@@ -1559,8 +1632,6 @@ function calculateModel(inputs) {
     trial1_profit_plain: trial1Profit,
     trial1_fee_wan: (trial1Fee / 10000).toFixed(1) + '万',
     trial1_fee_plain: trial1Fee,
-    trial1_after_fees_wan: (trial1AfterFees / 10000).toFixed(1) + '万',
-    trial1_after_fees_plain: trial1AfterFees,
     trial2_revenue_wan: formatWan(trial2MonthlyRev),
     trial2_revenue_plain: trial2MonthlyRev,
     trial2_expense_wan: (trial2Expense / 10000).toFixed(1) + '万',
@@ -1569,14 +1640,16 @@ function calculateModel(inputs) {
     trial2_profit_plain: trial2Profit,
     trial2_fee_wan: (trial2Fee / 10000).toFixed(1) + '万',
     trial2_fee_plain: trial2Fee,
-    trial2_after_fees_wan: (trial2AfterFees / 10000).toFixed(1) + '万',
-    trial2_after_fees_plain: trial2AfterFees,
+    trial3_revenue_wan: formatWan(trial3MonthlyRev),
+    trial3_revenue_plain: trial3MonthlyRev,
+    trial3_expense_wan: (trial3Expense / 10000).toFixed(1) + '万',
+    trial3_expense_plain: trial3Expense,
+    trial3_profit_wan: (trial3Profit / 10000).toFixed(1) + '万',
+    trial3_profit_plain: trial3Profit,
+    trial3_fee_wan: (trial3Fee / 10000).toFixed(1) + '万',
+    trial3_fee_plain: trial3Fee,
 
-    stable_profit_wan: (operatingProfit / 10000).toFixed(1) + '万',
-    stable_total_fee_wan: (totalFee / 10000).toFixed(1) + '万',
-    stable_after_fees_wan: (profitAfterFees / 10000).toFixed(1) + '万',
-    stable_operator_income_wan: (operatorIncome / 10000).toFixed(1) + '万',
-
+    // ===== 现金流水 =====
     cash_total_expense: formatNum(cashTotalExpense) + '元',
     cash_total_expense_num: cashTotalExpense,
     equipment_month_expense: formatNum(equipmentMonthExpense) + '元',
@@ -1584,15 +1657,7 @@ function calculateModel(inputs) {
     equipment_month_profit: formatNum(equipmentMonthProfit) + '元',
     equipment_month_profit_num: equipmentMonthProfit,
 
-    post_amort_profit: formatNum(postAmortOperatingProfit) + '元',
-    post_amort_profit_plain: postAmortOperatingProfit,
-    post_amort_profit_wan: (postAmortOperatingProfit / 10000).toFixed(0) + '万',
-    post_amort_profit_after_fees: formatNum(postAmortProfitAfterFees) + '元',
-    post_amort_profit_after_fees_plain: postAmortProfitAfterFees,
-    post_amort_operator_income: formatNum(postAmortOperatorIncome) + '元',
-    post_amort_operator_income_plain: postAmortOperatorIncome,
-    post_amort_operator_income_wan: (postAmortOperatorIncome / 10000).toFixed(1) + '万',
-
+    // ===== 人员架构 =====
     staff_count: i.staffCount + '人',
     staff_count_plain: i.staffCount,
     avg_salary: '≈' + formatNum(avgSalary) + '元',
@@ -1606,8 +1671,9 @@ function calculateModel(inputs) {
     front_cost: formatNum(i.frontCost) + '元',
     front_cost_plain: i.frontCost,
 
-    total_investment_detail: '总投资' + formatWan(i.equipmentInvestment) + '万元（装修/门脸/设备/餐具/办公/工具，商务风装修 · 二手设备 · 全部包含）',
-    equipment_investment_detail: '装修投入' + formatWan(i.equipmentInvestment),
+    // ===== 项目概述 =====
+    total_investment_detail: '总硬件投资' + formatWan(i.equipmentInvestment) + '元（含装修/门脸/设备/海鲜池/消防/电力改造，极简工业风+二手设备全包）',
+    equipment_investment_detail: '装修设备投入' + formatWan(i.equipmentInvestment),
     staff_initial_investment: '组建前厅后厨人工' + formatWan(i.staffInitialCost),
     food_initial_investment: '预留' + formatWan(i.foodInitialCost) + '采购食材',
     total_investment_summary: '共' + formatWan(i.totalInvestment),
