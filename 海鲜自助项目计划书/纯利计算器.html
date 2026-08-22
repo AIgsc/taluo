@@ -434,7 +434,8 @@
     },
 
     formatNum: function(n) {
-      if (n >= 10000) { var w = n / 10000; return w >= 10 ? Math.round(w) + '万' : w.toFixed(1) + '万'; }
+      // 直接显示完整数值（带千分位），不用"万"缩写，
+      // 避免编辑时解析"15万"丢失单位导致保存错误
       return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     },
 

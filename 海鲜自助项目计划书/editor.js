@@ -231,8 +231,9 @@
       if (window.PD.items) practicalData = window.PD.items;
       if (window.PD.customBlocks) customBlocks = window.PD.customBlocks;
     }
-    // 保留纯利计算器数据
-    var calculatorData = existingData.calculatorData || (window.CALC ? window.CALC.data : undefined);
+    // 纯利计算器数据：优先取当前运行时数据（用户修改后的实时值），
+    // 不要用 HTML 里的旧数据，否则用户修改推不上去
+    var calculatorData = (window.CALC && window.CALC.data) || existingData.calculatorData;
 
     var saveData = {
       version: 1,
@@ -307,7 +308,11 @@
 
   // ==================== 统一推送按钮（右下角） ====================
   function createPushButton() {
-    if (document.getElementById('bp-push-btn')) return;
+    // 清理可能重复创建的按钮，防止堆积多个
+    var existing = document.querySelectorAll('#bp-push-btn');
+    for (var i = 0; i < existing.length; i++) {
+      if (existing[i].parentNode) existing[i].parentNode.removeChild(existing[i]);
+    }
     var btn = document.createElement('div');
     btn.id = 'bp-push-btn';
     btn.innerHTML = '📤 推送';
