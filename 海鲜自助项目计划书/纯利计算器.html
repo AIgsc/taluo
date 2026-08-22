@@ -271,12 +271,6 @@
           if (window.hasChanges !== undefined) window.hasChanges = true;
         }
       } catch(e) {}
-      // 自动保存到服务器（防抖 3 秒）
-      if (this._autoSaveTimer) clearTimeout(this._autoSaveTimer);
-      var self = this;
-      this._autoSaveTimer = setTimeout(function() {
-        if (window.bpSaveContent) window.bpSaveContent();
-      }, 3000);
     },
 
     genId: function() { return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,4); },
@@ -478,5 +472,6 @@
 })();
 </script>
 <script src="editor.js"></script>
+<script>if (window.bpShowPushButton) window.bpShowPushButton();</script>
 </body>
 </html>

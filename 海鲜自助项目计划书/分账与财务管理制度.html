@@ -447,6 +447,13 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
   </div>
 <!-- 持久化变量 -->
 <script id="bp-saved-vars" type="application/json">{"version":1}</script>
+<script>
+// 先为文章标题和正文添加可编辑标记（editor.js 初始化时读取）
+document.querySelectorAll('.article-title, .article-body, .chapter-title, h1').forEach(function(el) {
+  el.setAttribute('data-edit', '1');
+});
+</script>
 <script src="editor.js"></script>
+<script>if (window.bpShowPushButton) window.bpShowPushButton();</script>
 </body>
 </html>

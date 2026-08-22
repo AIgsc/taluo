@@ -276,14 +276,18 @@
         hasChanges = false;
         if (result.github && !result.github.synced) {
           if (status) { status.textContent = '保存成功，但 GitHub 同步失败'; status.style.color = '#e67e22'; }
+          return { ok: false, error: 'github_sync_failed' };
         } else {
           if (status) { status.textContent = '保存成功！已同步到 GitHub'; status.style.color = '#27ae60'; }
+          return { ok: true };
         }
       } else {
         if (status) { status.textContent = '保存失败，请重试'; status.style.color = '#e74c3c'; }
+        return { ok: false, error: 'server_error' };
       }
     } catch (e) {
       if (status) { status.textContent = '保存失败：网络错误'; status.style.color = '#e74c3c'; }
+      return { ok: false, error: 'network_error' };
     } finally {
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存修改'; }
       if (status) {
@@ -294,8 +298,41 @@
     }
   }
 
-  // 暴露 saveContent 为全局函数（供其他页面调用，如纯利计算器自动保存）
+  // 暴露 saveContent 为全局函数
   window.bpSaveContent = saveContent;
+
+  // ==================== 统一推送按钮（右下角） ====================
+  function createPushButton() {
+    if (document.getElementById('bp-push-btn')) return;
+    var btn = document.createElement('div');
+    btn.id = 'bp-push-btn';
+    btn.innerHTML = '📤 推送';
+    btn.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:10px 22px;background:#2e86c1;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(46,134,193,0.35);transition:all 0.2s;user-select:none;';
+    btn.onclick = async function() {
+      btn.innerHTML = '⏳ 推送中...';
+      btn.style.pointerEvents = 'none';
+      btn.style.opacity = '0.7';
+      var ret = await saveContent();
+      if (ret && ret.ok) {
+        btn.innerHTML = '✓ 已推送';
+        btn.style.background = '#27ae60';
+        btn.style.boxShadow = '0 4px 16px rgba(39,174,96,0.35)';
+      } else {
+        btn.innerHTML = '✗ 推送失败';
+        btn.style.background = '#c0392b';
+        btn.style.boxShadow = '0 4px 16px rgba(192,57,43,0.35)';
+      }
+      setTimeout(function() {
+        btn.innerHTML = '📤 推送';
+        btn.style.background = '#2e86c1';
+        btn.style.boxShadow = '0 4px 16px rgba(46,134,193,0.35)';
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+      }, 3000);
+    };
+    document.body.appendChild(btn);
+  }
+  window.bpShowPushButton = createPushButton;
 
   // ==================== 初始化 ====================
   function init() {
