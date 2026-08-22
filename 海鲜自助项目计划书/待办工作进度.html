@@ -1317,6 +1317,8 @@ function scheduleSave() {
 function saveToVars() {
   if (!appData) return;
   try {
+    // 记录更新时间，用于在"本机草稿"与"线上数据"之间选择较新的一份
+    appData.updatedAt = Date.now();
     var el = document.getElementById('bp-saved-vars');
     if (el) {
       var data = JSON.parse(el.textContent) || {};
@@ -1324,6 +1326,8 @@ function saveToVars() {
       el.textContent = JSON.stringify(data);
       if (window.hasChanges !== undefined) window.hasChanges = true;
     }
+    // 本机备份：刷新后（即使还没推送）也能立即恢复 4 种状态
+    try { localStorage.setItem('todoData', JSON.stringify(appData)); } catch(e2) {}
   } catch(e) {
     console.error('Save failed:', e);
   }
@@ -1338,30 +1342,47 @@ function showToast(msg) {
 
 // ==================== 加载数据 ====================
 function loadData() {
-  // 从 bp-saved-vars 加载
+  // 1. 从 bp-saved-vars（线上推送上来的数据）读取
+  var htmlData = null;
   try {
     var el = document.getElementById('bp-saved-vars');
     if (el) {
       var data = JSON.parse(el.textContent);
       if (data && data.todoData && data.todoData.categories && data.todoData.categories.length > 0) {
-        if (data.todoData.data_version === DATA_VERSION) {
-          appData = data.todoData;
-        } else {
-          console.log('数据版本不一致，使用最新 DEFAULT_DATA (v' + DATA_VERSION + ')');
-          appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-          appData.data_version = DATA_VERSION;
-          saveToVars();
-        }
-      } else {
-        appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-        appData.data_version = DATA_VERSION;
-        saveToVars();
+        htmlData = data.todoData;
       }
     }
-  } catch(e) {
+  } catch(e) {}
+
+  // 2. 从 localStorage（本机草稿）读取，用于刷新后立即恢复未推送的修改
+  var localData = null;
+  try {
+    var ls = localStorage.getItem('todoData');
+    if (ls) {
+      var parsed = JSON.parse(ls);
+      if (parsed && parsed.categories && parsed.categories.length > 0) {
+        localData = parsed;
+      }
+    }
+  } catch(e) {}
+
+  // 3. 取更新时间较新的一份（本机草稿 > 线上数据）
+  var best = null;
+  var ht = htmlData ? (htmlData.updatedAt || 0) : 0;
+  var lt = localData ? (localData.updatedAt || 0) : 0;
+  if (lt > ht) best = localData;
+  else if (htmlData) best = htmlData;
+  else if (localData) best = localData;
+
+  if (best && best.data_version === DATA_VERSION) {
+    appData = best;
+  } else {
+    if (best) console.log('数据版本不一致，使用最新 DEFAULT_DATA (v' + DATA_VERSION + ')');
     appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
     appData.data_version = DATA_VERSION;
   }
+  // 统一同步：把选中的数据写回 bp-saved-vars 与 localStorage，保持两份一致
+  saveToVars();
   migrateItemFields();
   render();
 }

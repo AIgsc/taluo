@@ -260,6 +260,17 @@
     //    编辑状态 / 完成编辑状态点击保存，按钮都应正常工作
     resetEditState();
 
+    // 0.5 复位推送按钮：点击推送时按钮会先变成"推送中..."，该中间状态
+    //     绝不能写进线上 HTML，否则推上去的页面会多出一个卡在"推送中..."的残留按钮
+    var pushBtn = document.getElementById('bp-push-btn');
+    if (pushBtn) {
+      pushBtn.innerHTML = '📤 推送';
+      pushBtn.style.background = '#2e86c1';
+      pushBtn.style.boxShadow = '0 4px 16px rgba(46,134,193,0.35)';
+      pushBtn.style.pointerEvents = 'auto';
+      pushBtn.style.opacity = '1';
+    }
+
     // 1. 将当前变量值嵌入 HTML（持久化，下次加载时读取）
     var savedVars = document.getElementById('bp-saved-vars');
     var existingData = {};
@@ -279,12 +290,14 @@
     // 不要用 HTML 里的旧数据，否则用户修改推不上去
     var calculatorData = (window.CALC && window.CALC.data) || existingData.calculatorData;
 
-    var saveData = {
-      version: 1,
-      inputs: inputs,
-      practicalData: practicalData,
-      customBlocks: customBlocks
-    };
+    // 保留页面自身保存的其他数据（如待办页的 todoData），只覆盖已知字段。
+    // 否则推送时会把页面自己保存的数据丢弃，导致刷新后状态丢失
+    var saveData = {};
+    Object.keys(existingData).forEach(function(k) { saveData[k] = existingData[k]; });
+    saveData.version = 1;
+    saveData.inputs = inputs;
+    saveData.practicalData = practicalData;
+    saveData.customBlocks = customBlocks;
     if (calculatorData !== undefined) saveData.calculatorData = calculatorData;
 
     if (savedVars) {
@@ -352,13 +365,15 @@
 
   // ==================== 统一推送按钮（右下角） ====================
   function createPushButton() {
-    // 清理可能重复创建的按钮，防止堆积多个
-    var existing = document.querySelectorAll('#bp-push-btn');
-    for (var i = 0; i < existing.length; i++) {
-      if (existing[i].parentNode) existing[i].parentNode.removeChild(existing[i]);
+    // 复用已存在的按钮或新建一个：保证全局永远只有一个推送按钮
+    var btn = document.getElementById('bp-push-btn');
+    if (!btn) {
+      btn = document.createElement('div');
+      btn.id = 'bp-push-btn';
+      document.body.appendChild(btn);
     }
-    var btn = document.createElement('div');
-    btn.id = 'bp-push-btn';
+    // 一律复位为"正常待推送"状态：页面上可能存在被推送进 HTML 的残留按钮
+    // （卡在"推送中..."），直接复用并重置，而不是再新建一个导致两个按钮共存
     btn.innerHTML = '📤 推送';
     btn.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:10px 22px;background:#2e86c1;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 16px rgba(46,134,193,0.35);transition:all 0.2s;user-select:none;';
     btn.onclick = async function() {
@@ -386,7 +401,19 @@
         btn.style.opacity = '1';
       }, 3000);
     };
-    document.body.appendChild(btn);
+    // 兜底清理：HTML 里若还有其它同名按钮（例如历史推送残留的"推送中..."按钮），
+    // 等文档解析/加载完成后一并移除，只保留当前这一个
+    function removeStray() {
+      var els = document.querySelectorAll('#bp-push-btn');
+      for (var i = 0; i < els.length; i++) {
+        if (els[i] !== btn && els[i].parentNode) els[i].parentNode.removeChild(els[i]);
+      }
+    }
+    setTimeout(removeStray, 0);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', removeStray);
+    }
+    window.addEventListener('load', removeStray);
   }
   window.bpShowPushButton = createPushButton;
 
