@@ -264,23 +264,17 @@ module.exports = async (req, res) => {
     
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================
     if (req.method === 'POST' && path === '/api/business-plan/save-and-deploy') {
-      const { content, model, code_version } = req.body || {};
-      if (!content || typeof content !== 'object') {
-        return res.status(400).json({ error: '内容数据不能为空' });
+      const { html } = req.body || {};
+      if (!html || typeof html !== 'string') {
+        return res.status(400).json({ error: 'HTML 内容不能为空' });
       }
 
-      // 保存模型输入变量
-      let savedModel = null;
-      if (model && typeof model === 'object') {
-        savedModel = model;
-      }
-
-      // 同步到 GitHub（触发 Vercel 自动部署）
+      // 直接推送完整 HTML 到 GitHub（触发 Vercel 自动部署）
       const ghToken = process.env.GH_TOKEN;
       let ghResult = { synced: false, reason: 'token_not_found' };
       if (ghToken) {
         try {
-          await syncToGitHub(content, savedModel, ghToken);
+          await pushToGitHub(html, ghToken);
           ghResult = { synced: true };
           console.log('GitHub 同步成功');
         } catch (e) {
@@ -1072,51 +1066,22 @@ function githubRequest(method, path, token, body) {
   });
 }
 
-async function syncToGitHub(content, model, token) {
+async function pushToGitHub(html, token) {
   var owner = 'AIgsc';
   var repo = 'taluo';
   var filePath = '海鲜自助项目计划书/index.html';
   var encodedPath = filePath.split('/').map(function(s) { return encodeURIComponent(s); }).join('/');
   var apiPath = '/repos/' + owner + '/' + repo + '/contents/' + encodedPath;
 
-  // 1. 获取当前文件信息（含 SHA）
+  // 1. 获取当前文件 SHA
   var getRes = await githubRequest('GET', apiPath, token);
-
   if (getRes._status !== 200) {
-    throw new Error('获取文件失败: ' + getRes._status + ' ' + JSON.stringify(getRes));
+    throw new Error('获取文件失败: ' + getRes._status);
   }
-
   var sha = getRes.sha;
-  var currentContent = Buffer.from(getRes.content, 'base64').toString('utf-8');
 
-  // 2. 替换 data-edit 区块内容
-  var updatedHtml = currentContent;
-  var keys = Object.keys(content);
-  var updatedCount = 0;
-
-  for (var i = 0; i < keys.length; i++) {
-    if (keys[i] === '_version') continue; // 跳过版本号
-    var result = replaceDataEditContent(updatedHtml, keys[i], content[keys[i]]);
-    if (result !== null) {
-      updatedHtml = result;
-      updatedCount++;
-    }
-  }
-
-  // 3. 替换 data-model 计算值（使用模型输入运行计算）
-  if (model && typeof model === 'object') {
-    var computedValues = calculateModel(model);
-    updatedHtml = replaceDataModelContent(updatedHtml, computedValues);
-    console.log('已替换 data-model 计算值');
-  }
-
-  if (updatedCount === 0 && (!model || typeof model !== 'object')) {
-    console.log('没有可更新的内容，跳过 GitHub 提交');
-    return;
-  }
-
-  // 4. 提交更新到 GitHub
-  var newContent = Buffer.from(updatedHtml, 'utf-8').toString('base64');
+  // 2. 直接推送完整 HTML
+  var newContent = Buffer.from(html, 'utf-8').toString('base64');
   var putRes = await githubRequest('PUT', apiPath, token, JSON.stringify({
     message: '自动部署：更新商业计划书内容',
     content: newContent,
@@ -1125,10 +1090,10 @@ async function syncToGitHub(content, model, token) {
   }));
 
   if (putRes._status !== 200 && putRes._status !== 201) {
-    throw new Error('提交失败: ' + putRes._status + ' ' + JSON.stringify(putRes));
+    throw new Error('提交失败: ' + putRes._status);
   }
 
-  console.log('已提交 ' + updatedCount + ' 个区块到 GitHub');
+  console.log('已推送完整 HTML 到 GitHub');
 }
 
 // ==================== 服务端计算引擎（V2：与前端 business-model.js 完全一致，无设备分摊） ====================

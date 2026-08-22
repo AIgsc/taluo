@@ -266,50 +266,39 @@
     saveContent();
   }
 
-  // ==================== 收集所有可编辑内容 ====================
-  function collectContent() {
-    var data = {};
-    var elements = document.querySelectorAll('[data-edit]');
-    elements.forEach(function(el) {
-      data[el.dataset.edit] = el.innerHTML;
-    });
-    return data;
-  }
-
-  // ==================== 保存内容到 GitHub ====================
+  // ==================== 保存内容到 GitHub（直接推送完整 HTML） ====================
   async function saveContent() {
-    var content = collectContent();
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
 
-    // 收集模型变量
-    var modelInputs = null;
+    // 1. 将当前变量值嵌入 HTML（持久化，下次加载时 BusinessModel 读取）
     var bm = window.BusinessModel;
     if (bm) {
-      modelInputs = bm.getInputs();
+      var inputs = bm.getInputs();
+      var savedVars = document.getElementById('bp-saved-vars');
+      if (savedVars) {
+        savedVars.textContent = JSON.stringify({ version: 1, inputs: inputs });
+      } else {
+        var script = document.createElement('script');
+        script.id = 'bp-saved-vars';
+        script.type = 'application/json';
+        script.textContent = JSON.stringify({ version: 1, inputs: inputs });
+        document.body.appendChild(script);
+      }
     }
 
-    var keys = Object.keys(content);
-    if (keys.length === 0 && !modelInputs) {
-      status.textContent = '保存失败：未找到可编辑内容';
-      status.style.color = '#e74c3c';
-      return;
-    }
+    // 2. 获取完整 HTML
+    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
     saveBtn.disabled = true;
     saveBtn.textContent = '保存中...';
     status.textContent = '';
 
     try {
-      var body = { content: content };
-      if (modelInputs) {
-        body.model = modelInputs;
-      }
-
       var res = await fetch(API_URL + '/save-and-deploy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ html: html })
       });
 
       if (res.ok) {

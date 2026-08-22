@@ -495,7 +495,12 @@
     },
 
     // ==================== 渲染到页面 ====================
+    _initialized: false,
     render: function() {
+      if (!this._initialized) {
+        this.loadFromHTML();
+        this._initialized = true;
+      }
       this.calculate();
       var els = document.querySelectorAll('[data-model]');
       for (var i = 0; i < els.length; i++) {
@@ -505,6 +510,26 @@
           el.textContent = this.values[key];
         }
       }
+    },
+
+    // ==================== 从 HTML 加载持久化变量值 ====================
+    loadFromHTML: function() {
+      var el = document.getElementById('bp-saved-vars');
+      if (!el) return false;
+      try {
+        var data = JSON.parse(el.textContent);
+        if (data && data.inputs) {
+          Object.keys(data.inputs).forEach(function(k) {
+            if (data.inputs[k] !== undefined && data.inputs[k] !== null && BusinessModel.inputs[k] !== undefined) {
+              BusinessModel.inputs[k] = Number(data.inputs[k]);
+            }
+          });
+          return true;
+        }
+      } catch(e) {
+        // 静默失败，使用默认值
+      }
+      return false;
     },
 
     // ==================== 获取输入变量 ====================
