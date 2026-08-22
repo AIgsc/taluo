@@ -83,7 +83,14 @@
     if (cover) {
       cover.appendChild(bar);
     } else {
+      // 无封面容器时，工具栏追加到 body 顶部。
+      // 此时 absolute 定位相对视口会落在页面顶部，容易被固定的顶部导航栏遮挡，
+      // 因此改用 fixed 定位并放到导航栏下方、提高 z-index，保证始终可见可点。
       document.body.insertBefore(bar, document.body.firstChild);
+      bar.style.position = 'fixed';
+      bar.style.top = '52px';
+      bar.style.right = '16px';
+      bar.style.zIndex = '1000';
     }
 
     document.getElementById('bp-edit-btn').addEventListener('click', toggleEdit);
