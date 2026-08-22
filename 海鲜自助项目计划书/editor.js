@@ -311,7 +311,40 @@
     }
 
     // 2. 获取完整 HTML
-    var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    //    克隆 DOM 后剥离运行时动态元素再序列化，否则推上去的 HTML 会反复累积：
+    //    - 编辑器注入的工具栏样式块 <style>#bp-toolbar{...}</style>
+    //    - 编辑工具栏 DOM / 编辑态残留（.bp-editing）
+    //    - 浏览器扩展注入的垃圾节点（xl-chrome-ext 等）
+    var docClone = document.documentElement.cloneNode(true);
+
+    // 2.1 移除动态注入的工具栏样式块（无 id，按内容特征匹配）
+    var dynStyles = docClone.querySelectorAll('style');
+    for (var si = 0; si < dynStyles.length; si++) {
+      if (dynStyles[si].textContent && dynStyles[si].textContent.indexOf('#bp-toolbar') !== -1) {
+        if (dynStyles[si].parentNode) dynStyles[si].parentNode.removeChild(dynStyles[si]);
+      }
+    }
+    // 2.2 移除编辑工具栏与编辑态残留
+    var dynEls = docClone.querySelectorAll('#bp-toolbar, .bp-editing');
+    for (var ei = 0; ei < dynEls.length; ei++) {
+      if (dynEls[ei].parentNode) dynEls[ei].parentNode.removeChild(dynEls[ei]);
+    }
+    // 2.3 推送按钮复位为正常状态（不把"推送中..."写进线上 HTML）
+    var cloneBtn = docClone.querySelector('#bp-push-btn');
+    if (cloneBtn) {
+      cloneBtn.innerHTML = '📤 推送';
+      cloneBtn.style.background = '#2e86c1';
+      cloneBtn.style.boxShadow = '0 4px 16px rgba(46,134,193,0.35)';
+      cloneBtn.style.pointerEvents = 'auto';
+      cloneBtn.style.opacity = '1';
+    }
+    // 2.4 移除浏览器扩展注入的垃圾节点（如 xl-chrome-ext 下载条）
+    var extEls = docClone.querySelectorAll('[id^="xl_chrome_ext"], [class*="xl-chrome-ext"]');
+    for (var xi = 0; xi < extEls.length; xi++) {
+      if (extEls[xi].parentNode) extEls[xi].parentNode.removeChild(extEls[xi]);
+    }
+
+    var html = '<!DOCTYPE html>\n' + docClone.outerHTML;
 
     // 自动识别当前页面在 GitHub 上的文件路径
     // 注意：window.location.pathname 一定存在（打开页面必有路径），
