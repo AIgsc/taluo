@@ -48,7 +48,7 @@
   .pd-item:hover { background:rgba(0,0,0,0.02); }
   .pd-item .pd-name { flex:1; font-size:0.85rem; line-height:1.4; cursor:pointer; border-bottom:1px dashed transparent; padding:0 2px; border-radius:2px; min-width:80px; }
   .pd-item .pd-name:focus { outline:2px solid #5dade2; outline-offset:1px; background:rgba(93,173,226,0.05); }
-  .pd-item .pd-name .pd-notes { font-size:0.72rem; opacity:0.6; display:block; margin-top:1px; }
+  .pd-item .pd-notes { font-size:0.72rem; opacity:0.6; display:block; margin-top:1px; }
   .pd-item .pd-val { font-weight:600; white-space:nowrap; cursor:pointer; border-bottom:1px dashed #8e44ad; min-width:40px; text-align:center; display:inline-block; color:#8e44ad; }
   .pd-item .pd-val:focus { outline:2px solid #8e44ad; outline-offset:1px; border-radius:2px; background:#fff; }
   .pd-item .pd-actions { display:flex; gap:2px; opacity:0; transition:opacity 0.15s; flex-shrink:0; }
@@ -271,6 +271,12 @@
           if (window.hasChanges !== undefined) window.hasChanges = true;
         }
       } catch(e) {}
+      // 自动保存到服务器（防抖 3 秒）
+      if (this._autoSaveTimer) clearTimeout(this._autoSaveTimer);
+      var self = this;
+      this._autoSaveTimer = setTimeout(function() {
+        if (window.bpSaveContent) window.bpSaveContent();
+      }, 3000);
     },
 
     genId: function() { return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,4); },
@@ -469,5 +475,6 @@
   else CALC.init();
 })();
 </script>
+<script src="editor.js"></script>
 </body>
 </html>

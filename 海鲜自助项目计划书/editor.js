@@ -216,26 +216,40 @@
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
 
-    // 1. 将当前变量值嵌入 HTML（持久化，下次加载时 BusinessModel 读取）
+    // 1. 将当前变量值嵌入 HTML（持久化，下次加载时读取）
+    var savedVars = document.getElementById('bp-saved-vars');
+    var existingData = {};
+    if (savedVars) {
+      try { existingData = JSON.parse(savedVars.textContent); } catch(e) {}
+    }
+
     var bm = window.BusinessModel;
-    if (bm) {
-      var inputs = bm.getInputs();
-      var savedVars = document.getElementById('bp-saved-vars');
-      if (savedVars) {
-        var practicalData = [];
-        var customBlocks = [];
-        if (window.PD) {
-          if (window.PD.items) practicalData = window.PD.items;
-          if (window.PD.customBlocks) customBlocks = window.PD.customBlocks;
-        }
-        savedVars.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData, customBlocks: customBlocks });
-      } else {
-        var script = document.createElement('script');
-        script.id = 'bp-saved-vars';
-        script.type = 'application/json';
-        script.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData, customBlocks: customBlocks });
-        document.body.appendChild(script);
-      }
+    var inputs = bm ? bm.getInputs() : (existingData.inputs || {});
+    var practicalData = existingData.practicalData || [];
+    var customBlocks = existingData.customBlocks || [];
+    if (window.PD) {
+      if (window.PD.items) practicalData = window.PD.items;
+      if (window.PD.customBlocks) customBlocks = window.PD.customBlocks;
+    }
+    // 保留纯利计算器数据
+    var calculatorData = existingData.calculatorData || (window.CALC ? window.CALC.data : undefined);
+
+    var saveData = {
+      version: 1,
+      inputs: inputs,
+      practicalData: practicalData,
+      customBlocks: customBlocks
+    };
+    if (calculatorData !== undefined) saveData.calculatorData = calculatorData;
+
+    if (savedVars) {
+      savedVars.textContent = JSON.stringify(saveData);
+    } else {
+      var script = document.createElement('script');
+      script.id = 'bp-saved-vars';
+      script.type = 'application/json';
+      script.textContent = JSON.stringify(saveData);
+      document.body.appendChild(script);
     }
 
     // 2. 获取完整 HTML
@@ -277,6 +291,9 @@
       }, 3000);
     }
   }
+
+  // 暴露 saveContent 为全局函数（供其他页面调用，如纯利计算器自动保存）
+  window.bpSaveContent = saveContent;
 
   // ==================== 初始化 ====================
   function init() {
