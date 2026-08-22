@@ -129,8 +129,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       margin-top: 30px;
     }
   </style>
-<style>#bp-toolbar{position:absolute;top:12px;right:16px;z-index:999;display:flex;align-items:center;gap:8px;font-size:14px;transition:opacity 0.3s;touch-action:manipulation;}#bp-toolbar .bp-btn{border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.2);user-select:none;-webkit-user-select:none;}#bp-toolbar .bp-btn-edit{background:rgba(93,173,226,0.85);color:#fff;}#bp-toolbar .bp-btn-edit:hover{background:#2e86c1;}#bp-toolbar .bp-btn-save{background:#27ae60;color:#fff;}#bp-toolbar .bp-btn-save:hover{background:#1e8449;}#bp-toolbar .bp-status{font-size:11px;color:rgba(255,255,255,0.7);margin-left:4px;}.bp-editing{outline:2px dashed #5dade2 !important;outline-offset:2px !important;border-radius:4px !important;cursor:text !important;user-select:text !important;-webkit-user-select:text !important;-webkit-touch-callout:default !important;color:#1a1a2e !important;caret-color:#1a1a2e !important;}.cover.bp-editing, .cover.bp-editing h1, .cover.bp-editing .subtitle, .cover.bp-editing .info, .cover.bp-editing .info strong, .cover.bp-editing .badge, .cover.bp-editing .version, .cover.bp-editing .divider{color:#1a1a2e !important;caret-color:#1a1a2e !important;}.cover.bp-editing .divider{background:rgba(0,0,0,0.2) !important;}.cover.bp-editing h1{text-shadow:none !important;}.bp-editing:hover{background:rgba(93,173,226,0.05) !important;}.bp-saving{opacity:0.5;pointer-events:none;}.bp-data-editable{cursor:pointer !important;border-bottom:1px dashed #5dade2 !important;transition:border-color 0.2s,background 0.2s;border-radius:2px !important;}.bp-data-editable:hover{background:rgba(93,173,226,0.08) !important;border-bottom-color:#2e86c1 !important;}.bp-data-editable:focus{outline:2px solid #5dade2 !important;background:#fff !important;color:#1a5276 !important;border-radius:3px !important;padding:0 2px !important;}.bp-data-locked{cursor:default !important;border-bottom:1px dashed #ccc !important;pointer-events:none !important;opacity:0.85 !important;}.bp-data-locked:hover{background:transparent !important;border-bottom-color:#ccc !important;}</style></head>
-<body><div id="bp-toolbar" contenteditable="false" style="position: fixed; top: 52px; right: 16px; z-index: 1000;"><button id="bp-edit-btn" class="bp-btn bp-btn-edit" contenteditable="false">完成编辑</button><button id="bp-save-btn" class="bp-btn bp-btn-save" style="display: inline-block;" contenteditable="false">保存修改</button><span id="bp-status" class="bp-status"></span></div>
+</head>
+<body>
 <nav class="site-nav" style="display:flex;align-items:center;gap:4px;background:#1a2a3a;padding:0 16px;height:44px;color:#fff;font-size:0.82rem;overflow-x:auto;white-space:nowrap;position:fixed;top:0;left:0;right:0;z-index:999;">
   <span style="font-weight:700;margin-right:12px;font-size:0.85rem;opacity:0.9;flex-shrink:0;">🦐 海鲜自助</span>
   <a href="招商计划书.html" style="color:rgba(255,255,255,0.7);text-decoration:none;padding:4px 10px;border-radius:4px;transition:all 0.15s;">招商计划书</a>
@@ -140,30 +140,30 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </nav>
   <div class="container" style="margin-top:60px;">
 
-    <h1 data-edit="1" contenteditable="true" class="bp-editing">分账与财务管理制度</h1>
+    <h1 data-edit="1">分账与财务管理制度</h1>
     <div class="subtitle">黄辛庄2000㎡海鲜自助项目 · 合作协议核心附件</div>
 
     <!-- ========== 第一章 总则 ========== -->
     <div class="chapter">
-      <div class="chapter-title bp-editing" data-edit="1" contenteditable="true">第一章 总则</div>
+      <div class="chapter-title" data-edit="1">第一章 总则</div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第一条 目的与依据</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第一条 目的与依据</div>
+        <div class="article-body" data-edit="1">
           为规范黄辛庄2000㎡海鲜自助项目（以下简称"门店"）的财务核算、利润分配与对账流程，保障项目运营方、投资人、房东三方的合法权益，明确各方财务权利与义务，根据三方签署的合作协议，制定本制度。
         </div>
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第二条 适用范围</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第二条 适用范围</div>
+        <div class="article-body" data-edit="1">
           本制度适用于门店运营方、出资投资人、场地提供方（房东）三方的全部财务核算、分账结算、对账监督工作，作为合作协议的核心附件，与合作协议具有同等法律效力。
         </div>
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第三条 核算基本原则</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第三条 核算基本原则</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li><strong>权责发生制原则：</strong>收入与成本按实际发生归属对应月度，不得跨期随意调节。</li>
             <li><strong>凭证合规原则：</strong>所有入账成本必须具备真实、合法、可追溯的业务凭证。</li>
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第四条 核算周期</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第四条 核算周期</div>
+        <div class="article-body" data-edit="1">
           以自然月为一个核算周期，每月1日至当月最后一日为一个结算月度。
         </div>
       </div>
@@ -183,19 +183,19 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <!-- ========== 第二章 可分配纯利核算口径 ========== -->
     <div class="chapter">
-      <div class="chapter-title bp-editing" data-edit="1" contenteditable="true">第二章 可分配纯利核算口径</div>
+      <div class="chapter-title" data-edit="1">第二章 可分配纯利核算口径</div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第五条 核心计算公式</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第五条 核心计算公式</div>
+        <div class="article-body" data-edit="1">
           <strong>月度可分配纯利 = 月度全部营业收入 − 约定可扣除经营成本</strong><br>
           可分配纯利为三方分红结算的唯一基数，所有分账项目均以此口径计算。
         </div>
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第六条 营业收入确认规则</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第六条 营业收入确认规则</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>月度全部营业收入包含：门店堂食营收、团购核销营收、外卖营收、团建包场营收、周边售卖等所有与门店经营相关的全部收入，无任何例外项。</li>
             <li>所有营业收入必须全额进入门店指定对公账户，严禁以私人微信、支付宝、现金等方式收取营业款项，严禁瞒报、截留营收。</li>
@@ -205,8 +205,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第七条 允许扣除的经营成本范围</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第七条 允许扣除的经营成本范围</div>
+        <div class="article-body" data-edit="1">
           以下项目可依规计入当期经营成本，凭合规凭证入账：
           <ol>
             <li><strong>食材酒水成本：</strong>当月实际耗用的鲜活海鲜、肉类、果蔬、酒水饮料、调味品、一次性餐具包装等直接物料成本，凭采购入库单、付款凭证、供应商对账函核算。</li>
@@ -226,8 +226,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第八条 禁止扣除项目</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第八条 禁止扣除项目</div>
+        <div class="article-body" data-edit="1">
           以下支出严禁计入门店经营成本，不得用于冲减可分配纯利：
           <ol>
             <li>股东、运营方负责人的个人消费、私人开支；</li>
@@ -243,11 +243,11 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <!-- ========== 第三章 分账结算规则 ========== -->
     <div class="chapter">
-      <div class="chapter-title bp-editing" data-edit="1" contenteditable="true">第三章 分账结算规则</div>
+      <div class="chapter-title" data-edit="1">第三章 分账结算规则</div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第九条 分账法定顺序</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第九条 分账法定顺序</div>
+        <div class="article-body" data-edit="1">
           每月度可分配纯利，严格按照以下顺序分配，不得打乱次序：
           <ol>
             <li>第一步：弥补门店往期累计亏损；</li>
@@ -259,8 +259,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十条 投资人分红规则</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十条 投资人分红规则</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>分红基数：当月可分配纯利（弥补亏损后）；</li>
             <li>阶梯比例（回本前高比例加速回本，回本后降比例享收益）：
@@ -275,8 +275,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十一条 房东分成规则（超额累进制，消除跳档漏洞）</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十一条 房东分成规则（超额累进制，消除跳档漏洞）</div>
+        <div class="article-body" data-edit="1">
           为杜绝人为调节利润跳档的风险，房东分成采用<strong>超额累进比例</strong>核算，不以全额利润跳档：
           <ol>
             <li>当月可分配纯利中，30万元及以下的部分，按10%计提房东分成；</li>
@@ -293,11 +293,11 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <!-- ========== 第四章 月度对账与分账流程 ========== -->
     <div class="chapter">
-      <div class="chapter-title bp-editing" data-edit="1" contenteditable="true">第四章 月度对账与分账流程</div>
+      <div class="chapter-title" data-edit="1">第四章 月度对账与分账流程</div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十二条 报表出具与送达</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十二条 报表出具与送达</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>运营方须于每月5日前，完成上月财务核算，出具《月度经营利润表》《成本明细汇总表》，并附收银系统营收截图、对公账户流水明细、核心成本凭证扫描件；</li>
             <li>运营方须于每月7日前，将完整财务资料同步送达投资人和房东。</li>
@@ -306,8 +306,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十三条 异议与确认</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十三条 异议与确认</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>投资人和房东收到报表后，须在3个工作日内完成核对；</li>
             <li>对数据有异议的，须以书面形式提出具体疑问，运营方须在2个工作日内给出解释并补充凭证；</li>
@@ -317,8 +317,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十四条 分账打款</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十四条 分账打款</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>三方确认报表无误后，运营方须于每月15日前，完成所有分账款项的打款；</li>
             <li>所有分账款项均通过对公账户支付，保留付款凭证，同步给各方；</li>
@@ -330,11 +330,11 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <!-- ========== 第五章 财务监督与审计机制 ========== -->
     <div class="chapter">
-      <div class="chapter-title bp-editing" data-edit="1" contenteditable="true">第五章 财务监督与审计机制</div>
+      <div class="chapter-title" data-edit="1">第五章 财务监督与审计机制</div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十五条 日常知情权</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十五条 日常知情权</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>投资人和房东享有门店收银系统的只读查看权限，可随时查阅实时营收、客流、核销数据；</li>
             <li>投资人和房东可随时索要对公账户月度流水，运营方须无条件配合提供。</li>
@@ -343,8 +343,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十六条 季度现场查账权</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十六条 季度现场查账权</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>投资人和房东每方可每季度申请1次现场查账，查阅原始凭证、采购单据、工资表、发票等财务资料；</li>
             <li>查账需提前3个工作日预约，运营方须安排财务人员配合，不得无故阻挠、拒绝。</li>
@@ -353,8 +353,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十七条 年度审计</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十七条 年度审计</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>每自然年度结束后30日内，三方共同指定一家具备资质的第三方会计师事务所，对门店年度经营财务做专项审计；</li>
             <li>审计费用计入门店年度经营成本，由门店承担；</li>
@@ -364,8 +364,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十八条 争议专项审计</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十八条 争议专项审计</div>
+        <div class="article-body" data-edit="1">
           <ol>
             <li>任意一方对月度财务数据存在重大异议，且预估差额≥2万元的，可发起临时专项审计；</li>
             <li>审计费用由过错方承担；若审计无重大差异，由发起方承担。</li>
@@ -376,11 +376,11 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <!-- ========== 第六章 违约责任 ========== -->
     <div class="chapter">
-      <div class="chapter-title bp-editing" data-edit="1" contenteditable="true">第六章 违约责任</div>
+      <div class="chapter-title" data-edit="1">第六章 违约责任</div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第十九条 财务造假违约</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第十九条 财务造假违约</div>
+        <div class="article-body" data-edit="1">
           若经审计查实运营方存在瞒报营收、虚增成本、私户收款、人为调节利润等财务造假行为，属于重大违约：
           <ol>
             <li>运营方须全额追回违规侵占的款项，返还给对应权益方；</li>
@@ -391,8 +391,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第二十条 流程违规责任</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第二十条 流程违规责任</div>
+        <div class="article-body" data-edit="1">
           运营方未按约定时间出具报表、打款、配合查账，累计超过3次的，须向其他两方支付当月可分配纯利2%的违约金。
         </div>
       </div>
@@ -400,25 +400,25 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <!-- ========== 第七章 附则 ========== -->
     <div class="chapter">
-      <div class="chapter-title bp-editing" data-edit="1" contenteditable="true">第七章 附则</div>
+      <div class="chapter-title" data-edit="1">第七章 附则</div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第二十一条 制度效力</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第二十一条 制度效力</div>
+        <div class="article-body" data-edit="1">
           本制度为《黄辛庄海鲜自助项目合作协议》不可分割的附件，经三方签字盖章后生效，与主协议具有同等法律效力。
         </div>
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第二十二条 修改规则</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第二十二条 修改规则</div>
+        <div class="article-body" data-edit="1">
           本制度的任何修改、补充，均须经三方共同书面确认，单方面修改无效。
         </div>
       </div>
 
       <div class="article">
-        <div class="article-title bp-editing" data-edit="1" contenteditable="true">第二十三条 争议解决</div>
-        <div class="article-body bp-editing" data-edit="1" contenteditable="true">
+        <div class="article-title" data-edit="1">第二十三条 争议解决</div>
+        <div class="article-body" data-edit="1">
           因本制度产生的争议，三方优先协商解决；协商不成的，任何一方均可向门店所在地人民法院提起诉讼。
         </div>
       </div>
@@ -453,6 +453,6 @@ document.querySelectorAll('.article-title, .article-body, .chapter-title, h1').f
 });
 </script>
 <script src="editor.js"></script>
-<script>if (window.bpShowPushButton) window.bpShowPushButton();</script><div id="bp-push-btn" style="position: fixed; bottom: 24px; right: 24px; z-index: 99999; padding: 10px 22px; background: rgb(46, 134, 193); color: rgb(255, 255, 255); border-width: medium; border-style: none; border-color: currentcolor; border-image: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: rgba(46, 134, 193, 0.35) 0px 4px 16px; transition: 0.2s; user-select: none;">📤 推送</div>
-
-</body><div class="xl-chrome-ext-bar_4DB361DE-01F7-4376-B494-639E489D19ED" id="xl_chrome_ext_4DB361DE-01F7-4376-B494-639E489D19ED" style="display: block;" data-v-app=""><div class=""><div id="xl_chrome_ext_video_tag_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED" config="[object Object]" uiversion="v2" exception="false" latestvideosrc="" isshowvideotag="false" isshowdownloadbar="true" isshowcloudaddbar="false"><div class="_video_op_wrapper_96mx8_1" config="[object Object]" uiversion="v2" style="display: none;"><ul class="_video_op_list_96mx8_17"><li class="_op_item_96mx8_39 _download_96mx8_45"><span class="_op_icon_96mx8_25"></span><span class="_op_text_96mx8_31">下载</span></li><li class="_op_item_96mx8_39 _screen_96mx8_51"><span class="_op_icon_96mx8_25"></span><span class="_op_text_96mx8_31">投屏</span></li></ul></div></div><div class="badge_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED _badge_wrapper_wnbzb_1" id="badge_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED"><div class="_logo_wnbzb_24"></div><span class="_line_wnbzb_32"></span><div class="_text_wrapper_wnbzb_39"><span class="_download_icon_wnbzb_51"></span><span class="_text_wnbzb_39">高速下载</span></div></div><!----><!----><!----><!----><div class="_container_wq4mj_4"><!----></div></div></div></html>
+<script>if (window.bpShowPushButton) window.bpShowPushButton();</script>
+</body>
+</html>
