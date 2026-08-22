@@ -761,5 +761,21 @@
 
   if (typeof window !== 'undefined') {
     window.BusinessModel = BusinessModel;
+
+    // 页面加载完成后自动渲染一次：把持久化数据（bp-saved-vars）算出的值写入 data-model。
+    // 幂等——editor.js 之后还会再调 render()，重复渲染无害；
+    // 保证即使页面只加载 business-model.js、或渲染时机不确定，前台数字也一定与输入同步。
+    function autoRender() {
+      if (window.BusinessModel && typeof document !== 'undefined' && document.querySelector('[data-model]')) {
+        window.BusinessModel.render();
+      }
+    }
+    if (typeof document !== 'undefined') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', autoRender);
+      } else {
+        autoRender();
+      }
+    }
   }
 })();

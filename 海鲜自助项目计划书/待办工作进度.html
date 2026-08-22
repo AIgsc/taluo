@@ -1016,6 +1016,9 @@ function toggleCat(header) {
     var isOpen = body.classList.contains('open');
     try { localStorage.setItem('todo_cat_collapsed_' + catId, isOpen ? '0' : '1'); } catch(e) {}
   }
+  // 折叠/展开后重建 Sortable：折叠时 body 为 display:none 会被 initSortable 跳过，
+  // 展开后需重新绑定，否则该分类内拖拽失效
+  if (window.Sortable) initSortable();
 }
 
 function toggleTodayFocus(header) {
