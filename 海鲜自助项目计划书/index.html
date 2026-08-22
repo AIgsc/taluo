@@ -3086,12 +3086,10 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     .pd-item .pd-name .pd-notes { font-size:0.72rem; opacity:0.6; display:block; margin-top:1px; }
     .pd-item .pd-val { font-weight:600; white-space:nowrap; cursor:pointer; border-bottom:1px dashed #8e44ad; min-width:40px; text-align:center; display:inline-block; color:#8e44ad; }
     .pd-item .pd-val:focus { outline:2px solid #8e44ad; outline-offset:1px; border-radius:2px; background:#fff; }
-    .pd-item .pd-unit { font-size:0.78rem; opacity:0.7; margin-right:4px; }
     .pd-item .pd-actions { display:flex; gap:2px; opacity:0; transition:opacity 0.15s; flex-shrink:0; }
     .pd-item:hover .pd-actions { opacity:1; }
     .pd-item .pd-actions button { background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;font-size:0.75rem;transition:all 0.15s; }
     .pd-item .pd-actions .pd-del:hover { background:rgba(192,57,43,0.1); color:#c0392b; }
-    .pd-item .pd-source { font-size:0.65rem; opacity:0.5; margin-left:6px; }
     .pd-add-area { padding:10px 14px; border-top:1px dashed rgba(0,0,0,0.08); }
     .pd-add-btn { display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:1px dashed;border-radius:6px;background:none;cursor:pointer;font-size:0.78rem;opacity:0.7;transition:all 0.15s; }
     .pd-add-btn:hover { opacity:1; }
@@ -3135,59 +3133,60 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
   // ---------- 初始数据定义 ----------
   var DEFAULT_ITEMS = [
     // ═══ 一级：签约前必须核实 ═══
-    { id:'pd_l1_01', block:'level1', title:'消防改造真实全包价', value:150000, unit:'元', notes:'北京2000㎡餐饮场所消防改造（喷淋/烟感/疏散/验收代办）市场行情15-20万', source:'', dateUpdated:today },
-    { id:'pd_l1_02', block:'level1', title:'电力增容真实成本', value:80000, unit:'元', notes:'确认农贸市场供电容量是否满足餐饮+海鲜池+冷库负荷，含增容申请费/电缆铺设/配电室改造', source:'', dateUpdated:today },
-    { id:'pd_l1_03', block:'level1', title:'排烟与隔油池改造费用', value:60000, unit:'元', notes:'确认是否有专用烟道接口、市政污水管网接入；新装油烟净化系统+自建达标隔油池', source:'', dateUpdated:today },
-    { id:'pd_l1_04', block:'level1', title:'海鲜池维生系统真实报价', value:70000, unit:'元', notes:'制冷机组数量、循环水系统、池体瓷砖工程量；低配系统会导致极高损耗率', source:'', dateUpdated:today },
-    { id:'pd_l1_05', block:'level1', title:'场地结构与承重勘测', value:20000, unit:'元', notes:'冷库/海鲜池蓄水后重量大，确认楼板承重是否达标；地面坡度、下水点位数量', source:'', dateUpdated:today },
-    { id:'pd_l1_06', block:'level1', title:'农贸市场水电燃气单价', value:60000, unit:'元/月', notes:'市场商业水电常加价，确认电费/水费/燃气费真实单价与缴费方式', source:'', dateUpdated:today },
-    { id:'pd_l1_07', block:'level1', title:'场地注册资质确认', value:0, unit:'—', notes:'确认黄辛庄农贸市场房屋产权性质、土地用途，是否可注册餐饮类营业执照', source:'', dateUpdated:today },
-    { id:'pd_l1_08', block:'level1', title:'食品经营许可证硬性要求', value:0, unit:'—', notes:'北京各区对后厨面积占比、粗加工/清洗/消毒分区、明厨亮灶要求不同，需提前对接食药监', source:'', dateUpdated:today },
-    { id:'pd_l1_09', block:'level1', title:'环评与排污许可', value:0, unit:'—', notes:'确认排水接口等级，2000㎡海鲜自助排水量/油污量大，是否需单独办理排污许可', source:'', dateUpdated:today },
-    { id:'pd_l1_10', block:'level1', title:'房东最终分成规则', value:5000, unit:'元/月', notes:'超额累进30万内10%/超出20%，亏损期场地占用费5000元，与房东最终谈判确认', source:'', dateUpdated:today },
-    { id:'pd_l1_11', block:'level1', title:'投资人分红与退出细则', value:0, unit:'—', notes:'回本前40%/回本后10%、3年期限、资产归属、清算优先级、本金兜底处置规则', source:'', dateUpdated:today },
-    { id:'pd_l1_12', block:'level1', title:'流量团队合作模式', value:0, unit:'—', notes:'4%服务商费+4%运营部门费，确认服务范围、保底客流、投产比承诺', source:'', dateUpdated:today },
+    { id:'pd_l1_01', block:'level1', title:'消防改造真实全包价', value:150000, notes:'北京2000㎡餐饮场所消防改造（喷淋/烟感/疏散/验收代办）市场行情15-20万', dateUpdated:today },
+    { id:'pd_l1_02', block:'level1', title:'电力增容真实成本', value:80000, notes:'确认农贸市场供电容量是否满足餐饮+海鲜池+冷库负荷，含增容申请费/电缆铺设/配电室改造', dateUpdated:today },
+    { id:'pd_l1_03', block:'level1', title:'排烟与隔油池改造费用', value:60000, notes:'确认是否有专用烟道接口、市政污水管网接入；新装油烟净化系统+自建达标隔油池', dateUpdated:today },
+    { id:'pd_l1_04', block:'level1', title:'海鲜池维生系统真实报价', value:70000, notes:'制冷机组数量、循环水系统、池体瓷砖工程量；低配系统会导致极高损耗率', dateUpdated:today },
+    { id:'pd_l1_05', block:'level1', title:'场地结构与承重勘测', value:20000, notes:'冷库/海鲜池蓄水后重量大，确认楼板承重是否达标；地面坡度、下水点位数量', dateUpdated:today },
+    { id:'pd_l1_06', block:'level1', title:'农贸市场水电燃气单价', value:60000, notes:'市场商业水电常加价，确认电费/水费/燃气费真实单价与缴费方式', dateUpdated:today },
+    { id:'pd_l1_07', block:'level1', title:'场地注册资质确认', value:0, notes:'确认黄辛庄农贸市场房屋产权性质、土地用途，是否可注册餐饮类营业执照', dateUpdated:today },
+    { id:'pd_l1_08', block:'level1', title:'食品经营许可证硬性要求', value:0, notes:'北京各区对后厨面积占比、粗加工/清洗/消毒分区、明厨亮灶要求不同，需提前对接食药监', dateUpdated:today },
+    { id:'pd_l1_09', block:'level1', title:'环评与排污许可', value:0, notes:'确认排水接口等级，2000㎡海鲜自助排水量/油污量大，是否需单独办理排污许可', dateUpdated:today },
+    { id:'pd_l1_10', block:'level1', title:'房东最终分成规则', value:5000, notes:'超额累进30万内10%/超出20%，亏损期场地占用费5000元，与房东最终谈判确认', dateUpdated:today },
+    { id:'pd_l1_11', block:'level1', title:'投资人分红与退出细则', value:0, notes:'回本前40%/回本后10%、3年期限、资产归属、清算优先级、本金兜底处置规则', dateUpdated:today },
+    { id:'pd_l1_12', block:'level1', title:'流量团队合作模式', value:0, notes:'4%服务商费+4%运营部门费，确认服务范围、保底客流、投产比承诺', dateUpdated:today },
 
     // ═══ 二级：筹备期必须落实 ═══
-    { id:'pd_l2_01', block:'level2', title:'总厨岗位真实月薪', value:15000, unit:'元/月', notes:'北京房山餐饮市场总厨招聘行情，含社保餐宿', source:'', dateUpdated:today },
-    { id:'pd_l2_02', block:'level2', title:'海鲜加工主管月薪', value:8000, unit:'元/月', notes:'核心岗位薪资偏差大，需核实北京房山真实招聘行情', source:'', dateUpdated:today },
-    { id:'pd_l2_03', block:'level2', title:'前厅主管月薪', value:7000, unit:'元/月', notes:'含社保餐宿', source:'', dateUpdated:today },
-    { id:'pd_l2_04', block:'level2', title:'服务员月薪', value:4500, unit:'元/月', notes:'北京房山餐饮服务员市场行情', source:'', dateUpdated:today },
-    { id:'pd_l2_05', block:'level2', title:'员工社保真实成本（38人）', value:60000, unit:'元/月', notes:'按北京社保最低基数或实际缴纳基数，精确计算38人单位承担部分', source:'', dateUpdated:today },
-    { id:'pd_l2_06', block:'level2', title:'包吃住真实成本', value:15000, unit:'元/月', notes:'38人食宿，宿舍租金+食堂食材成本，北京近郊员工宿舍成本', source:'', dateUpdated:today },
-    { id:'pd_l2_07', block:'level2', title:'筹备期到岗节奏与成本', value:120000, unit:'元', notes:'对应真实招聘进度/培训周期，核心岗位提前到岗，基层员工开业前到岗', source:'', dateUpdated:today },
-    { id:'pd_l2_08', block:'level2', title:'鲜活海鲜平均拿货价', value:0, unit:'元/斤', notes:'到黄辛庄农贸市场及周边水产批发市场核实鲜活海鲜真实批发价', source:'', dateUpdated:today },
-    { id:'pd_l2_09', block:'level2', title:'榴莲平均拿货价', value:0, unit:'元/斤', notes:'按规格、品级、拿货量对应的价格', source:'', dateUpdated:today },
-    { id:'pd_l2_10', block:'level2', title:'牛羊肉平均拿货价', value:0, unit:'元/斤', notes:'核实批发价', source:'', dateUpdated:today },
-    { id:'pd_l2_11', block:'level2', title:'供应商账期政策', value:30, unit:'天', notes:'确认月结账期、起送量、退换货规则；现结模式会直接击穿30万流动资金', source:'', dateUpdated:today },
-    { id:'pd_l2_12', block:'level2', title:'海鲜损耗真实比例', value:5, unit:'%', notes:'夏季高温/运输死亡/暂养损耗，按品类测算贝类/虾蟹/活鱼存活周期', source:'', dateUpdated:today },
-    { id:'pd_l2_13', block:'level2', title:'周边客群消费调研结果', value:169, unit:'元', notes:'周边3公里小区/企业调研，验证目标客群价格接受度、消费频次', source:'', dateUpdated:today },
-    { id:'pd_l2_14', block:'level2', title:'竞品真实客单价与翻台率', value:0, unit:'—', notes:'周边同类自助实际客单价/翻台率/工作日周末客流差异，验证日均306人测算', source:'', dateUpdated:today },
-    { id:'pd_l2_15', block:'level2', title:'本地抖音投流成本', value:0, unit:'元/千次', notes:'核实房山本地餐饮团购投流成本/达人报价，验证8%流量费能否支撑日均6万营收', source:'', dateUpdated:today },
+    { id:'pd_l2_01', block:'level2', title:'总厨岗位真实月薪', value:15000, notes:'北京房山餐饮市场总厨招聘行情，含社保餐宿', dateUpdated:today },
+    { id:'pd_l2_02', block:'level2', title:'海鲜加工主管月薪', value:8000, notes:'核心岗位薪资偏差大，需核实北京房山真实招聘行情', dateUpdated:today },
+    { id:'pd_l2_03', block:'level2', title:'前厅主管月薪', value:7000, notes:'含社保餐宿', dateUpdated:today },
+    { id:'pd_l2_04', block:'level2', title:'服务员月薪', value:4500, notes:'北京房山餐饮服务员市场行情', dateUpdated:today },
+    { id:'pd_l2_05', block:'level2', title:'员工社保真实成本（38人）', value:60000, notes:'按北京社保最低基数或实际缴纳基数，精确计算38人单位承担部分', dateUpdated:today },
+    { id:'pd_l2_06', block:'level2', title:'包吃住真实成本', value:15000, notes:'38人食宿，宿舍租金+食堂食材成本，北京近郊员工宿舍成本', dateUpdated:today },
+    { id:'pd_l2_07', block:'level2', title:'筹备期到岗节奏与成本', value:120000, notes:'对应真实招聘进度/培训周期，核心岗位提前到岗，基层员工开业前到岗', dateUpdated:today },
+    { id:'pd_l2_08', block:'level2', title:'鲜活海鲜平均拿货价', value:0, notes:'到黄辛庄农贸市场及周边水产批发市场核实鲜活海鲜真实批发价', dateUpdated:today },
+    { id:'pd_l2_09', block:'level2', title:'榴莲平均拿货价', value:0, notes:'按规格、品级、拿货量对应的价格', dateUpdated:today },
+    { id:'pd_l2_10', block:'level2', title:'牛羊肉平均拿货价', value:0, notes:'核实批发价', dateUpdated:today },
+    { id:'pd_l2_11', block:'level2', title:'酒水平均拿货价', value:0, notes:'饮料/酒水批发价，含啤酒、饮料等', dateUpdated:today },
+    { id:'pd_l2_12', block:'level2', title:'供应商账期政策', value:30, notes:'确认月结账期、起送量、退换货规则；现结模式会直接击穿30万流动资金', dateUpdated:today },
+    { id:'pd_l2_13', block:'level2', title:'海鲜损耗真实比例', value:5, notes:'夏季高温/运输死亡/暂养损耗，按品类测算贝类/虾蟹/活鱼存活周期', dateUpdated:today },
+    { id:'pd_l2_14', block:'level2', title:'周边客群消费调研结果', value:169, notes:'周边3公里小区/企业调研，验证目标客群价格接受度、消费频次', dateUpdated:today },
+    { id:'pd_l2_15', block:'level2', title:'竞品真实客单价与翻台率', value:0, notes:'周边同类自助实际客单价/翻台率/工作日周末客流差异，验证日均306人测算', dateUpdated:today },
+    { id:'pd_l2_16', block:'level2', title:'本地抖音投流成本', value:0, notes:'核实房山本地餐饮团购投流成本/达人报价，验证8%流量费能否支撑日均6万营收', dateUpdated:today },
 
     // ═══ 三级：开业后月度更新 ═══
-    { id:'pd_l3_01', block:'level3', title:'月度水电燃气费实缴', value:60000, unit:'元/月', notes:'海鲜池/冷库/空调耗电大户，夏季冬季差异极大，按真实账单更新', source:'', dateUpdated:today },
-    { id:'pd_l3_02', block:'level3', title:'月度实际食材成本率', value:48, unit:'%', notes:'按"采购总额+期初库存-期末库存"核算真实消耗成本', source:'', dateUpdated:today },
-    { id:'pd_l3_03', block:'level3', title:'月度设备维保与易耗品', value:8000, unit:'元/月', notes:'海鲜池清洗/冷库维保/餐具损耗/清洁用品等月度杂项', source:'', dateUpdated:today },
-    { id:'pd_l3_04', block:'level3', title:'月度抖音核销营收', value:0, unit:'元', notes:'抖音团购核销真实到账金额', source:'', dateUpdated:today },
-    { id:'pd_l3_05', block:'level3', title:'月度线下收银营收', value:0, unit:'元', notes:'线下直接消费真实到账金额', source:'', dateUpdated:today },
-    { id:'pd_l3_06', block:'level3', title:'月度团购退款率', value:3, unit:'%', notes:'影响可分配纯利的计算', source:'', dateUpdated:today },
-    { id:'pd_l3_07', block:'level3', title:'投资人累计分红额', value:0, unit:'元', notes:'40%/10%比例切换唯一依据，精确记账', source:'', dateUpdated:today },
-    { id:'pd_l3_08', block:'level3', title:'流动资金余额', value:300000, unit:'元', notes:'实时监控现金流，触发预警线及时启动预案', source:'', dateUpdated:today },
+    { id:'pd_l3_01', block:'level3', title:'月度水电燃气费实缴', value:60000, notes:'海鲜池/冷库/空调耗电大户，夏季冬季差异极大，按真实账单更新', dateUpdated:today },
+    { id:'pd_l3_02', block:'level3', title:'月度实际食材成本率', value:48, notes:'按"采购总额+期初库存-期末库存"核算真实消耗成本', dateUpdated:today },
+    { id:'pd_l3_03', block:'level3', title:'月度设备维保与易耗品', value:8000, notes:'海鲜池清洗/冷库维保/餐具损耗/清洁用品等月度杂项', dateUpdated:today },
+    { id:'pd_l3_04', block:'level3', title:'月度抖音核销营收', value:0, notes:'抖音团购核销真实到账金额', dateUpdated:today },
+    { id:'pd_l3_05', block:'level3', title:'月度线下收银营收', value:0, notes:'线下直接消费真实到账金额', dateUpdated:today },
+    { id:'pd_l3_06', block:'level3', title:'月度团购退款率', value:3, notes:'影响可分配纯利的计算', dateUpdated:today },
+    { id:'pd_l3_07', block:'level3', title:'投资人累计分红额', value:0, notes:'40%/10%比例切换唯一依据，精确记账', dateUpdated:today },
+    { id:'pd_l3_08', block:'level3', title:'流动资金余额', value:300000, notes:'实时监控现金流，触发预警线及时启动预案', dateUpdated:today },
 
     // ═══ 隐性核心数据 ═══
-    { id:'pd_l4_01', block:'level4', title:'淡旺季客流波动系数', value:0.7, unit:'—', notes:'北京餐饮春节淡季/暑期旺季，测算客流波动对利润的影响，淡季系数0.7', source:'', dateUpdated:today },
-    { id:'pd_l4_02', block:'level4', title:'员工流失率', value:30, unit:'%/年', notes:'餐饮行业人员流动大，持续的招聘/培训成本未在预算中充分体现', source:'', dateUpdated:today },
-    { id:'pd_l4_03', block:'level4', title:'食品安全风险准备金', value:50000, unit:'元', notes:'海鲜自助易出现食品安全投诉，需预留应急处理备用金', source:'', dateUpdated:today },
-    { id:'pd_l4_04', block:'level4', title:'核心设备二手残值参考', value:0, unit:'元', notes:'海鲜池/冷库/空调等大件设备二手回收市场价，用于清算场景本金兜底测算', source:'', dateUpdated:today },
+    { id:'pd_l4_01', block:'level4', title:'淡旺季客流波动系数', value:0.7, notes:'北京餐饮春节淡季/暑期旺季，测算客流波动对利润的影响，淡季系数0.7', dateUpdated:today },
+    { id:'pd_l4_02', block:'level4', title:'员工流失率', value:30, notes:'餐饮行业人员流动大，持续的招聘/培训成本未在预算中充分体现', dateUpdated:today },
+    { id:'pd_l4_03', block:'level4', title:'食品安全风险准备金', value:50000, notes:'海鲜自助易出现食品安全投诉，需预留应急处理备用金', dateUpdated:today },
+    { id:'pd_l4_04', block:'level4', title:'核心设备二手残值参考', value:0, notes:'海鲜池/冷库/空调等大件设备二手回收市场价，用于清算场景本金兜底测算', dateUpdated:today },
   ];
 
   // ---------- 板块定义 ----------
   var BLOCKS = [
-    { id:'level1', icon:'🔴', title:'一、一级核心数据：签约前必须核实', subtitle:'直接决定项目是否成立，不确认不能签合同', color:'#c0392b', bg:'#fff5f5' },
-    { id:'level2', icon:'🟠', title:'二、二级核心数据：筹备期必须落实', subtitle:'直接影响开业节奏与首月盈亏', color:'#e67e22', bg:'#fffaf0' },
-    { id:'level3', icon:'🟢', title:'三、三级核心数据：开业后月度更新', subtitle:'直接影响分账与经营决策，每月更新', color:'#27ae60', bg:'#f0faf4' },
-    { id:'level4', icon:'⚪', title:'四、隐性核心数据（最容易被忽略）', subtitle:'淡旺季/流失率/风险准备金/设备残值', color:'#8e44ad', bg:'#faf5ff' },
+    { id:'level1', icon:'🔴', title:'一、一级核心数据：签约前必须核实', color:'#c0392b', bg:'#fff5f5' },
+    { id:'level2', icon:'🟠', title:'二、二级核心数据：筹备期必须落实', color:'#e67e22', bg:'#fffaf0' },
+    { id:'level3', icon:'🟢', title:'三、三级核心数据：开业后月度更新', color:'#27ae60', bg:'#f0faf4' },
+    { id:'level4', icon:'⚪', title:'四、隐性核心数据（最容易被忽略）', color:'#8e44ad', bg:'#faf5ff' },
   ];
 
   // ---------- 核心管理器 ----------
@@ -3227,8 +3226,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     },
     genId: function() { return 'pd_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,4); },
     getItems: function(blockId) { return this.items.filter(function(it){ return it.block === blockId; }); },
-    addItem: function(blockId, title, value, unit, notes, source) {
-      this.items.push({ id: this.genId(), block: blockId, title: title || '新项目', value: (value!==undefined&&value!==null) ? Number(value) : 0, unit: unit || '元', notes: notes || '', source: source || '', dateUpdated: today });
+    addItem: function(blockId, title, value, notes) {
+      this.items.push({ id: this.genId(), block: blockId, title: title || '新项目', value: (value!==undefined&&value!==null) ? Number(value) : 0, notes: notes || '', dateUpdated: today });
       this.save(); this.render();
     },
     deleteItem: function(id) {
@@ -3261,12 +3260,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
         html += '<button class="pd-add-btn" onclick="PD.showAddForm(\'' + blk.id + '\')" style="color:' + blk.color + ';border-color:' + blk.color + ';">➕ 添加项目</button>';
         html += '<div class="pd-add-form" id="pd-form-' + blk.id + '">';
         html += '<input type="text" id="pd-form-title-' + blk.id + '" placeholder="项目名称（如：空调设备采购价）">';
-        html += '<div class="pd-form-row">';
-        html += '<input type="text" id="pd-form-value-' + blk.id + '" placeholder="数值" inputmode="decimal">';
-        html += '<input type="text" id="pd-form-unit-' + blk.id + '" placeholder="单位（元/元/月/%）" style="max-width:120px;">';
-        html += '</div>';
+        html += '<input type="text" id="pd-form-value-' + blk.id + '" placeholder="数值" inputmode="decimal" style="margin-bottom:6px;">';
         html += '<textarea id="pd-form-notes-' + blk.id + '" placeholder="备注说明（可选）" rows="2"></textarea>';
-        html += '<div class="pd-form-row"><input type="text" id="pd-form-source-' + blk.id + '" placeholder="数据来源（合同/报价单/勘测报告，可选）"></div>';
         html += '<div class="pd-form-actions">';
         html += '<button class="pd-form-submit" onclick="PD.submitAdd(\'' + blk.id + '\')">✓ 确认添加</button>';
         html += '<button class="pd-form-cancel" onclick="PD.hideAddForm(\'' + blk.id + '\')">取消</button>';
@@ -3277,14 +3272,11 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     },
     renderItem: function(it) {
       var valStr = typeof it.value === 'number' ? this.formatNum(it.value) : it.value;
-      var sourceHtml = it.source ? '<span class="pd-source">📎 ' + it.source + '</span>' : '';
       var notesHtml = it.notes ? '<span class="pd-notes">' + it.notes + '</span>' : '';
       return '<div class="pd-item" data-pd-id="' + it.id + '">' +
         '<span class="pd-name" data-pd-edit="' + it.id + '" data-pd-field="title" contenteditable="true">' + it.title + notesHtml + '</span>' +
         '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">' +
-          '<span class="pd-unit">' + it.unit + '</span>' +
           '<span class="pd-val" data-pd-edit="' + it.id + '" data-pd-field="value" contenteditable="true">' + valStr + '</span>' +
-          sourceHtml +
         '</div>' +
         '<div class="pd-actions">' +
           '<button class="pd-del" onclick="PD.deleteItem(\'' + it.id + '\')" title="删除">✕</button>' +
@@ -3323,12 +3315,10 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     submitAdd: function(blockId) {
       var title = document.getElementById('pd-form-title-' + blockId).value.trim();
       var value = document.getElementById('pd-form-value-' + blockId).value.trim();
-      var unit = document.getElementById('pd-form-unit-' + blockId).value.trim() || '元';
       var notes = document.getElementById('pd-form-notes-' + blockId).value.trim();
-      var source = document.getElementById('pd-form-source-' + blockId).value.trim();
       if (!title) { alert('请输入项目名称'); return; }
       var numVal = parseFloat(value.replace(/[^0-9.\-]/g, ''));
-      this.addItem(blockId, title, isNaN(numVal) ? 0 : numVal, unit, notes, source);
+      this.addItem(blockId, title, isNaN(numVal) ? 0 : numVal, notes);
       this.hideAddForm(blockId);
     }
   };
