@@ -257,8 +257,8 @@
 
     // 自动识别当前页面在 GitHub 上的文件路径
     var pagePath = window.location.pathname.replace(/^\//, '');
-    // 如果路径以 / 开头或为空，默认使用旧路径兼容
-    if (!pagePath || pagePath === '') pagePath = '海鲜自助项目计划书/index.html';
+    // 如果路径以 / 开头或为空，默认使用招商计划书.html（原 index.html 已重命名）
+    if (!pagePath || pagePath === '') pagePath = '海鲜自助项目计划书/招商计划书.html';
 
     if (saveBtn) saveBtn.disabled = true;
     if (saveBtn) saveBtn.textContent = '保存中...';

@@ -1069,13 +1069,21 @@ function githubRequest(method, path, token, body) {
 async function pushToGitHub(html, filePath, token) {
   var owner = 'AIgsc';
   var repo = 'taluo';
+
+  if (!filePath || typeof filePath !== 'string') {
+    // 降级兼容：旧版请求可能没有 filePath
+    filePath = '海鲜自助项目计划书/招商计划书.html';
+  }
+
   var encodedPath = filePath.split('/').map(function(s) { return encodeURIComponent(s); }).join('/');
   var apiPath = '/repos/' + owner + '/' + repo + '/contents/' + encodedPath;
+
+  console.log('pushToGitHub filePath:', filePath, 'apiPath:', apiPath);
 
   // 1. 获取当前文件 SHA
   var getRes = await githubRequest('GET', apiPath, token);
   if (getRes._status !== 200) {
-    throw new Error('获取文件失败: ' + getRes._status);
+    throw new Error('获取文件失败: ' + getRes._status + ' [path: ' + filePath + ']');
   }
   var sha = getRes.sha;
 
