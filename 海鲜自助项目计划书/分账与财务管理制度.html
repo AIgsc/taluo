@@ -132,7 +132,14 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
   </style>
 </head>
 <body>
-  <div class="container">
+<nav class="site-nav" style="display:flex;align-items:center;gap:4px;background:#1a2a3a;padding:0 16px;height:44px;color:#fff;font-size:0.82rem;overflow-x:auto;white-space:nowrap;position:fixed;top:0;left:0;right:0;z-index:999;">
+  <span style="font-weight:700;margin-right:12px;font-size:0.85rem;opacity:0.9;flex-shrink:0;">🦐 海鲜自助</span>
+  <a href="index.html" style="color:rgba(255,255,255,0.7);text-decoration:none;padding:4px 10px;border-radius:4px;transition:all 0.15s;">首页</a>
+  <a href="纯利计算器.html" style="color:rgba(255,255,255,0.7);text-decoration:none;padding:4px 10px;border-radius:4px;transition:all 0.15s;">纯利计算器</a>
+  <a href="待办工作进度.html" style="color:rgba(255,255,255,0.7);text-decoration:none;padding:4px 10px;border-radius:4px;transition:all 0.15s;">待办工作进度</a>
+  <a href="分账与财务管理制度.html" style="color:#fff;text-decoration:none;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.15);font-weight:600;">分账制度</a>
+</nav>
+  <div class="container" style="margin-top:60px;">
 
     <h1>分账与财务管理制度</h1>
     <div class="subtitle">黄辛庄2000㎡海鲜自助项目 · 合作协议核心附件</div>
@@ -438,5 +445,8 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     </div>
 
   </div>
+<!-- 持久化变量 -->
+<script id="bp-saved-vars" type="application/json">{"version":1}</script>
+<script src="editor.js"></script>
 </body>
 </html>
