@@ -43,6 +43,9 @@
   .ms-col-title { font-weight:700; font-size:0.9rem; margin-bottom:8px; }
   .settlement-result { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#fafbfc; border-top:1px solid #eee; font-size:0.9rem; }
   .ms-profit { font-size:1.05rem; font-weight:700; }
+  .cumulative-row { display:flex; justify-content:space-around; align-items:center; gap:8px; flex-wrap:wrap; padding:10px 16px; background:#eef6ee; border-top:1px solid #e2eee2; font-size:0.82rem; color:var(--text-light); }
+  .cumulative-row b { font-size:0.95rem; color:var(--text); }
+  .params-warn { margin:10px 14px 0; padding:8px 10px; background:#fdf6ec; border:1px solid #f3e2c8; border-radius:6px; font-size:0.78rem; color:#b9770e; }
 
   /* ====== 通用卡片 ====== */
   .section-card { background:var(--card); border-radius:10px; margin-bottom:16px; border:1px solid #e8e8e8; overflow:hidden; }
@@ -192,6 +195,11 @@
       <span>本月结余（纯利）= 本月收入 − 本月支出</span>
       <span class="ms-profit" id="ms-profit">0</span>
     </div>
+    <div class="cumulative-row">
+      <span>累计收入 <b id="cum-income">0</b></span>
+      <span>累计支出 <b id="cum-expense">0</b></span>
+      <span>累计结余 <b id="cum-profit">0</b></span>
+    </div>
   </div>
 
   <!-- 资本投入账 -->
@@ -230,6 +238,7 @@
   <details class="section-card">
     <summary>📋 调研参数 <span class="sec-note">非金额调研项 · 不参与收支总账，仅作参考</span></summary>
     <div class="details-body">
+      <div class="params-warn">⚠️ 以下为调研/参考数据，不参与收支总账，仅作经营分析参考</div>
       <div id="params-items"></div>
       <div class="pd-add-area">
         <button class="pd-add-btn" style="color:#8e44ad;border-color:#8e44ad;" onclick="CALC.showAddForm('params')">➕ 添加参数</button>
@@ -257,12 +266,6 @@
           <tr><td>月度经营总成本</td><td class="ps-val"><span class="ps-plan" id="ps-cost-plan">–</span><span class="ps-actual" id="ps-cost-actual"> –</span></td></tr>
           <tr><td>可分配纯利（扣8%流量费）</td><td class="ps-val"><span class="ps-plan" id="ps-profit-plan">–</span><span class="ps-actual" id="ps-profit-actual"> –</span></td></tr>
         </table>
-        <div class="ps-detail">
-          <div class="ps-chip"><div class="ps-chip-label">计划书·投资人分红（回本前/后）</div><div class="ps-chip-val" id="ps-investor">–</div></div>
-          <div class="ps-chip"><div class="ps-chip-label">计划书·房东分成（超额累进）</div><div class="ps-chip-val" id="ps-landlord">–</div></div>
-          <div class="ps-chip"><div class="ps-chip-label">计划书·老板收益</div><div class="ps-chip-val" id="ps-operator">–</div></div>
-          <div class="ps-chip"><div class="ps-chip-label">计划书·投资人回本周期</div><div class="ps-chip-val" id="ps-payback">–</div></div>
-        </div>
       </div>
     </div>
   </details>
@@ -271,7 +274,7 @@
 <div id="toast"></div>
 
 <!-- 持久化变量 -->
-<script id="bp-saved-vars" type="application/json">{"version":2,"calculatorData":{"version":2,"touched":false,"currentMonth":"2026-08","months":{"2026-08":{"income":[{"id":"pd_inc_01","title":"月度抖音核销营收","value":0,"notes":"抖音团购核销真实到账金额"},{"id":"pd_inc_02","title":"月度线下收银营收","value":0,"notes":"线下直接消费真实到账金额"},{"id":"pd_inc_03","title":"月度团购/外卖营收","value":0,"notes":"美团/大众点评/外卖等平台真实到账金额"}],"expense":[{"id":"pd_l3_01","title":"月度水电燃气费实缴","value":60000,"notes":"海鲜池/冷库/空调耗电大户，夏季冬季差异极大，按真实账单更新"},{"id":"pd_l3_03","title":"月度设备维保与易耗品","value":8000,"notes":"海鲜池清洗/冷库维保/餐具损耗/清洁用品等月度杂项"}]}},"capital":[{"id":"pd_l1_01","title":"消防改造真实全包价","value":150000,"date":"2026-08-22","notes":"北京2000㎡餐饮场所消防改造（喷淋/烟感/疏散/验收代办）市场行情15-20万"},{"id":"pd_l1_02","title":"电力增容真实成本","value":80000,"date":"2026-08-22","notes":"确认供电容量是否满足餐饮+海鲜池+冷库负荷，含增容申请费/电缆铺设/配电室改造"},{"id":"pd_l1_03","title":"排烟与隔油池改造费用","value":60000,"date":"2026-08-22","notes":"新装油烟净化系统+自建达标隔油池"},{"id":"pd_l1_04","title":"海鲜池维生系统真实报价","value":70000,"date":"2026-08-22","notes":"制冷机组数量、循环水系统、池体瓷砖工程量"},{"id":"pd_l1_05","title":"场地结构与承重勘测","value":20000,"date":"2026-08-22","notes":"冷库/海鲜池蓄水后承重确认、地面坡度、下水点位数量"},{"id":"pd_l2_07","title":"筹备期人工组建成本","value":120000,"date":"2026-08-22","notes":"招聘培训期核心岗位提前到岗成本"}],"params":[{"id":"pd_l1_06","title":"农贸市场水电燃气单价","value":60000,"notes":"市场商业水电常加价，确认真实单价与缴费方式"},{"id":"pd_l1_07","title":"场地注册资质确认","value":0,"notes":"确认房屋产权性质、土地用途，是否可注册餐饮类营业执照"},{"id":"pd_l1_08","title":"食品经营许可证要求","value":0,"notes":"后厨面积占比/分区/明厨亮灶，需提前对接食药监"},{"id":"pd_l1_09","title":"环评与排污许可","value":0,"notes":"排水接口等级，2000㎡海鲜自助排水量/油污量大，是否需单独办理排污许可"},{"id":"pd_l1_10","title":"房东最终分成规则","value":5000,"notes":"超额累进30万内10%/超出20%，亏损期场地占用费5000元"},{"id":"pd_l1_11","title":"投资人分红与退出细则","value":0,"notes":"回本前40%/回本后10%、3年期限、清算优先级、本金兜底处置规则"},{"id":"pd_l1_12","title":"流量团队合作模式","value":0,"notes":"4%服务商费+4%运营部门费，服务范围/保底客流/投产比承诺"},{"id":"pd_l2_01","title":"总厨岗位真实月薪","value":15000,"notes":"北京房山餐饮市场总厨招聘行情，含社保餐宿"},{"id":"pd_l2_02","title":"海鲜加工主管月薪","value":8000,"notes":"核心岗位薪资偏差大，需核实北京房山真实招聘行情"},{"id":"pd_l2_03","title":"前厅主管月薪","value":7000,"notes":"含社保餐宿"},{"id":"pd_l2_04","title":"服务员月薪","value":4500,"notes":"北京房山餐饮服务员市场行情"},{"id":"pd_l2_05","title":"员工社保真实成本（38人）","value":60000,"notes":"按北京社保基数精确计算38人单位承担部分"},{"id":"pd_l2_06","title":"包吃住真实成本","value":15000,"notes":"38人食宿，宿舍租金+食堂食材成本，北京近郊员工宿舍成本"},{"id":"pd_l2_08","title":"鲜活海鲜平均拿货价","value":0,"notes":"到黄辛庄农贸市场及周边水产批发市场核实真实批发价"},{"id":"pd_l2_09","title":"榴莲平均拿货价","value":0,"notes":"按规格、品级、拿货量对应的价格"},{"id":"pd_l2_10","title":"牛羊肉平均拿货价","value":0,"notes":"核实批发价"},{"id":"pd_l2_11","title":"酒水平均拿货价","value":0,"notes":"饮料/酒水批发价"},{"id":"pd_l2_12","title":"供应商账期政策","value":30,"notes":"月结账期/起送量/退换货规则；现结会直接击穿30万流动资金"},{"id":"pd_l2_13","title":"海鲜损耗真实比例","value":5,"notes":"夏季高温/运输死亡/暂养损耗，按品类测算存活周期"},{"id":"pd_l2_14","title":"周边客群消费调研结果","value":169,"notes":"验证目标客群价格接受度、消费频次"},{"id":"pd_l2_15","title":"竞品真实客单价与翻台率","value":0,"notes":"验证日均客流测算"},{"id":"pd_l2_16","title":"本地抖音投流成本","value":0,"notes":"验证8%流量费能否支撑日均营收"},{"id":"pd_l3_02","title":"月度实际食材成本率","value":48,"notes":"按采购总额+期初库存-期末库存核算真实消耗成本"},{"id":"pd_l3_06","title":"月度团购退款率","value":3,"notes":"影响可分配纯利的计算"},{"id":"pd_l3_07","title":"投资人累计分红额","value":0,"notes":"40%/10%比例切换唯一依据，精确记账"},{"id":"pd_l3_08","title":"流动资金余额","value":300000,"notes":"实时监控现金流，触发预警线及时启动预案"},{"id":"pd_l4_01","title":"淡旺季客流波动系数","value":0.7,"notes":"春节淡季/暑期旺季，淡季系数0.7"},{"id":"pd_l4_02","title":"员工流失率","value":30,"notes":"餐饮行业人员流动大，招聘/培训成本未充分体现"},{"id":"pd_l4_03","title":"食品安全风险准备金","value":50000,"notes":"海鲜自助易出现食品安全投诉，需预留应急处理备用金"},{"id":"pd_l4_04","title":"核心设备二手残值参考","value":0,"notes":"大件设备二手回收市场价，用于清算场景本金兜底测算"}]}}</script>
+<script id="bp-saved-vars" type="application/json">{"version":2,"calculatorData":{"version":2,"touched":false,"currentMonth":"2026-08","months":{"2026-08":{"income":[{"id":"pd_inc_01","title":"月度抖音核销营收","value":0,"notes":"抖音团购核销真实到账金额"},{"id":"pd_inc_02","title":"月度线下收银营收","value":0,"notes":"线下直接消费真实到账金额"},{"id":"pd_inc_03","title":"月度团购/外卖营收","value":0,"notes":"美团/大众点评/外卖等平台真实到账金额"}],"expense":[{"id":"pd_l3_01","title":"月度水电燃气费实缴","value":60000,"notes":"海鲜池/冷库/空调耗电大户，夏季冬季差异极大，按真实账单更新"},{"id":"pd_l3_03","title":"月度设备维保与易耗品","value":8000,"notes":"海鲜池清洗/冷库维保/餐具损耗/清洁用品等月度杂项"}]}},"capital":[{"id":"pd_l1_01","title":"消防改造真实全包价","value":150000,"date":"2026-08-22","notes":"北京2000㎡餐饮场所消防改造（喷淋/烟感/疏散/验收代办）市场行情15-20万"},{"id":"pd_l1_02","title":"电力增容真实成本","value":80000,"date":"2026-08-22","notes":"确认供电容量是否满足餐饮+海鲜池+冷库负荷，含增容申请费/电缆铺设/配电室改造"},{"id":"pd_l1_03","title":"排烟与隔油池改造费用","value":60000,"date":"2026-08-22","notes":"新装油烟净化系统+自建达标隔油池"},{"id":"pd_l1_04","title":"海鲜池维生系统真实报价","value":70000,"date":"2026-08-22","notes":"制冷机组数量、循环水系统、池体瓷砖工程量"},{"id":"pd_l1_05","title":"场地结构与承重勘测","value":20000,"date":"2026-08-22","notes":"冷库/海鲜池蓄水后承重确认、地面坡度、下水点位数量"},{"id":"pd_l2_07","title":"筹备期人工组建成本","value":120000,"date":"2026-08-22","notes":"招聘培训期核心岗位提前到岗成本"},{"id":"pd_l4_03","title":"食品安全风险准备金","value":50000,"date":"2026-08-22","notes":"海鲜自助易出现食品安全投诉，预留应急处理备用金"}],"params":[{"id":"pd_l1_06","title":"农贸市场水电燃气单价","value":60000,"notes":"市场商业水电常加价，确认真实单价与缴费方式"},{"id":"pd_l1_07","title":"场地注册资质确认","value":0,"notes":"确认房屋产权性质、土地用途，是否可注册餐饮类营业执照"},{"id":"pd_l1_08","title":"食品经营许可证要求","value":0,"notes":"后厨面积占比/分区/明厨亮灶，需提前对接食药监"},{"id":"pd_l1_09","title":"环评与排污许可","value":0,"notes":"排水接口等级，2000㎡海鲜自助排水量/油污量大，是否需单独办理排污许可"},{"id":"pd_l2_01","title":"总厨岗位真实月薪","value":15000,"notes":"北京房山餐饮市场总厨招聘行情，含社保餐宿"},{"id":"pd_l2_02","title":"海鲜加工主管月薪","value":8000,"notes":"核心岗位薪资偏差大，需核实北京房山真实招聘行情"},{"id":"pd_l2_03","title":"前厅主管月薪","value":7000,"notes":"含社保餐宿"},{"id":"pd_l2_04","title":"服务员月薪","value":4500,"notes":"北京房山餐饮服务员市场行情"},{"id":"pd_l2_05","title":"员工社保真实成本（38人）","value":60000,"notes":"按北京社保基数精确计算38人单位承担部分"},{"id":"pd_l2_06","title":"包吃住真实成本","value":15000,"notes":"38人食宿，宿舍租金+食堂食材成本，北京近郊员工宿舍成本"},{"id":"pd_l2_08","title":"鲜活海鲜平均拿货价","value":0,"notes":"到黄辛庄农贸市场及周边水产批发市场核实真实批发价"},{"id":"pd_l2_09","title":"榴莲平均拿货价","value":0,"notes":"按规格、品级、拿货量对应的价格"},{"id":"pd_l2_10","title":"牛羊肉平均拿货价","value":0,"notes":"核实批发价"},{"id":"pd_l2_11","title":"酒水平均拿货价","value":0,"notes":"饮料/酒水批发价"},{"id":"pd_l2_12","title":"供应商账期政策","value":30,"notes":"月结账期/起送量/退换货规则；现结会直接击穿30万流动资金"},{"id":"pd_l2_13","title":"海鲜损耗真实比例","value":5,"notes":"夏季高温/运输死亡/暂养损耗，按品类测算存活周期"},{"id":"pd_l2_14","title":"周边客群消费调研结果","value":169,"notes":"验证目标客群价格接受度、消费频次"},{"id":"pd_l2_15","title":"竞品真实客单价与翻台率","value":0,"notes":"验证日均客流测算"},{"id":"pd_l2_16","title":"本地抖音投流成本","value":0,"notes":"验证8%流量费能否支撑日均营收"},{"id":"pd_l3_02","title":"月度实际食材成本率","value":48,"notes":"按采购总额+期初库存-期末库存核算真实消耗成本"},{"id":"pd_l3_06","title":"月度团购退款率","value":3,"notes":"影响可分配纯利的计算"},{"id":"pd_l4_01","title":"淡旺季客流波动系数","value":0.7,"notes":"春节淡季/暑期旺季，淡季系数0.7"},{"id":"pd_l4_02","title":"员工流失率","value":30,"notes":"餐饮行业人员流动大，招聘/培训成本未充分体现"},{"id":"pd_l4_04","title":"核心设备二手残值参考","value":0,"notes":"大件设备二手回收市场价，用于清算场景本金兜底测算"}]}}</script>
 
 <script src="business-model.js"></script>
 <script>
@@ -301,16 +304,14 @@
     { id:'pd_l1_03', title:'排烟与隔油池改造费用', value:60000, date:todayStr, notes:'新装油烟净化系统+自建达标隔油池' },
     { id:'pd_l1_04', title:'海鲜池维生系统真实报价', value:70000, date:todayStr, notes:'制冷机组数量、循环水系统、池体瓷砖工程量' },
     { id:'pd_l1_05', title:'场地结构与承重勘测', value:20000, date:todayStr, notes:'冷库/海鲜池蓄水后承重确认、地面坡度、下水点位数量' },
-    { id:'pd_l2_07', title:'筹备期人工组建成本', value:120000, date:todayStr, notes:'招聘培训期核心岗位提前到岗成本' }
+    { id:'pd_l2_07', title:'筹备期人工组建成本', value:120000, date:todayStr, notes:'招聘培训期核心岗位提前到岗成本' },
+    { id:'pd_l4_03', title:'食品安全风险准备金', value:50000, date:todayStr, notes:'海鲜自助易出现食品安全投诉，预留应急处理备用金' }
   ];
   var TPL_PARAMS = [
     { id:'pd_l1_06', title:'农贸市场水电燃气单价', value:60000, notes:'市场商业水电常加价，确认真实单价与缴费方式' },
     { id:'pd_l1_07', title:'场地注册资质确认', value:0, notes:'确认房屋产权性质、土地用途，是否可注册餐饮类营业执照' },
     { id:'pd_l1_08', title:'食品经营许可证要求', value:0, notes:'后厨面积占比/分区/明厨亮灶，需提前对接食药监' },
     { id:'pd_l1_09', title:'环评与排污许可', value:0, notes:'排水接口等级，2000㎡海鲜自助排水量/油污量大，是否需单独办理排污许可' },
-    { id:'pd_l1_10', title:'房东最终分成规则', value:5000, notes:'超额累进30万内10%/超出20%，亏损期场地占用费5000元' },
-    { id:'pd_l1_11', title:'投资人分红与退出细则', value:0, notes:'回本前40%/回本后10%、3年期限、清算优先级、本金兜底处置规则' },
-    { id:'pd_l1_12', title:'流量团队合作模式', value:0, notes:'4%服务商费+4%运营部门费，服务范围/保底客流/投产比承诺' },
     { id:'pd_l2_01', title:'总厨岗位真实月薪', value:15000, notes:'北京房山餐饮市场总厨招聘行情，含社保餐宿' },
     { id:'pd_l2_02', title:'海鲜加工主管月薪', value:8000, notes:'核心岗位薪资偏差大，需核实北京房山真实招聘行情' },
     { id:'pd_l2_03', title:'前厅主管月薪', value:7000, notes:'含社保餐宿' },
@@ -328,11 +329,8 @@
     { id:'pd_l2_16', title:'本地抖音投流成本', value:0, notes:'验证8%流量费能否支撑日均营收' },
     { id:'pd_l3_02', title:'月度实际食材成本率', value:48, notes:'按采购总额+期初库存-期末库存核算真实消耗成本' },
     { id:'pd_l3_06', title:'月度团购退款率', value:3, notes:'影响可分配纯利的计算' },
-    { id:'pd_l3_07', title:'投资人累计分红额', value:0, notes:'40%/10%比例切换唯一依据，精确记账' },
-    { id:'pd_l3_08', title:'流动资金余额', value:300000, notes:'实时监控现金流，触发预警线及时启动预案' },
     { id:'pd_l4_01', title:'淡旺季客流波动系数', value:0.7, notes:'春节淡季/暑期旺季，淡季系数0.7' },
     { id:'pd_l4_02', title:'员工流失率', value:30, notes:'餐饮行业人员流动大，招聘/培训成本未充分体现' },
-    { id:'pd_l4_03', title:'食品安全风险准备金', value:50000, notes:'海鲜自助易出现食品安全投诉，需预留应急处理备用金' },
     { id:'pd_l4_04', title:'核心设备二手残值参考', value:0, notes:'大件设备二手回收市场价，用于清算场景本金兜底测算' }
   ];
   function cloneList(list) { return JSON.parse(JSON.stringify(list)); }
@@ -578,6 +576,21 @@
       var msEl = document.getElementById('ms-profit');
       msEl.textContent = (profit >= 0 ? '+' : '-') + this.formatNum(Math.abs(profit));
       msEl.style.color = profit >= 0 ? '#27ae60' : '#c0392b';
+
+      // 累计（遍历所有已填月份）
+      var cumInc = 0, cumExp = 0;
+      for (var k in this.data.months) {
+        var m = this.data.months[k];
+        cumInc += this.sumArr(m.income);
+        cumExp += this.sumArr(m.expense);
+      }
+      var cumProfit = cumInc - cumExp;
+      var ciEl = document.getElementById('cum-income');
+      var ceEl = document.getElementById('cum-expense');
+      var cpEl = document.getElementById('cum-profit');
+      if (ciEl) { ciEl.textContent = this.formatNum(cumInc); ciEl.style.color = '#27ae60'; }
+      if (ceEl) { ceEl.textContent = this.formatNum(cumExp); ceEl.style.color = '#c0392b'; }
+      if (cpEl) { cpEl.textContent = this.formatNum(cumProfit); cpEl.style.color = cumProfit >= 0 ? '#27ae60' : '#c0392b'; }
     },
 
     renderPayback: function() {
@@ -635,11 +648,6 @@
       document.getElementById('ps-cost-actual').textContent = ' 实际 ' + this.formatNum(monthlyExpense);
       document.getElementById('ps-profit-plan').textContent = this.formatNum(planProfit);
       document.getElementById('ps-profit-actual').textContent = ' 实际 ' + this.formatNum(profit);
-
-      document.getElementById('ps-investor').textContent = this.formatNum(v.investor_dividend_pre_num || 0) + ' / ' + this.formatNum(v.investor_dividend_post_num || 0) + ' 元';
-      document.getElementById('ps-landlord').textContent = this.formatNum(v.landlord_dividend_num || 0) + ' 元';
-      document.getElementById('ps-operator').textContent = this.formatNum(v.operator_income_num || 0) + ' 元';
-      document.getElementById('ps-payback').textContent = (v.realistic_payback_plain || '') + ' 个月';
     },
 
     // ====== 行内编辑绑定 ======
