@@ -356,6 +356,18 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
   .add-item-btn:hover { background: var(--card-hover); color: var(--accent); border-top-color: var(--accent); }
   .add-item-btn i { font-size: 0.7rem; }
 
+  /* Add category button */
+  .add-category-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin: 18px 0 10px; padding: 12px 16px; cursor: pointer;
+    border: 1px dashed var(--border); border-radius: 10px;
+    color: var(--text2); font-size: 0.85rem;
+    background: rgba(46,134,193,0.04);
+    transition: all 0.2s; user-select: none;
+  }
+  .add-category-btn:hover { background: var(--card-hover); color: var(--accent); border-color: var(--accent); }
+  .add-category-btn i { font-size: 0.75rem; }
+
   /* Sortable ghost */
   .sortable-ghost {
     opacity: 0.4; background: var(--accent) !important;
@@ -937,6 +949,8 @@ function render() {
     html += '</div>';
   });
 
+  html += '<div class="add-category-btn" onclick="addCategory()"><i class="fas fa-plus-circle"></i> 新增板块</div>';
+
   document.getElementById('categoryList').innerHTML = html;
   // Restore collapsed state from localStorage
   cats.forEach(function(cat) {
@@ -962,6 +976,32 @@ function render() {
 function escHtml(s) {
   if (!s) return '';
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ==================== 新增板块（分类） ====================
+function addCategory() {
+  if (!appData) appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  var name = prompt('输入新板块名称：', '新板块');
+  if (name === null) return;
+  name = (name || '').trim();
+  if (!name) return;
+  var maxNum = 0, maxSort = 0;
+  (appData.categories || []).forEach(function(c) {
+    var n = parseInt(String(c.id).replace(/^cat_/, ''), 10);
+    if (!isNaN(n) && n > maxNum) maxNum = n;
+    if (c.sort_order > maxSort) maxSort = c.sort_order;
+  });
+  var newCat = {
+    id: 'cat_' + (maxNum + 1),
+    name: name,
+    icon: '📁',
+    sort_order: maxSort + 1,
+    items: []
+  };
+  appData.categories.push(newCat);
+  saveToVars();
+  render();
+  showToast('已新增板块：「' + name + '」');
 }
 
 function toggleCat(header) {
