@@ -232,7 +232,7 @@
       var sunCustomers = Math.round(sunDaily / i.price);
       var weeklyCustomers = monThuCustomers * 4 + friCustomers + satCustomers + sunCustomers;
 
-      var tableCapacity = i.tableCount * 4;
+      var tableCapacity = i.tableCount * i.seatsPerTable;
       var monThuTurnover = (monThuCustomers / tableCapacity);
       var friTurnover = (friCustomers / tableCapacity);
       var satTurnover = (satCustomers / tableCapacity);
@@ -249,7 +249,7 @@
       var avgSalary = Math.round(i.laborCost / i.staffCount);
 
       // ========== 最大容量 ==========
-      var maxCapacity = Math.round(i.tableCount * 4);
+      var maxCapacity = Math.round(i.tableCount * i.seatsPerTable);
       var diningArea = Math.round(i.area * 0.475);
       var tableAreaDetail = (Math.round(diningArea / i.tableCount * 10) / 10);
 
@@ -554,8 +554,7 @@
       'service_fee_pct': 'serviceFeePct',
       'operation_pct': 'operationPct',
       'marketing_cost_pct': 'marketingPct',
-      'investor_dividend_pre_num': 'investorPctPrePayback',
-      'investor_dividend_post_num': 'investorPct',
+      // 注意：investor_dividend_pre_num / investor_dividend_post_num 是计算后的金额，不是输入百分比，不可编辑
       'staff_initial_cost_wan': 'staffInitialCost',
       'food_initial_cost_wan': 'foodInitialCost',
       'total_investment_raw': 'totalInvestment',
@@ -600,137 +599,6 @@
       return out;
     }
   };
-
-  // ==================== 服务端计算引擎 ====================
-  if (typeof module !== 'undefined' && module.exports) {
-    var defaultInputs = {};
-    var inputKeys = Object.keys(BusinessModel.inputs);
-    for (var di = 0; di < inputKeys.length; di++) {
-      defaultInputs[inputKeys[di]] = BusinessModel.inputs[inputKeys[di]];
-    }
-
-    module.exports = {
-      defaultInputs: defaultInputs,
-      calculate: function(inputs) {
-        var i = Object.assign({
-          area: 2000, price: 169, dailyRevenue: 60000,
-          totalInvestment: 1000000, equipmentInvestment: 700000,
-          foodCostPct: 48, rent: 0, laborCost: 215600,
-          marketingPct: 0, miscCost: 60000, serviceFeePct: 4,
-          operationPct: 4, investorPctPrePayback: 40, investorPct: 10,
-          tableCount: 120, seatsPerTable: 2.8, staffCount: 38,
-          utilityCost: 60000, kitchenStaff: 22, kitchenCost: 105000,
-          frontStaff: 16, frontCost: 75000,
-          staffInitialCost: 200000, foodInitialCost: 100000
-        }, inputs || {});
-
-        var monthlyRevenue = Math.round(i.dailyRevenue * 30);
-        var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
-        var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
-        var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
-        var cashNetProfit = monthlyRevenue - cashTotalExpense;
-        var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
-        var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
-        var totalFee = serviceFee + operationFee;
-        var dividendBase = cashNetProfit - totalFee;
-
-        var investorPrePayback = Math.round(dividendBase * i.investorPctPrePayback / 100);
-        var investorPostPayback = Math.round(dividendBase * i.investorPct / 100);
-
-        var landlordThreshold = 300000;
-        var landlordDividend;
-        if (dividendBase <= landlordThreshold) {
-          landlordDividend = Math.round(dividendBase * 10 / 100);
-        } else {
-          landlordDividend = Math.round(landlordThreshold * 10 / 100) + Math.round((dividendBase - landlordThreshold) * 20 / 100);
-        }
-
-        var operatorIncomePre = dividendBase - investorPrePayback - landlordDividend;
-        var operatorIncomePost = dividendBase - investorPostPayback - landlordDividend;
-
-        var monThuDaily = i.dailyRevenue;
-        var friDaily = i.dailyRevenue;
-        var satDaily = i.dailyRevenue;
-        var sunDaily = i.dailyRevenue;
-        var weeklyTotal = monThuDaily * 4 + friDaily + satDaily + sunDaily;
-        var monThuCustomers = Math.round(monThuDaily / i.price);
-        var friCustomers = Math.round(friDaily / i.price);
-        var satCustomers = Math.round(satDaily / i.price);
-        var sunCustomers = Math.round(sunDaily / i.price);
-        var weeklyCustomers = monThuCustomers * 4 + friCustomers + satCustomers + sunCustomers;
-        var tableCapacity = i.tableCount * i.seatsPerTable;
-
-        var trial1MonthlyRev = Math.round(monthlyRevenue * 0.50);
-        var trial1Expense = Math.round(monthlyRevenue * 0.75);
-        var trial1Profit = trial1MonthlyRev - trial1Expense;
-        var trial1Fee = Math.round(trial1MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
-        trial1Profit = trial1Profit - trial1Fee;
-
-        var trial2MonthlyRev = Math.round(monthlyRevenue * 0.67);
-        var trial2Expense = Math.round(monthlyRevenue * 0.78);
-        var trial2Profit = trial2MonthlyRev - trial2Expense;
-        var trial2Fee = Math.round(trial2MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
-        trial2Profit = trial2Profit - trial2Fee;
-
-        var trial3MonthlyRev = Math.round(monthlyRevenue * 0.83);
-        var trial3Expense = Math.round(monthlyRevenue * 0.82);
-        var trial3Profit = trial3MonthlyRev - trial3Expense;
-        var trial3Fee = Math.round(trial3MonthlyRev * (i.serviceFeePct + i.operationPct) / 100);
-        trial3Profit = trial3Profit - trial3Fee;
-
-        var equipmentMonthExpense = cashTotalExpense + i.equipmentInvestment;
-        var equipmentMonthProfit = monthlyRevenue - equipmentMonthExpense;
-
-        return {
-          monthlyRevenue: monthlyRevenue,
-          foodCost: foodCost,
-          marketingCost: marketingCost,
-          cashTotalExpense: cashTotalExpense,
-          cashNetProfit: cashNetProfit,
-          serviceFee: serviceFee,
-          service_fee: serviceFee,
-          operation_fee: operationFee,
-          operation_pct: i.operationPct,
-          total_fee: totalFee,
-          dividendBase: dividendBase,
-          investorPrePayback: investorPrePayback,
-          investorPostPayback: investorPostPayback,
-          landlordDividend: landlordDividend,
-          operatorIncomePre: operatorIncomePre,
-          operatorIncomePost: operatorIncomePost,
-          dailyRevenue: i.dailyRevenue,
-
-          monThuDaily: monThuDaily, friDaily: friDaily, satDaily: satDaily, sunDaily: sunDaily,
-          weeklyTotal: weeklyTotal,
-          monThuCustomers: monThuCustomers, friCustomers: friCustomers,
-          satCustomers: satCustomers, sunCustomers: sunCustomers,
-          weeklyCustomers: weeklyCustomers,
-          monThuTurnover: (monThuCustomers / tableCapacity),
-          friTurnover: (friCustomers / tableCapacity),
-          satTurnover: (satCustomers / tableCapacity),
-          sunTurnover: (sunCustomers / tableCapacity),
-          tableCapacity: tableCapacity,
-
-          trial1MonthlyRev: trial1MonthlyRev, trial1Expense: trial1Expense,
-          trial1Profit: trial1Profit, trial1Fee: trial1Fee,
-          trial2MonthlyRev: trial2MonthlyRev, trial2Expense: trial2Expense,
-          trial2Profit: trial2Profit, trial2Fee: trial2Fee,
-          trial3MonthlyRev: trial3MonthlyRev, trial3Expense: trial3Expense,
-          trial3Profit: trial3Profit, trial3Fee: trial3Fee,
-
-          cashTotalExpense: cashTotalExpense,
-          equipmentMonthExpense: equipmentMonthExpense,
-          equipmentMonthProfit: equipmentMonthProfit,
-
-          workingCapital: i.totalInvestment - i.equipmentInvestment,
-          avgSalary: Math.round(i.laborCost / i.staffCount),
-          maxCapacity: Math.round(i.tableCount * 4),
-          diningArea: Math.round(i.area * 0.475),
-          tableAreaPerTable: Math.round(Math.round(i.area * 0.475) / i.tableCount * 10) / 10,
-        };
-      }
-    };
-  }
 
   if (typeof window !== 'undefined') {
     window.BusinessModel = BusinessModel;
