@@ -3156,7 +3156,6 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 // ==================== 实战数据管理系统（独立于核心模型） ====================
 (function() {
   'use strict';
-  var STORAGE_KEY = 'bp_practical_data';
   var today = new Date().toISOString().slice(0,10);
 
   // ---------- 初始数据定义 ----------
@@ -3228,14 +3227,15 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     },
     load: function() {
       try {
-        var saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          var parsed = JSON.parse(saved);
-          if (parsed && Array.isArray(parsed)) {
+        var el = document.getElementById('bp-saved-vars');
+        if (el) {
+          var data = JSON.parse(el.textContent);
+          if (data && data.practicalData && Array.isArray(data.practicalData)) {
+            var saved = data.practicalData;
             // 合并：用保存的数据覆盖同ID的默认值，新增默认项
             var merged = {};
             DEFAULT_ITEMS.forEach(function(d){ merged[d.id] = JSON.parse(JSON.stringify(d)); });
-            parsed.forEach(function(p){ if(merged[p.id]) Object.assign(merged[p.id], p); else merged[p.id] = p; });
+            saved.forEach(function(p){ if(merged[p.id]) Object.assign(merged[p.id], p); else merged[p.id] = p; });
             this.items = Object.keys(merged).map(function(k){ return merged[k]; });
             return;
           }
@@ -3244,7 +3244,16 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       this.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
     },
     save: function() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items)); } catch(e) {}
+      try {
+        var el = document.getElementById('bp-saved-vars');
+        if (el) {
+          var data = JSON.parse(el.textContent) || {};
+          data.practicalData = this.items;
+          el.textContent = JSON.stringify(data);
+          // 触发编辑器保存标记（如果有 editor.js）
+          if (window.hasChanges !== undefined) window.hasChanges = true;
+        }
+      } catch(e) {}
     },
     // 生成唯一ID
     genId: function() { return 'pd_custom_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,4); },
@@ -3479,5 +3488,5 @@ window.CODE_VERSION = '20260822-001';
 </script>
 <script src="business-model.js"></script>
 <!-- 持久化变量值：保存时更新，加载时 BusinessModel 读取 -->
-<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":2000,"price":169,"monRev":35100,"tueRev":35100,"wedRev":35100,"thuRev":35100,"friRev":93200,"satRev":93200,"sunRev":93200,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000,"actualRenovationCost":700000,"workingCapitalAlert":100000,"investorCumDividend":0,"prepLaborCost":120000,"openingMarketingBudget":50000,"foodWastePct":3,"licenseCost":30000,"weekendPartTimeCost":30000,"socialInsuranceBase":5000}}</script>
+<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":2000,"price":169,"monRev":35100,"tueRev":35100,"wedRev":35100,"thuRev":35100,"friRev":93200,"satRev":93200,"sunRev":93200,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000,"actualRenovationCost":700000,"workingCapitalAlert":100000,"investorCumDividend":0,"prepLaborCost":120000,"openingMarketingBudget":50000,"foodWastePct":3,"licenseCost":30000,"weekendPartTimeCost":30000,"socialInsuranceBase":5000},"practicalData":[]}</script>
 <script src="editor.js"></script></body></html>

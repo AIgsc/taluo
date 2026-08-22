@@ -222,12 +222,14 @@
       var inputs = bm.getInputs();
       var savedVars = document.getElementById('bp-saved-vars');
       if (savedVars) {
-        savedVars.textContent = JSON.stringify({ version: 1, inputs: inputs });
+        var practicalData = [];
+        if (window.PD && window.PD.items) practicalData = window.PD.items;
+        savedVars.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData });
       } else {
         var script = document.createElement('script');
         script.id = 'bp-saved-vars';
         script.type = 'application/json';
-        script.textContent = JSON.stringify({ version: 1, inputs: inputs });
+        script.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData });
         document.body.appendChild(script);
       }
     }
