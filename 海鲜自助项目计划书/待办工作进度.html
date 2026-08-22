@@ -715,9 +715,33 @@ var DEFAULT_DATA = {
       { id: 'it_15_10', title: '每月生成角色收益速览报表', desc: '按投资人、房东、运营方三角色生成月度收益速览，包含当月收益、累计收益、回报率，用于三方沟通', status: 'pending', sort_order: 10, reports: [] },
       { id: 'it_15_11', title: '建立分账对账确认流程', desc: '每月分账后，投资人、房东、运营方三方签字确认，存档备查', status: 'pending', sort_order: 11, reports: [] },
     ]},
+    { id: 'cat_16', name: '实战落地待填数据（替换模拟值）', icon: '📝', sort_order: 16, items: [
+      { id: 'it_16_1', title: '【核心】硬件工程真实报价', desc: '消防改造、电力增容、排烟下水、海鲜池维生系统、冷库、中央空调6项，需施工方现场勘测后正式报价，直接决定总投资是否突破100万阈值', status: 'pending', sort_order: 1, reports: [] },
+      { id: 'it_16_2', title: '【核心】流动资金实际额度', desc: '原预设30万，需根据真实筹备周期、供应商账期、开业营销预算、月度固定支出规模最终确认，是项目现金流安全垫的核心', status: 'pending', sort_order: 2, reports: [] },
+      { id: 'it_16_3', title: '【核心】月度真实客流营收数据', desc: '分日客流与翻台率，工作日/周末实际到店人数、核销金额、翻台率，替代测算值，是所有利润计算的底层基础', status: 'pending', sort_order: 3, reports: [] },
+      { id: 'it_16_4', title: '【核心】真实食材成本率', desc: '原预设48%，需每月按实际采购额、食材损耗、期末库存核算真实成本率；海鲜、榴莲的损耗波动会直接影响利润基数', status: 'pending', sort_order: 4, reports: [] },
+      { id: 'it_16_5', title: '二手设备采购成交价', desc: '厨房设备、桌椅、空调、冷库等二手资产，需按实际看货、议价后的最终价格填写，替换预算表中的估算值', status: 'pending', sort_order: 5, reports: [] },
+      { id: 'it_16_6', title: '房东分成规则正式写入合同', desc: '超额累进的档位阈值（30万）、分档比例（10%/20%）、亏损期是否收取场地占用费及具体金额，必须和房东谈判后敲定原文写入合同', status: 'pending', sort_order: 6, reports: [] },
+      { id: 'it_16_7', title: '投资人核心条款最终确认', desc: '实际出资金额、回本触发阈值、回本前后分红比例、合伙期限、提前回购计算公式、退出机制细节，需与投资人最终签约时确认', status: 'pending', sort_order: 7, reports: [] },
+      { id: 'it_16_8', title: '流量合作费率正式签约', desc: '抖音服务商4%、运营部门4%的点位，需和服务商、运营团队真实签约后填写，同时明确服务范围、投流是否额外计费等边界', status: 'pending', sort_order: 8, reports: [] },
+      { id: 'it_16_9', title: '场地实际可用面积测量', desc: '2000㎡为标称面积，需扣除公摊、立柱、不可改造区域，按真实使用面积重新核算餐位、后厨、仓储占比', status: 'pending', sort_order: 9, reports: [] },
+      { id: 'it_16_10', title: '场地基础条件现场勘测确认', desc: '原有电力容量、消防主系统资质、排烟管道接口、给排水条件，必须现场勘测确认，直接决定改造工程量与费用', status: 'pending', sort_order: 10, reports: [] },
+      { id: 'it_16_11', title: '证照办理成本与周期确认', desc: '食品经营许可证、消防验收、环评、营业执照的实际办理周期与代办费用，按当地监管要求和第三方报价填写', status: 'pending', sort_order: 11, reports: [] },
+      { id: 'it_16_12', title: '各岗位真实薪资确认', desc: '总厨、海鲜加工、前厅主管等核心岗位月薪，以及社保缴纳基数、包吃住成本，需按北京房山当地招聘市场真实行情填写', status: 'pending', sort_order: 12, reports: [] },
+      { id: 'it_16_13', title: '高峰兼职规则确认', desc: '周末、节假日兼职人员的数量、时薪与排班机制，按当地劳务市场价格填写', status: 'pending', sort_order: 13, reports: [] },
+      { id: 'it_16_14', title: '筹备期人工成本确认', desc: '招聘、培训期间的到岗人数与薪资发放标准，按实际招聘进度填写', status: 'pending', sort_order: 14, reports: [] },
+      { id: 'it_16_15', title: '最终客单价体系确认', desc: '169元为建议正价，需根据周边竞品价格、试营业反馈，最终确认工作日价、周末价、团购价、儿童价等完整定价体系', status: 'pending', sort_order: 15, reports: [] },
+      { id: 'it_16_16', title: '开业营销预算确认', desc: '抖音投流、达人探店、开业活动的实际预算，从运营部门费中列支，需按真实投放计划填写', status: 'pending', sort_order: 16, reports: [] },
+      { id: 'it_16_17', title: '月度水电燃气杂费（每月更新）', desc: '按真实缴费账单填写，2000㎡带海鲜池、冷库的能耗随季节波动较大', status: 'pending', sort_order: 17, reports: [] },
+      { id: 'it_16_18', title: '月度实际营销支出（每月更新）', desc: '投流、达人、活动的真实花费，每月核对8%流量费的实际使用情况', status: 'pending', sort_order: 18, reports: [] },
+      { id: 'it_16_19', title: '投资人累计分红额（每月更新）', desc: '作为40%/10%比例切换的唯一触发依据，必须精确记账，每月更新', status: 'pending', sort_order: 19, reports: [] },
+      { id: 'it_16_20', title: '累计盈亏台账（每月更新）', desc: '用于弥补往期亏损的核算，直接决定当月是否具备分红条件', status: 'pending', sort_order: 20, reports: [] },
+      { id: 'it_16_21', title: '流动资金预警线重新测算', desc: '原预设10万，需根据月度固定支出规模重新测算安全阈值', status: 'pending', sort_order: 21, reports: [] },
+      { id: 'it_16_22', title: '核心设备残值参考', desc: '海鲜池、冷库、空调等大件设备的二手回收市场价，用于清算场景的本金兜底测算', status: 'pending', sort_order: 22, reports: [] },
+    ]},
   ]
 };
-var DATA_VERSION = 3; // 增: 版本3=新增负责人/优先级/开始日期/截止日期 + 超时提醒
+var DATA_VERSION = 4; // 增: 版本4=新增实战落地待填数据分类（cat_16）
 
 // ==================== 状态管理 ====================
 var API_URL = '/api/todo';
