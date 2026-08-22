@@ -385,7 +385,10 @@
       var notesHtml = it.notes ? '<span class="pd-notes">' + it.notes + '</span>' : '';
       var color = section === 'income' ? '#27ae60' : '#c0392b';
       return '<div class="pd-item">' +
-        '<span class="pd-name" data-calc-edit="' + section + ':' + it.id + '" data-calc-field="title" contenteditable="true">' + it.title + notesHtml + '</span>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<span class="pd-name" data-calc-edit="' + section + ':' + it.id + '" data-calc-field="title" contenteditable="true">' + it.title + '</span>' +
+          notesHtml +
+        '</div> ' +
         '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">' +
           '<span class="pd-val" data-calc-edit="' + section + ':' + it.id + '" data-calc-field="value" contenteditable="true" style="color:' + color + ';border-color:' + color + ';">' + valStr + '</span>' +
         '</div>' +
