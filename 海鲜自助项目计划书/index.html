@@ -2268,36 +2268,36 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
           from { opacity: 0; transform: scale(0.95); }
           to { opacity: 1; transform: scale(1); }
         }
-      </style></head>
+      </style><style>#bp-toolbar{position:absolute;top:12px;right:16px;z-index:999;display:flex;align-items:center;gap:8px;font-size:14px;transition:opacity 0.3s;touch-action:manipulation;}#bp-toolbar .bp-btn{border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.2);user-select:none;-webkit-user-select:none;}#bp-toolbar .bp-btn-edit{background:rgba(93,173,226,0.85);color:#fff;}#bp-toolbar .bp-btn-edit:hover{background:#2e86c1;}#bp-toolbar .bp-btn-save{background:#27ae60;color:#fff;}#bp-toolbar .bp-btn-save:hover{background:#1e8449;}#bp-toolbar .bp-status{font-size:11px;color:rgba(255,255,255,0.7);margin-left:4px;}.bp-editing{outline:2px dashed #5dade2 !important;outline-offset:2px !important;border-radius:4px !important;cursor:text !important;user-select:text !important;-webkit-user-select:text !important;-webkit-touch-callout:default !important;}.bp-editing:hover{background:rgba(93,173,226,0.05) !important;}.bp-saving{opacity:0.5;pointer-events:none;}.bp-data-editable{cursor:pointer !important;border-bottom:1px dashed #5dade2 !important;transition:border-color 0.2s,background 0.2s;border-radius:2px !important;}.bp-data-editable:hover{background:rgba(93,173,226,0.08) !important;border-bottom-color:#2e86c1 !important;}.bp-data-editable:focus{outline:2px solid #5dade2 !important;background:#fff !important;color:#1a5276 !important;border-radius:3px !important;padding:0 2px !important;}.bp-data-locked{cursor:default !important;border-bottom:1px dashed #ccc !important;pointer-events:none !important;opacity:0.85 !important;}.bp-data-locked:hover{background:transparent !important;border-bottom-color:#ccc !important;}</style></head>
 <body>
 
 <div class="container" id="app" data-page-version="5">
 
   <!-- ==================== 封面 ==================== -->
-  <div class="cover" id="page-cover" data-edit="cover">
+  <div class="cover" id="page-cover" data-edit="cover" contenteditable="false">
 
 
     <div class="badge">餐饮商业合作 · 100万招商计划书</div>
-<h1><span style="font-size:1.8rem;">海鲜火锅自助</span><span data-model="area">2000㎡</span><span style="font-size:1.8rem;">黄辛庄农贸市场店</span></h1>
+<h1><span style="font-size:1.8rem;">海鲜火锅自助</span><span data-model="area" contenteditable="true" class="bp-data-editable" inputmode="decimal">1000㎡</span><span style="font-size:1.8rem;">黄辛庄农贸市场店</span></h1>
     <div class="divider"></div>
     <div class="info">
       <strong>包含内容：</strong>投资人 · 房东 · 项目组织者（老板）· 财务对账<br>
-      <strong>投资人出资：</strong><span style="color:#ffd700;font-size:1.1rem;"><span data-model="total_investment">100万</span>元</span>（硬件70万+流动资金30万，食材账期滚动，无需额外垫资）<br>
+      <strong>投资人出资：</strong><span style="color:#ffd700;font-size:1.1rem;"><span data-model="total_investment" contenteditable="true" class="bp-data-editable" inputmode="decimal">100万</span>元</span>（硬件70万+流动资金30万，食材账期滚动，无需额外垫资）<br>
       <strong>老板（组织者）：</strong>不投钱，全程运营管理，拿分红<br>
-      <strong>目标营业：</strong>日销<span data-model="daily_revenue">6.0万</span> · 月销<span data-model="monthly_revenue">180万</span><br>
+      <strong>目标营业：</strong>日销<span data-model="daily_revenue" contenteditable="true" class="bp-data-editable" inputmode="decimal">6.0万</span> · 月销<span data-model="monthly_revenue" contenteditable="false" class="">180万</span><br>
       <strong>团队编制：</strong>38人<br>
-      <strong>投资人回本：</strong><span data-model="realistic_payback_from_investment">约12个月</span>（从出资日算起，回本前分40%加速回本）<br>
-      <strong>合伙期限：</strong><span data-model="investor_term">36个月</span>（3年，期满资产归运营方，<span data-model="investor_total_3y">约214万</span>总回报，<span data-model="investor_roi_3y">214%</span>）<br>
-      <strong>老板月纯利：</strong>回本前约<span data-model="operator_income_wan">XX万</span> · 回本后约<span data-model="operator_steady_income_wan">XX万</span><br>
-      <strong>老板年纯利：</strong>第1年约<span data-model="operator_year1_wan">162万</span> · 第2年起 <span data-model="operator_year2_wan">约419万</span>
+      <strong>投资人回本：</strong><span data-model="realistic_payback_from_investment" contenteditable="false" class="">13个月（从出资日算起）</span>（从出资日算起，回本前分40%加速回本）<br>
+      <strong>合伙期限：</strong><span data-model="investor_term" contenteditable="false" class="">36个月</span>（3年，期满资产归运营方，<span data-model="investor_total_3y" contenteditable="false" class="">214万</span>总回报，<span data-model="investor_roi_3y" contenteditable="false" class="">214%</span>）<br>
+      <strong>老板月纯利：</strong>回本前约<span data-model="operator_income_wan" contenteditable="false" class="">21.3万</span> · 回本后约<span data-model="operator_steady_income_wan" contenteditable="false" class="">34.9万</span><br>
+      <strong>老板年纯利：</strong>第1年约<span data-model="operator_year1_wan" contenteditable="false" class="">约172万</span> · 第2年起 <span data-model="operator_year2_wan" contenteditable="false" class="">约419万</span>
     </div>
     <div class="version">版本 V11.3 · 老板不投钱 · 角色定位修正</div>
   
 
-</div>
+<div id="bp-toolbar" contenteditable="false"><button id="bp-edit-btn" class="bp-btn bp-btn-edit" contenteditable="false">编辑文字</button><button id="bp-save-btn" class="bp-btn bp-btn-save" style="display: none;" contenteditable="false">保存修改</button><span id="bp-status" class="bp-status"></span></div></div>
 
   <!-- ==================== 目录 ==================== -->
-  <div class="toc" id="page-toc" data-edit="toc">
+  <div class="toc" id="page-toc" data-edit="toc" contenteditable="false">
 
 
     <h2>目 录</h2>
@@ -2322,14 +2322,14 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
   <!-- ==================== 一、项目概述 ==================== -->
-  <div class="section" id="s1" data-edit="s1">
+  <div class="section" id="s1" data-edit="s1" contenteditable="false">
 
 
     <div class="section-header">
       <div class="section-num">一</div>
       <h2>项目概述</h2>
     </div>
-    <p>本项目位于<strong>黄辛庄农贸市场</strong>，总经营面积<strong><span data-model="area">2000㎡</span></strong>，打造爆品海鲜火锅自助门店。主营品类：鲜活海鲜、鲜榴莲、烤串、炒菜、啤酒饮料、独立小火锅。</p>
+    <p>本项目位于<strong>黄辛庄农贸市场</strong>，总经营面积<strong><span data-model="area" contenteditable="true" class="bp-data-editable" inputmode="decimal">1000㎡</span></strong>，打造爆品海鲜火锅自助门店。主营品类：鲜活海鲜、鲜榴莲、烤串、炒菜、啤酒饮料、独立小火锅。</p>
     <p>门店定位：<strong>大空间、高性价比、多品类全覆盖</strong>。依托农贸市场供应链优势、超大免费停车场、近郊自驾客流，主打家庭聚餐、朋友聚会、公司团建。区域无直接竞品，市场空白度高。</p>
     <div class="highlight-box green">
       <strong>项目核心指标：</strong><br>
@@ -2344,7 +2344,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 二、经营模式与产品结构 ==================== -->
-  <div class="section" id="s4" data-edit="s4">
+  <div class="section" id="s4" data-edit="s4" contenteditable="false">
 
 
     <div class="section-header">
@@ -2364,7 +2364,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 三、营收测算 ==================== -->
-  <div class="section" id="s6" data-edit="s6">
+  <div class="section" id="s6" data-edit="s6" contenteditable="false">
 
 
     <div class="section-header">
@@ -2373,7 +2373,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     </div>
     <div class="sub-title">1、人均消费定价</div>
     <div class="data-grid">
-      <div class="data-card"><div class="label">定价</div><div class="value green"><span data-model="price">169元/位</span></div></div>
+      <div class="data-card"><div class="label">定价</div><div class="value green"><span data-model="price" contenteditable="true" class="bp-data-editable" inputmode="decimal">169元/位</span></div></div>
       <div class="data-card"><div class="label">竞争品类均价</div><div class="value">169–328元</div></div>
     </div>
     <div class="highlight-box green"><strong>定价优势：</strong>169元极致性价比，差异化碾压竞品，适配大众、团建刚需客流。</div>
@@ -2383,44 +2383,44 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <table>
         <thead><tr><th>日期</th><th style="text-align:right;">日均营收</th><th style="text-align:right;">日均客流</th><th style="text-align:right;">约当翻台</th><th>说明</th></tr></thead>
         <tbody>
-          <tr><td>周一至周四（4天）</td><td style="text-align:right;"><span data-model="mon_thu_wan">3.5万</span></td><td style="text-align:right;"><span data-model="mon_thu_customers">207人</span></td><td style="text-align:right;"><span data-model="mon_thu_turnover">0.62次</span></td><td>工作日客流偏少，散客为主</td></tr>
-          <tr><td>周五（1天）</td><td style="text-align:right;"><span data-model="fri_wan">6.0万</span></td><td style="text-align:right;"><span data-model="fri_customers">355人</span></td><td style="text-align:right;"><span data-model="fri_turnover">1.06次</span></td><td>周末预热，晚间高峰</td></tr>
-          <tr><td>周六（1天）</td><td style="text-align:right;"><span data-model="sat_wan">12.0万</span></td><td style="text-align:right;"><span data-model="sat_customers">710人</span></td><td style="text-align:right;"><span data-model="sat_turnover">2.11次</span></td><td>爆满排队，午晚两轮全满</td></tr>
-          <tr><td>周日（1天）</td><td style="text-align:right;"><span data-model="sun_wan">10.0万</span></td><td style="text-align:right;"><span data-model="sun_customers">592人</span></td><td style="text-align:right;"><span data-model="sun_turnover">1.76次</span></td><td>火爆，下午略回落</td></tr>
-          <tr class="total-row"><td><strong>周合计</strong></td><td style="text-align:right;"><strong><span data-model="weekly_total_wan">42万</span></strong></td><td style="text-align:right;"><strong><span data-model="weekly_customers">2,485人</span></strong></td><td style="text-align:right;"><strong>—</strong></td><td>—</td></tr>
+          <tr><td>周一至周四（4天）</td><td style="text-align:right;"><span data-model="mon_thu_wan" contenteditable="false" class="">6.0万</span></td><td style="text-align:right;"><span data-model="mon_thu_customers" contenteditable="false" class="">355人</span></td><td style="text-align:right;"><span data-model="mon_thu_turnover" contenteditable="false" class="">0.74次</span></td><td>工作日客流偏少，散客为主</td></tr>
+          <tr><td>周五（1天）</td><td style="text-align:right;"><span data-model="fri_wan" contenteditable="false" class="">6.0万</span></td><td style="text-align:right;"><span data-model="fri_customers" contenteditable="false" class="">355人</span></td><td style="text-align:right;"><span data-model="fri_turnover" contenteditable="false" class="">0.74次</span></td><td>周末预热，晚间高峰</td></tr>
+          <tr><td>周六（1天）</td><td style="text-align:right;"><span data-model="sat_wan" contenteditable="false" class="">6.0万</span></td><td style="text-align:right;"><span data-model="sat_customers" contenteditable="false" class="">355人</span></td><td style="text-align:right;"><span data-model="sat_turnover" contenteditable="false" class="">0.74次</span></td><td>爆满排队，午晚两轮全满</td></tr>
+          <tr><td>周日（1天）</td><td style="text-align:right;"><span data-model="sun_wan" contenteditable="false" class="">6.0万</span></td><td style="text-align:right;"><span data-model="sun_customers" contenteditable="false" class="">355人</span></td><td style="text-align:right;"><span data-model="sun_turnover" contenteditable="false" class="">0.74次</span></td><td>火爆，下午略回落</td></tr>
+          <tr class="total-row"><td><strong>周合计</strong></td><td style="text-align:right;"><strong><span data-model="weekly_total_wan" contenteditable="false" class="">42万</span></strong></td><td style="text-align:right;"><strong><span data-model="weekly_customers" contenteditable="false" class="">2,485人</span></strong></td><td style="text-align:right;"><strong>—</strong></td><td>—</td></tr>
         </tbody>
       </table>
     </div>
     <div class="highlight-box green">
-      <strong>月度汇总：</strong><span data-model="monthly_summary">月均4.3周 × 42万/周 ≈ 180万/月（日均约6.0万）</span>，全年高低峰对冲后稳定可靠。
+      <strong>月度汇总：</strong><span data-model="monthly_summary" contenteditable="false" class="">月均4.3周 × 42万/周 ≈ 180万/月（日均约6.0万）</span>，全年高低峰对冲后稳定可靠。
     </div>
     <div class="sub-title">3、项目保守目标</div>
     <div class="data-grid">
-      <div class="data-card"><div class="label">日均核销营业额</div><div class="value green"><span data-model="daily_revenue">6.0万</span></div></div>
-      <div class="data-card"><div class="label">月度总营业额</div><div class="value green"><span data-model="monthly_revenue">180万</span></div></div>
+      <div class="data-card"><div class="label">日均核销营业额</div><div class="value green"><span data-model="daily_revenue" contenteditable="true" class="bp-data-editable" inputmode="decimal">6.0万</span></div></div>
+      <div class="data-card"><div class="label">月度总营业额</div><div class="value green"><span data-model="monthly_revenue" contenteditable="false" class="">180万</span></div></div>
     </div>
   
 
 </div>
 
 <!-- ==================== 四、项目利润测算 ==================== -->
-  <div class="section" id="s8" data-edit="s8">
+  <div class="section" id="s8" data-edit="s8" contenteditable="false">
 
 
     <div class="section-header">
       <div class="section-num">四</div>
       <h2>项目利润测算</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:8px;">以下为稳定月销<span data-model="monthly_revenue">180万</span>场景的利润测算。</p>
+    <p class="fs-085 color-gray" style="margin-bottom:8px;">以下为稳定月销<span data-model="monthly_revenue" contenteditable="false" class="">180万</span>场景的利润测算。</p>
     <div class="data-grid">
-      <div class="data-card"><div class="label">月度总营收</div><div class="value green"><span data-model="monthly_revenue_num">1,800,000元</span></div></div>
+      <div class="data-card"><div class="label">月度总营收</div><div class="value green"><span data-model="monthly_revenue_num" contenteditable="false" class="">1,800,000元</span></div></div>
     </div>
     <div class="highlight-box green" style="text-align:center;">
-      <strong style="font-size:1.2rem;">月度可分配纯利：<span data-model="dividend_base_display">456,400</span> 元</strong>
+      <strong style="font-size:1.2rem;">月度可分配纯利：<span data-model="dividend_base_display" contenteditable="false" class="">456,400</span> 元</strong>
     </div>
     <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
       <strong>📌 利润口径说明：</strong><br>
-      • 可分配纯利 = 月度总营收 − 全部运营成本(人工/食材/水电/杂费) − 抖音服务商费(4%) − 运营部门费(4%) = <span data-model="dividend_base_num">456,400</span>元<br>
+      • 可分配纯利 = 月度总营收 − 全部运营成本(人工/食材/水电/杂费) − 抖音服务商费(4%) − 运营部门费(4%) = <span data-model="dividend_base_num" contenteditable="false" class="">456400</span>元<br>
       • 8%为流量获客刚性成本（抖音服务商4%+运营部门4%），等同于食材、水电、人工，属于开店必须花的硬支出，不是老板的个人收益。<br>
       • 没有流量就没有客流，门店直接倒闭。这部分费用是给前端流量团队的，投资人和房东无需额外承担。
     </div>
@@ -2429,7 +2429,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 五、回本周期测算 ==================== -->
-  <div class="section" id="s11" data-edit="s11">
+  <div class="section" id="s11" data-edit="s11" contenteditable="false">
 
 
     <div class="section-header">
@@ -2437,9 +2437,9 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <h2>回本周期测算</h2>
     </div>
     <div class="data-grid">
-      <div class="data-card"><div class="label">投资人出资</div><div class="value"><span data-model="total_investment">100万</span></div></div>
-      <div class="data-card"><div class="label">投资人月分红（回本前40%）</div><div class="value green"><span data-model="investor_dividend">XX元</span></div></div>
-      <div class="data-card"><div class="label">投资人回本周期（含装修+爬坡，回本前40%加速）</div><div class="value green"><span data-model="realistic_payback"><span>约11个月</span></span></div></div>
+      <div class="data-card"><div class="label">投资人出资</div><div class="value"><span data-model="total_investment" contenteditable="true" class="bp-data-editable" inputmode="decimal">100万</span></div></div>
+      <div class="data-card"><div class="label">投资人月分红（回本前40%）</div><div class="value green"><span data-model="investor_dividend" contenteditable="false" class="">182,560元</span></div></div>
+      <div class="data-card"><div class="label">投资人回本周期（含装修+爬坡，回本前40%加速）</div><div class="value green"><span data-model="realistic_payback" contenteditable="false" class="">11个月（从开业算起）</span></div></div>
     </div>
     <div class="sub-title-sm">投资人资金回推演时间线（100万为投资人出资，老板不投钱）</div>
     <div class="table-wrap">
@@ -2464,7 +2464,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 六、项目风险控制 ==================== -->
-  <div class="section" id="s12" data-edit="s12">
+  <div class="section" id="s12" data-edit="s12" contenteditable="false">
 
 
     <div class="section-header">
@@ -2485,7 +2485,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 七、场地硬件与空间规划 ==================== -->
-  <div class="section" id="s2" data-edit="s2">
+  <div class="section" id="s2" data-edit="s2" contenteditable="false">
 
 
     <div class="section-header">
@@ -2495,13 +2495,13 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <div class="sub-title">1、场地面积分配</div>
     <div class="data-grid">
-      <div class="data-card"><div class="label">总面积</div><div class="value"><span data-model="area">2000㎡</span></div></div>
-      <div class="data-card"><div class="label">用餐区</div><div class="value green"><span data-model="area_dining">950㎡（47.5%）</span></div></div>
-      <div class="data-card"><div class="label">取餐明档区</div><div class="value"><span data-model="area_serving">300㎡（15%）</span></div></div>
-      <div class="data-card"><div class="label">后厨区</div><div class="value"><span data-model="area_kitchen">400㎡（20%）</span></div></div>
-      <div class="data-card"><div class="label">冷库+仓储</div><div class="value"><span data-model="area_storage">200㎡（10%）</span></div></div>
-      <div class="data-card"><div class="label">门厅/收银/等位</div><div class="value"><span data-model="area_lobby">80㎡（4%）</span></div></div>
-      <div class="data-card"><div class="label">卫生间+过道</div><div class="value"><span data-model="area_restroom">70㎡（3.5%）</span></div></div>
+      <div class="data-card"><div class="label">总面积</div><div class="value"><span data-model="area" contenteditable="true" class="bp-data-editable" inputmode="decimal">1000㎡</span></div></div>
+      <div class="data-card"><div class="label">用餐区</div><div class="value green"><span data-model="area_dining" contenteditable="false" class="">475㎡（47.5%）</span></div></div>
+      <div class="data-card"><div class="label">取餐明档区</div><div class="value"><span data-model="area_serving" contenteditable="false" class="">150㎡（15%）</span></div></div>
+      <div class="data-card"><div class="label">后厨区</div><div class="value"><span data-model="area_kitchen" contenteditable="false" class="">200㎡（20%）</span></div></div>
+      <div class="data-card"><div class="label">冷库+仓储</div><div class="value"><span data-model="area_storage" contenteditable="false" class="">100㎡（10%）</span></div></div>
+      <div class="data-card"><div class="label">门厅/收银/等位</div><div class="value"><span data-model="area_lobby" contenteditable="false" class="">40㎡（4%）</span></div></div>
+      <div class="data-card"><div class="label">卫生间+过道</div><div class="value"><span data-model="area_restroom" contenteditable="false" class="">35㎡（3.5%）</span></div></div>
     </div>
 
     <div class="sub-title">2、桌位布局</div>
@@ -2531,7 +2531,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 八、房东合作模式 ==================== -->
-  <div class="section" id="s10" data-edit="s10">
+  <div class="section" id="s10" data-edit="s10" contenteditable="false">
 
 
     <div class="section-header">
@@ -2574,7 +2574,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 九、装修与开业全套预算（70万全包） ==================== -->
-  <div class="section" id="s3" data-edit="s3">
+  <div class="section" id="s3" data-edit="s3" contenteditable="false">
 
 
     <div class="section-header">
@@ -2682,7 +2682,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 十、整体落地执行计划 ==================== -->
-  <div class="section" id="s13" data-edit="s13">
+  <div class="section" id="s13" data-edit="s13" contenteditable="false">
 
 
     <div class="section-header">
@@ -2703,15 +2703,15 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 十一、人员架构与月度人工成本 ==================== -->
-  <div class="section" id="s5" data-edit="s5">
+  <div class="section" id="s5" data-edit="s5" contenteditable="false">
 
 
     <div class="section-header">
       <div class="section-num">十一</div>
       <h2>人员架构与月度人工成本</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:12px;">适配日营业额<span data-model="daily_revenue">6.0万</span>满负荷运营，总编制 38人，月度人工总成本<span data-model="labor_cost_plain">215600</span>元（含社保、食宿、高峰兼职，北京房山上调）</p>
-    <div class="sub-title-sm">后厨 <span data-model="kitchen_staff">22人</span>（月度总成本 <span data-model="kitchen_cost">105,000元</span>）</div>
+    <p class="fs-085 color-gray" style="margin-bottom:12px;">适配日营业额<span data-model="daily_revenue" contenteditable="true" class="bp-data-editable" inputmode="decimal">6.0万</span>满负荷运营，总编制 38人，月度人工总成本<span data-model="labor_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">215600</span>元（含社保、食宿、高峰兼职，北京房山上调）</p>
+    <div class="sub-title-sm">后厨 <span data-model="kitchen_staff" contenteditable="false" class="">22人</span>（月度总成本 <span data-model="kitchen_cost" contenteditable="false" class="">105,000元</span>）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:45%;">岗位</th><th style="width:15%;text-align:right;">人数</th><th style="width:20%;text-align:right;">月薪/人</th><th style="width:20%;text-align:right;">小计</th></tr></thead>
@@ -2721,11 +2721,11 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
           <tr><td>热菜、烤串、凉菜</td><td style="text-align:right;">6</td><td style="text-align:right;">5,500</td><td style="text-align:right;">33,000</td></tr>
           <tr><td>仓储分拣</td><td style="text-align:right;">2</td><td style="text-align:right;">4,500</td><td style="text-align:right;">9,000</td></tr>
           <tr><td>洗碗杂工</td><td style="text-align:right;">4</td><td style="text-align:right;">2,800</td><td style="text-align:right;">11,200</td></tr>
-          <tr class="total-row"><td><strong>后厨小计</strong></td><td style="text-align:right;"><strong><span data-model="kitchen_staff_plain">22</span></strong></td><td style="text-align:right;">—</td><td style="text-align:right;"><strong><span data-model="kitchen_cost_plain">105000</span></strong></td></tr>
+          <tr class="total-row"><td><strong>后厨小计</strong></td><td style="text-align:right;"><strong><span data-model="kitchen_staff_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">22</span></strong></td><td style="text-align:right;">—</td><td style="text-align:right;"><strong><span data-model="kitchen_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">105000</span></strong></td></tr>
         </tbody>
       </table>
     </div>
-    <div class="sub-title-sm">前厅 <span data-model="front_staff">16人</span>（月度总成本 <span data-model="front_cost">75,000元</span>）</div>
+    <div class="sub-title-sm">前厅 <span data-model="front_staff" contenteditable="false" class="">16人</span>（月度总成本 <span data-model="front_cost" contenteditable="false" class="">75,000元</span>）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:45%;">岗位</th><th style="width:15%;text-align:right;">人数</th><th style="width:20%;text-align:right;">月薪/人</th><th style="width:20%;text-align:right;">小计</th></tr></thead>
@@ -2735,18 +2735,18 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
           <tr><td>巡台补餐服务</td><td style="text-align:right;">11</td><td style="text-align:right;">4,500</td><td style="text-align:right;">49,500</td></tr>
           <tr><td>机动保洁</td><td style="text-align:right;">1</td><td style="text-align:right;">3,500</td><td style="text-align:right;">3,500</td></tr>
           <tr><td>包吃住餐宿补贴</td><td style="text-align:right;">—</td><td style="text-align:right;">—</td><td style="text-align:right;">9,000</td></tr>
-          <tr class="total-row"><td><strong>前厅小计</strong></td><td style="text-align:right;"><strong><span data-model="front_staff_plain">16</span></strong></td><td style="text-align:right;">—</td><td style="text-align:right;"><strong><span data-model="front_cost_plain">75000</span></strong></td></tr>
+          <tr class="total-row"><td><strong>前厅小计</strong></td><td style="text-align:right;"><strong><span data-model="front_staff_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">16</span></strong></td><td style="text-align:right;">—</td><td style="text-align:right;"><strong><span data-model="front_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">75000</span></strong></td></tr>
         </tbody>
       </table>
     </div>
-    <div class="highlight-box"><strong>月度人工总成本：<span data-model="labor_cost_plain">215600</span>元</strong><br>
+    <div class="highlight-box"><strong>月度人工总成本：<span data-model="labor_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">215600</span>元</strong><br>
   <span style="font-size:0.85rem;color:#555;">后厨纯工资105,000 + 前厅纯工资（含餐宿补贴）75,000 + 社保单位缴纳+高峰兼职+其他福利≈35,600 = <strong>215,600元</strong>（北京房山上调12%）</span></div>
   
 
 </div>
 
 <!-- ==================== 十二、月度全套运营成本 ==================== -->
-  <div class="section" id="s7" data-edit="s7">
+  <div class="section" id="s7" data-edit="s7" contenteditable="false">
 
 
     <div class="section-header">
@@ -2754,7 +2754,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <h2>月度现金流水报表</h2>
     </div>
     <p class="fs-085 color-gray" style="margin-bottom:8px;">
-      以下为稳定月销<span data-model="monthly_revenue">180万</span>场景的现金流水报表。<br>
+      以下为稳定月销<span data-model="monthly_revenue" contenteditable="false" class="">180万</span>场景的现金流水报表。<br>
     </p>
 
     <!-- 现金流水 -->
@@ -2763,24 +2763,24 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <table>
         <thead><tr><th style="width:60%;">项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
         <tbody>
-          <tr><td style="color:#1a8a3a;font-weight:700;">月度营业收入</td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><span data-model="monthly_revenue_num">1,800,000元</span></td></tr>
+          <tr><td style="color:#1a8a3a;font-weight:700;">月度营业收入</td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><span data-model="monthly_revenue_num" contenteditable="false" class="">1,800,000元</span></td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 现金真实流出（运营成本） ——</td></tr>
-          <tr><td>① 人员工资实付</td><td style="text-align:right;"><span data-model="labor_cost_plain">215600</span></td></tr>
-          <tr><td>② 原材料采购实付</td><td style="text-align:right;"><span data-model="food_cost_num">864000</span></td></tr>
-          <tr><td>③ 水电燃气费</td><td style="text-align:right;"><span data-model="utility_cost_plain">60000</span></td></tr>
+          <tr><td>① 人员工资实付</td><td style="text-align:right;"><span data-model="labor_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">215600</span></td></tr>
+          <tr><td>② 原材料采购实付</td><td style="text-align:right;"><span data-model="food_cost_num" contenteditable="false" class="">864000</span></td></tr>
+          <tr><td>③ 水电燃气费</td><td style="text-align:right;"><span data-model="utility_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">60000</span></td></tr>
           <tr><td>④ 营销推广（已含在运营部门费4%中，由运营方统筹）</td><td style="text-align:right;color:#888;">0（从运营部门费支出）</td></tr>
-          <tr><td>⑤ 其他运营杂费实付</td><td style="text-align:right;"><span data-model="misc_cost_plain">60000</span></td></tr>
-          <tr class="total-row"><td><strong>月度现金总支出（运营成本）</strong></td><td style="text-align:right;"><strong><span data-model="cash_total_expense_num">1199600</span></strong></td></tr>
-          <tr style="background:#e8f8f5;"><td><strong>✅ 扣运营成本后现金毛利</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="cash_net_profit_num">600400</span></strong></td></tr>
+          <tr><td>⑤ 其他运营杂费实付</td><td style="text-align:right;"><span data-model="misc_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">60000</span></td></tr>
+          <tr class="total-row"><td><strong>月度现金总支出（运营成本）</strong></td><td style="text-align:right;"><strong><span data-model="cash_total_expense_num" contenteditable="false" class="">1199600</span></strong></td></tr>
+          <tr style="background:#e8f8f5;"><td><strong>✅ 扣运营成本后现金毛利</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="cash_net_profit_num" contenteditable="false" class="">600400</span></strong></td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 优先扣除两费 ——</td></tr>
-          <tr><td>⑥ 服务商费用（营收×4%）</td><td style="text-align:right;"><span data-model="service_fee_num">72000</span></td></tr>
-          <tr><td>⑦ 运营部门费用（营收×4%，独立团队无底薪）</td><td style="text-align:right;"><span data-model="operation_fee_num">72000</span></td></tr>
-          <tr style="background:#d5f5e3;"><td><strong>✅ 月度可分配纯利（三方分红统一基数）</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="dividend_base_num">456,400</span></strong></td></tr>
+          <tr><td>⑥ 服务商费用（营收×4%）</td><td style="text-align:right;"><span data-model="service_fee_num" contenteditable="false" class="">72000</span></td></tr>
+          <tr><td>⑦ 运营部门费用（营收×4%，独立团队无底薪）</td><td style="text-align:right;"><span data-model="operation_fee_num" contenteditable="false" class="">72000</span></td></tr>
+          <tr style="background:#d5f5e3;"><td><strong>✅ 月度可分配纯利（三方分红统一基数）</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="dividend_base_num" contenteditable="false" class="">456400</span></strong></td></tr>
         </tbody>
       </table>
     </div>
     <p class="fs-085 color-gray" style="margin-bottom:12px;">
-      ⚡ 设备付款月（开业首个完整月）：现金总支出 = <span data-model="cash_total_expense_num">1199600</span> + <span data-model="equipment_investment_plain">700000</span>（设备全款）= <strong><span data-model="equipment_month_expense_num">1899600</span></strong>，现金净利润 = <strong><span data-model="equipment_month_profit_num">-99600</span></strong>。
+      ⚡ 设备付款月（开业首个完整月）：现金总支出 = <span data-model="cash_total_expense_num" contenteditable="false" class="">1199600</span> + <span data-model="equipment_investment_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal">700000</span>（设备全款）= <strong><span data-model="equipment_month_expense_num" contenteditable="false" class="">1899600</span></strong>，现金净利润 = <strong><span data-model="equipment_month_profit_num" contenteditable="false" class="">-99600</span></strong>。
     </p>
     <div class="highlight-box" style="border-left:4px solid #2e86c1;font-size:0.85rem;">
       <strong>📌 现金流优化说明：</strong>食材供应商月结30天，当月食材成本次月结算，开业首月无需垫付食材采购款，流动资金压力大幅降低。
@@ -2792,7 +2792,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </div>
 
 <!-- ==================== 十三、三方分账机制 ==================== -->
-  <div class="section" id="s9" data-edit="s9">
+  <div class="section" id="s9" data-edit="s9" contenteditable="false">
 
 
     <div class="section-header">
@@ -2817,30 +2817,30 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <li><strong>房东分成（超额累进）：</strong>可分配纯利中30万以内部分按10%，超出30万部分按20%</li>
       <li><strong>剩余全部：</strong>归门店老板（运营方）所有</li>
     </ol>
-    <div class="sub-title-sm">当月具体分账明细（月销<span data-model="monthly_revenue">180万</span>稳定状态，可分配纯利口径）</div>
+    <div class="sub-title-sm">当月具体分账明细（月销<span data-model="monthly_revenue" contenteditable="false" class="">180万</span>稳定状态，可分配纯利口径）</div>
     <div class="table-wrap">
       <table>
         <thead><tr><th style="width:60%;">分账项目</th><th style="width:40%;text-align:right;">金额（元）</th></tr></thead>
         <tbody>
-          <tr><td>① 月度总营收</td><td style="text-align:right;"><span data-model="monthly_revenue_num">1,800,000元</span></td></tr>
-          <tr><td>② 减：全部运营成本（人工/食材/水电/杂费）</td><td style="text-align:right;color:#c0392b;"><span data-model="cash_total_expense_num">1,199,600</span></td></tr>
-          <tr><td>③ 减：抖音服务商费用（营收×4%，前端获客硬成本）</td><td style="text-align:right;color:#c0392b;"><span data-model="service_fee_num">72,000</span></td></tr>
-          <tr><td>④ 减：运营部门费用（营收×4%，达人/拍摄/直播硬成本）</td><td style="text-align:right;color:#c0392b;"><span data-model="operation_fee_num">72,000</span></td></tr>
-          <tr style="background:#d5f5e3;"><td><strong>⑤ 月度可分配纯利（三方分红统一基数）</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="dividend_base_num">456,400</span></strong></td></tr>
+          <tr><td>① 月度总营收</td><td style="text-align:right;"><span data-model="monthly_revenue_num" contenteditable="false" class="">1,800,000元</span></td></tr>
+          <tr><td>② 减：全部运营成本（人工/食材/水电/杂费）</td><td style="text-align:right;color:#c0392b;"><span data-model="cash_total_expense_num" contenteditable="false" class="">1199600</span></td></tr>
+          <tr><td>③ 减：抖音服务商费用（营收×4%，前端获客硬成本）</td><td style="text-align:right;color:#c0392b;"><span data-model="service_fee_num" contenteditable="false" class="">72000</span></td></tr>
+          <tr><td>④ 减：运营部门费用（营收×4%，达人/拍摄/直播硬成本）</td><td style="text-align:right;color:#c0392b;"><span data-model="operation_fee_num" contenteditable="false" class="">72000</span></td></tr>
+          <tr style="background:#d5f5e3;"><td><strong>⑤ 月度可分配纯利（三方分红统一基数）</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="dividend_base_num" contenteditable="false" class="">456400</span></strong></td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 三方分红（全部以可分配纯利为基数） ——</td></tr>
-          <tr><td>⑥ 投资人分红（回本前，分可分配纯利40%）</td><td style="text-align:right;color:#1a8a3a;"><span data-model="investor_dividend">182,560元</span></td></tr>
-          <tr><td>⑦ 房东分成（超额累进：30万内10% + 超出部分20%）</td><td style="text-align:right;"><span data-model="landlord_dividend">61,280元</span></td></tr>
-          <tr class="total-row"><td><strong>⑧ 门店老板（运营方）月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income">212,560元</span></strong></td></tr>
+          <tr><td>⑥ 投资人分红（回本前，分可分配纯利40%）</td><td style="text-align:right;color:#1a8a3a;"><span data-model="investor_dividend" contenteditable="false" class="">182,560元</span></td></tr>
+          <tr><td>⑦ 房东分成（超额累进：30万内10% + 超出部分20%）</td><td style="text-align:right;"><span data-model="landlord_dividend" contenteditable="false" class="">61,280元</span></td></tr>
+          <tr class="total-row"><td><strong>⑧ 门店老板（运营方）月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income" contenteditable="false" class="">212,560元</span></strong></td></tr>
         </tbody>
       </table>
     </div>
     <div class="highlight-box" style="border-left:4px solid #8e44ad;">
       <strong>📌 利润基数定义（写进合同）：</strong><br>
-      「可分配纯利」= 总营业额 − 全部运营成本(人工/食材/水电/杂费) − 抖音服务商费用(<span data-model="service_fee_pct">4%</span>) − 运营部门费用(<span data-model="operation_pct">4%</span>)<br>
+      「可分配纯利」= 总营业额 − 全部运营成本(人工/食材/水电/杂费) − 抖音服务商费用(<span data-model="service_fee_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">4%</span>) − 运营部门费用(<span data-model="operation_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">4%</span>)<br>
       8%流量费已包含抖音服务商和运营部门全部营销支出，属于开店刚性成本，不由老板个人承担。<br>
       投资人分红基数 = 可分配纯利；房东分成基数 = 可分配纯利（超额累进：30万以内10% / 超出部分20%）。<br>
       <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「可分配纯利」定义，否则结算时各执一词，产生纠纷。</span><br>
-      <span style="color:#2e86c1;">📌 稳态可分配纯利≈<span data-model="dividend_base_num">456,400</span>元，回本前投资人分40%≈182,560元，房东超额累进≈61,280元，运营方≈212,560元。</span>
+      <span style="color:#2e86c1;">📌 稳态可分配纯利≈<span data-model="dividend_base_num" contenteditable="false" class="">456400</span>元，回本前投资人分40%≈182,560元，房东超额累进≈61,280元，运营方≈212,560元。</span>
     </div>
     <div class="highlight-box" style="border-left:4px solid #c0392b;font-size:0.85rem;">
       <strong>📌 财务透明与防跳档机制（写进合同）：</strong><br><br>
@@ -2861,7 +2861,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     <div class="highlight-box" style="border-left:4px solid #8e44ad;">
       <strong>定位：固定期限财务合伙人（非干股、非按劳分配）</strong><br>
       投资人出资100万但不参与日常经营，属于纯资本投资。按「回本前高比例加速回本、回本后降比例享收益、到期退出」原则设计。<br><br>
-      <strong>📌 合伙期限：<span data-model="investor_term">36个月</span>（3年）</strong><br>
+      <strong>📌 合伙期限：<span data-model="investor_term" contenteditable="false" class="">36个月</span>（3年）</strong><br>
       • <strong>回本前（开业第6-11个月）：</strong>月分红约18.3万（可分配纯利×40%），6个月累计约109.5万，已收回本金<br>
       • <strong>回本后（第12-36个月）：</strong>月分红约4.6万（可分配纯利×10%），25个月累计约114万，纯收益<br>
       • <strong>3年总分红：约214万，投资回报率约214%</strong><br><br>
@@ -2937,7 +2937,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
 
   <!-- ==================== 十四、角色收益速览 ==================== -->
-  <div class="section" id="s14" data-edit="s14">
+  <div class="section" id="s14" data-edit="s14" contenteditable="false">
 
     <div class="section-header">
       <div class="section-num">十四</div>
@@ -2956,28 +2956,28 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
         <div class="metric">
           <span class="label">月分红（回本前40%）</span>
-          <span class="value"><span data-model="investor_dividend_num">182,560</span>元</span>
+          <span class="value"><span data-model="investor_dividend_num" contenteditable="false" class="">182560</span>元</span>
         </div>
         <div class="metric">
           <span class="label">月分红（回本后10%）</span>
-          <span class="value"><span data-model="investor_dividend_post_num">45,640</span>元</span>
+          <span class="value"><span data-model="investor_dividend_post_num" contenteditable="true" class="bp-data-editable" inputmode="decimal">45640</span>元</span>
         </div>
         <div class="divider"></div>
         <div class="metric">
           <span class="label">第1年分红</span>
-          <span class="value"><span data-model="investor_year1_dividend_wan">约109万</span></span>
+          <span class="value"><span data-model="investor_year1_dividend_wan" contenteditable="false" class="">105万</span></span>
         </div>
         <div class="metric">
           <span class="label">3年总分红</span>
-          <span class="value large"><span data-model="investor_total_3y_wan">约214万</span></span>
+          <span class="value large"><span data-model="investor_total_3y_wan" contenteditable="false" class="">214万</span></span>
         </div>
         <div class="metric">
           <span class="label">投资回报率</span>
-          <span class="value large" style="color:#ffd700;"><span data-model="investor_roi_3y">214%</span></span>
+          <span class="value large" style="color:#ffd700;"><span data-model="investor_roi_3y" contenteditable="false" class="">214%</span></span>
         </div>
         <div class="metric">
           <span class="label">回本周期</span>
-          <span class="value"><span data-model="realistic_payback">约11个月</span>（从开业算起）</span>
+          <span class="value"><span data-model="realistic_payback" contenteditable="false" class="">11个月（从开业算起）</span>（从开业算起）</span>
         </div>
         <div class="tag">本金安全兜底 · 资产处置权</div>
       </div>
@@ -3020,20 +3020,20 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
         <div class="metric">
           <span class="label">月均纯利</span>
-          <span class="value large">第1年 <span data-model="operator_income_wan">36.5万</span></span>
+          <span class="value large">第1年 <span data-model="operator_income_wan" contenteditable="false" class="">21.3万</span></span>
         </div>
         <div class="metric">
           <span class="label"></span>
-          <span class="value large">第2-3年 ≈<span data-model="operator_steady_income_wan">32.8万</span></span>
+          <span class="value large">第2-3年 ≈<span data-model="operator_steady_income_wan" contenteditable="false" class="">34.9万</span></span>
         </div>
         <div class="divider"></div>
         <div class="metric">
           <span class="label">第1年纯利</span>
-          <span class="value"><span data-model="operator_year1_wan">约162万</span></span>
+          <span class="value"><span data-model="operator_year1_wan" contenteditable="false" class="">约172万</span></span>
         </div>
         <div class="metric">
           <span class="label">3年总纯利</span>
-          <span class="value large" style="color:#ffd700;"><span data-model="operator_total_3y_wan">约1,001万</span></span>
+          <span class="value large" style="color:#ffd700;"><span data-model="operator_total_3y_wan" contenteditable="false" class="">1011万</span></span>
         </div>
         <div class="metric">
           <span class="label">投资回报</span>
@@ -3046,9 +3046,9 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
     <div class="highlight-box" style="margin-top:20px;background:#f0f8fc;">
       <strong>📌 快速决策参考：</strong><br>
-      • <strong>投资人视角：</strong>100万投入，3年回报约<span data-model="investor_total_3y_wan">214万</span>，年化回报率约75%。回本前分40%加速回本，最快约12个月收回本金，之后享10%纯收益。适合追求高收益、能接受餐饮实体投资周期的财务投资人。<br>
+      • <strong>投资人视角：</strong>100万投入，3年回报约<span data-model="investor_total_3y_wan" contenteditable="false" class="">214万</span>，年化回报率约75%。回本前分40%加速回本，最快约12个月收回本金，之后享10%纯收益。适合追求高收益、能接受餐饮实体投资周期的财务投资人。<br>
       • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，超额累进分成（30万以内10%/超出部分20%），月均约6.1万，3年共约220万。适合持有商业物业、愿共担风险的资产方。<br>
-      • <strong>老板视角：</strong>无需出资，承担后端运营管理，3年可获纯利约<span data-model="operator_total_3y_wan">1,001万</span>。适合有餐饮运营经验、能调动供应链资源的项目组织者。
+      • <strong>老板视角：</strong>无需出资，承担后端运营管理，3年可获纯利约<span data-model="operator_total_3y_wan" contenteditable="false" class="">1011万</span>。适合有餐饮运营经验、能调动供应链资源的项目组织者。
     </div>
   
 </div>
@@ -3064,5 +3064,5 @@ window.CODE_VERSION = '20260822-001';
 </script>
 <script src="business-model.js"></script>
 <!-- 持久化变量值：保存时更新，加载时 BusinessModel 读取 -->
-<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":2000,"price":169,"dailyRevenue":60000,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000}}</script>
-<script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body></html>
+<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":1000,"price":169,"dailyRevenue":60000,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000}}</script>
+<script src="editor.js"></script><div class="dark"><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-tag"></div><div class="trae-browser-inspect-highlight-box"></div><div class="trae-browser-inspect-highlight-box trae-browser-inspect-select-highlight-box" style="cursor: grab; pointer-events: auto;"></div><div class="trae-browser-inspect-overlay" style="display: none;"></div><div class="trae-browser-inspect-comment-card-container"></div><div class="trae-browser-inspect-drop-indicator" style="position: fixed; pointer-events: none; z-index: 999999; display: none; background: linear-gradient(90deg, rgb(0, 102, 255), rgb(0, 170, 255)); box-shadow: rgba(0, 102, 255, 0.4) 0px 0px 4px 1px, rgba(0, 102, 255, 0.3) 0px 0px 8px 2px, rgba(0, 102, 255, 0.2) 0px 0px 12px 3px; transition: transform 0.15s, width 0.15s, height 0.15s;"></div></div><div class="trae-browser-inspect-text-selection-container dark"><div class="trae-browser-inspect-comment-card-container"></div></div><div class="trae-browser-inspect-operation dark"></div></body><div class="xl-chrome-ext-bar_4DB361DE-01F7-4376-B494-639E489D19ED" id="xl_chrome_ext_4DB361DE-01F7-4376-B494-639E489D19ED" data-v-app="" style="display: block;"><div class=""><div id="xl_chrome_ext_video_tag_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED" config="[object Object]" uiversion="v2" exception="false" latestvideosrc="" isshowvideotag="false" isshowdownloadbar="true" isshowcloudaddbar="false"><div class="_video_op_wrapper_96mx8_1" config="[object Object]" uiversion="v2" style="display: none;"><ul class="_video_op_list_96mx8_17"><li class="_op_item_96mx8_39 _download_96mx8_45"><span class="_op_icon_96mx8_25"></span><span class="_op_text_96mx8_31">下载</span></li><li class="_op_item_96mx8_39 _screen_96mx8_51"><span class="_op_icon_96mx8_25"></span><span class="_op_text_96mx8_31">投屏</span></li></ul></div></div><div class="badge_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED _badge_wrapper_wnbzb_1" id="badge_wrapper_4DB361DE-01F7-4376-B494-639E489D19ED"><div class="_logo_wnbzb_24"></div><span class="_line_wnbzb_32"></span><div class="_text_wrapper_wnbzb_39"><span class="_download_icon_wnbzb_51"></span><span class="_text_wnbzb_39">高速下载</span></div></div><!----><!----><!----><!----><div class="_container_wq4mj_4"><!----></div></div></div></html>
