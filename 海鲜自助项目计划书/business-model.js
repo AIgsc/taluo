@@ -375,7 +375,10 @@
         weekend_part_time_cost_wan: formatWan(i.weekendPartTimeCost),
         social_insurance_base_wan: (i.socialInsuranceBase / 10000).toFixed(2) + '万',
         actual_labor_cost_wan: formatWan(actualLaborCost),
+        actual_labor_cost_num: actualLaborCost,
         actual_social_insurance_wan: formatWan(actualSocialInsurance),
+        actual_social_insurance_num: actualSocialInsurance,
+        weekend_part_time_cost_num: i.weekendPartTimeCost,
 
         // ===== 4. 投资 =====
         total_investment: formatWan(i.totalInvestment),
