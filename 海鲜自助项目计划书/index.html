@@ -3074,6 +3074,139 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
   
 </div>
 
+  <!-- ==================== 实战数据填写区 ==================== -->
+<div class="section" id="s-practical" style="border-left:4px solid #8e44ad;background:#faf5ff;">
+  <div class="section-header">
+    <div class="section-num" style="background:#8e44ad;">📋</div>
+    <h2 style="color:#8e44ad;">实战数据填写区</h2>
+  </div>
+  <p class="fs-085 color-gray" style="margin-bottom:8px;">以下数据需根据真实谈判、现场勘测、官方报价填写，替换测算值。点击数字可直接修改。</p>
+
+  <div class="highlight-box" style="border-left:4px solid #8e44ad;margin:12px 0;background:#faf5ff;">
+    <strong style="color:#8e44ad;">一、签约启动阶段（直接决定合同有效性与预算底线）</strong><br>
+    <span style="font-size:0.8rem;color:#888;">以真实谈判、现场勘测、官方报价为准，禁用估算值</span>
+    <table style="width:100%;font-size:0.85rem;border-collapse:collapse;margin-top:6px;">
+      <tr>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          ① 工程真实报价：<span data-model="actual_renovation_cost" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">700000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（消防改造/电力增容/排烟下水/海鲜池维生系统/冷库/中央空调6项）</span>
+        </td>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          ② 流动资金预警线：<span data-model="working_capital_alert" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">100000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（根据月度固定支出规模重新测算安全阈值）</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ③ 证照办理成本：<span data-model="license_cost" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">30000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（食品经营许可证/消防验收/环评/营业执照含代办）</span>
+        </td>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ④ 社保缴纳基数：<span data-model="social_insurance_base" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">5000</span>元/人/月<br>
+          <span style="font-size:0.7rem;color:#999;">（按北京房山当地社保政策填写）</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ⑤ 食材损耗率：<span data-model="food_waste_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:30px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">3</span>%<br>
+          <span style="font-size:0.7rem;color:#999;">（海鲜/榴莲损耗波动大，按实际核算）</span>
+        </td>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ⑥ 投资人累计已分红：<span data-model="investor_cum_dividend" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">0</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（40%/10%比例切换的唯一触发依据，必须精确记账）</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="highlight-box" style="border-left:4px solid #e67e22;margin:12px 0;background:#fffaf0;">
+    <strong style="color:#e67e22;">二、筹备与爬坡阶段（影响开业节奏与首月盈亏）</strong><br>
+    <span style="font-size:0.8rem;color:#888;">按北京房山当地招聘市场真实行情填写</span>
+    <table style="width:100%;font-size:0.85rem;border-collapse:collapse;margin-top:6px;">
+      <tr>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          ① 筹备期人工成本：<span data-model="prep_labor_cost" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #e67e22;color:#e67e22;cursor:pointer;">120000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（招聘培训期间到岗人数与薪资）</span>
+        </td>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          ② 开业营销预算：<span data-model="opening_marketing_budget" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #e67e22;color:#e67e22;cursor:pointer;">50000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（抖音投流/达人探店/开业活动，从运营部门费列支）</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ③ 周末兼职月均成本：<span data-model="weekend_part_time_cost" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #e67e22;color:#e67e22;cursor:pointer;">30000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（周末/节假日兼职人员数量、时薪与排班）</span>
+        </td>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ④ 实际人工成本（含社保+兼职）：<span data-model="actual_labor_cost_wan" contenteditable="false" class="" style="color:#e67e22;font-weight:600;">27.6万</span><br>
+          <span style="font-size:0.7rem;color:#999;">（基础人工+周末兼职+社保，自动计算）</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="highlight-box" style="border-left:4px solid #27ae60;margin:12px 0;background:#f0faf4;">
+    <strong style="color:#27ae60;">三、稳态运营后每月必须更新（直接影响分账与经营决策）</strong><br>
+    <span style="font-size:0.8rem;color:#888;">用真实经营数据替换测算值，每月更新</span>
+    <table style="width:100%;font-size:0.85rem;border-collapse:collapse;margin-top:6px;">
+      <tr>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          ① 月度实际总营收：<span data-model="monthly_revenue_raw" contenteditable="false" class="" style="color:#27ae60;font-weight:600;">1800000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（按抖音核销+线下收银真实到账，替代测算值）</span>
+        </td>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          ② 月度实际食材成本率：<span data-model="food_cost_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:30px;text-align:center;border-bottom:1px dashed #27ae60;color:#27ae60;cursor:pointer;">48</span>%<br>
+          <span style="font-size:0.7rem;color:#999;">（按实际采购额+损耗+期末库存核算）</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ③ 月度水电燃气杂费：<span data-model="utility_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #27ae60;color:#27ae60;cursor:pointer;">60000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（2000㎡带海鲜池/冷库，能耗随季节波动）</span>
+        </td>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ④ 月度杂费：<span data-model="misc_cost_plain" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #27ae60;color:#27ae60;cursor:pointer;">60000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（按真实缴费账单填写）</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ⑤ 可分配纯利：<span data-model="dividend_base_display" contenteditable="false" class="" style="color:#27ae60;font-weight:600;">456,400</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（自动计算，决定当月是否具备分红条件）</span>
+        </td>
+        <td style="padding:4px 8px;vertical-align:top;">
+          ⑥ 投资人月分红：<span data-model="investor_dividend_num" contenteditable="false" class="" style="color:#27ae60;font-weight:600;">182,560</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（回本前40%/回本后10%，自动切换）</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="highlight-box" style="border-left:4px solid #c0392b;margin:12px 0;background:#fff5f5;">
+    <strong style="color:#c0392b;">四、风险兜底类</strong>
+    <table style="width:100%;font-size:0.85rem;border-collapse:collapse;margin-top:6px;">
+      <tr>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          流动资金预警线：<span data-model="working_capital_alert" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #c0392b;color:#c0392b;cursor:pointer;">100000</span>元<br>
+          <span style="font-size:0.7rem;color:#999;">（低于此线需立即补充流动资金）</span>
+        </td>
+        <td style="padding:4px 8px;width:50%;vertical-align:top;">
+          设备残值参考：海鲜池/冷库/空调等二手市场价<br>
+          <span style="font-size:0.7rem;color:#999;">（用于清算场景的本金兜底测算）</span>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="highlight-box" style="background:#fff;border:1px solid #8e44ad;margin:12px 0;font-size:0.8rem;">
+    <strong>📌 核心根数据提醒：</strong>以下三个数据是整个计划书所有测算的假设根基，落地时必须第一时间用真实数据替换：<br>
+    • <strong>工程真实报价</strong>（<span data-model="actual_renovation_cost" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:50px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">700000</span>元）— 直接决定总投资是否突破100万阈值<br>
+    • <strong>食材实际成本率</strong>（<span data-model="food_cost_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal" style="display:inline-block;min-width:30px;text-align:center;border-bottom:1px dashed #8e44ad;color:#8e44ad;cursor:pointer;">48</span>%）— 直接影响利润基数<br>
+    • <strong>月度真实客流营收</strong>（7天日营收可编辑）— 所有利润计算的底层基础
+  </div>
+</div>
+
   <div class="page-number">— 全文完 —</div>
 
 </div>
@@ -3085,5 +3218,5 @@ window.CODE_VERSION = '20260822-001';
 </script>
 <script src="business-model.js"></script>
 <!-- 持久化变量值：保存时更新，加载时 BusinessModel 读取 -->
-<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":2000,"price":169,"monRev":35100,"tueRev":35100,"wedRev":35100,"thuRev":35100,"friRev":93200,"satRev":93200,"sunRev":93200,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000}}</script>
+<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":2000,"price":169,"monRev":35100,"tueRev":35100,"wedRev":35100,"thuRev":35100,"friRev":93200,"satRev":93200,"sunRev":93200,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000,"actualRenovationCost":700000,"workingCapitalAlert":100000,"investorCumDividend":0,"prepLaborCost":120000,"openingMarketingBudget":50000,"foodWastePct":3,"licenseCost":30000,"weekendPartTimeCost":30000,"socialInsuranceBase":5000}}</script>
 <script src="editor.js"></script></body></html>

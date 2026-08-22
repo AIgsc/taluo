@@ -68,6 +68,17 @@
       frontCost: 75000,        // 前厅月度总成本 元
       staffInitialCost: 200000, // 前期人工组建费用 元
       foodInitialCost: 100000,  // 首批食材备货费用 元
+
+      // ===== 实战填写字段（签约启动/筹备/运营阶段） =====
+      actualRenovationCost: 700000, // ① 工程真实报价(6项核心工程) 元
+      workingCapitalAlert: 100000,  // ② 流动资金预警线 元
+      investorCumDividend: 0,       // ③ 投资人累计已分红额(40%/10%切换依据) 元
+      prepLaborCost: 120000,        // ④ 筹备期人工成本(招聘培训期) 元
+      openingMarketingBudget: 50000,// ⑤ 开业营销预算(从运营部门费列支) 元
+      foodWastePct: 3,              // ⑥ 食材损耗率 %(海鲜/榴莲波动大)
+      licenseCost: 30000,           // ⑦ 证照办理成本(含代办) 元
+      weekendPartTimeCost: 30000,   // ⑧ 周末兼职月均成本 元
+      socialInsuranceBase: 5000,    // ⑨ 社保缴纳基数 元/人/月
     },
 
     // ----- 计算结果缓存 -----
@@ -90,9 +101,13 @@
 
       // ========== 基础计算 ==========
       var monthlyRevenue = Math.round(dailyRevenue * 30);
-      var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
+      // 食材成本 = 营收 × 成本率 × (1 + 损耗率)
+      var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100 * (1 + i.foodWastePct / 100));
       var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
-      var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
+      // 实际人工 = 基础人工 + 周末兼职 + 社保(人均基数×人数×单位比例32%)
+      var actualSocialInsurance = Math.round(i.socialInsuranceBase * i.staffCount * 0.32);
+      var actualLaborCost = i.laborCost + i.weekendPartTimeCost + actualSocialInsurance;
+      var cashTotalExpense = actualLaborCost + foodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
       var cashNetProfit = monthlyRevenue - cashTotalExpense;
       var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
       var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
@@ -187,7 +202,8 @@
 
       // ========== 老板（运营方）3年各年收益 ==========
       var opYear1 = 0, opYear2 = 0, opYear3 = 0;
-      var opCumInvestor = 0;
+      // 从实战累计已分红额开始，剩余需回本金额
+      var opCumInvestor = i.investorCumDividend || 0;
       for (var om = 1; om <= 36; om++) {
         var opDiv = 0;
         if (om >= 6) {
@@ -346,6 +362,20 @@
         weekly_total_plain: weeklyTotal,
 
         monthly_summary: '月均4.3周 × ' + formatWan(weeklyTotal) + '/周 ≈ ' + formatWan(monthlyRevenue) + '/月（日均约' + formatWan(Math.round(dailyRevenue)) + '）',
+
+        // ===== 实战填写字段值输出 =====
+        actual_renovation_cost_wan: formatWan(i.actualRenovationCost),
+        working_capital_alert_wan: formatWan(i.workingCapitalAlert),
+        investor_cum_dividend_wan: formatWan(i.investorCumDividend),
+        prep_labor_cost_wan: formatWan(i.prepLaborCost),
+        prep_labor_cost_plain: i.prepLaborCost,
+        opening_marketing_budget_wan: formatWan(i.openingMarketingBudget),
+        food_waste_pct_str: i.foodWastePct + '%',
+        license_cost_wan: formatWan(i.licenseCost),
+        weekend_part_time_cost_wan: formatWan(i.weekendPartTimeCost),
+        social_insurance_base_wan: (i.socialInsuranceBase / 10000).toFixed(2) + '万',
+        actual_labor_cost_wan: formatWan(actualLaborCost),
+        actual_social_insurance_wan: formatWan(actualSocialInsurance),
 
         // ===== 4. 投资 =====
         total_investment: formatWan(i.totalInvestment),
@@ -580,6 +610,15 @@
       'sun_plain': 'sunRev',
       'total_investment': 'totalInvestment',
       'equipment_investment': 'equipmentInvestment',
+      'actual_renovation_cost': 'actualRenovationCost',
+      'working_capital_alert': 'workingCapitalAlert',
+      'investor_cum_dividend': 'investorCumDividend',
+      'prep_labor_cost': 'prepLaborCost',
+      'opening_marketing_budget': 'openingMarketingBudget',
+      'food_waste_pct': 'foodWastePct',
+      'license_cost': 'licenseCost',
+      'weekend_part_time_cost': 'weekendPartTimeCost',
+      'social_insurance_base': 'socialInsuranceBase',
       'food_cost_pct': 'foodCostPct',
       'rent_plain': 'rent',
       'labor_cost_plain': 'laborCost',
