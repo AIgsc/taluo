@@ -41,6 +41,7 @@
         'border:none;padding:6px 14px;border-radius:6px;cursor:pointer;' +
         'font-size:13px;font-weight:600;transition:all 0.2s;' +
         'touch-action:manipulation;-webkit-tap-highlight-color:rgba(255,255,255,0.2);' +
+        'user-select:none;-webkit-user-select:none;' +
       '}' +
       '#bp-toolbar .bp-btn-edit{background:rgba(93,173,226,0.85);color:#fff;}' +
       '#bp-toolbar .bp-btn-edit:hover{background:#2e86c1;}' +
@@ -81,6 +82,18 @@
     document.getElementById('bp-edit-btn').addEventListener('click', toggleEdit);
     document.getElementById('bp-var-btn').addEventListener('click', toggleVarModal);
     document.getElementById('bp-save-btn').addEventListener('click', saveContent);
+
+    // 确保工具栏不被继承 contentEditable
+    bar.contentEditable = false;
+    var btns = bar.querySelectorAll('button');
+    btns.forEach(function(b) { b.contentEditable = false; });
+
+    // 阻止 mousedown 冒泡到父级可编辑元素（防止按钮被意外编辑）
+    bar.addEventListener('mousedown', function(e) {
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+        e.stopPropagation();
+      }
+    });
   }
 
   // ==================== 切换编辑模式 ====================
@@ -91,6 +104,14 @@
       el.contentEditable = editMode;
       el.classList.toggle('bp-editing', editMode);
     });
+
+    // 防止工具栏按钮继承 contentEditable（工具栏在 #page-cover 内部）
+    var toolbar = document.getElementById('bp-toolbar');
+    if (toolbar) {
+      toolbar.contentEditable = false;
+      var btns = toolbar.querySelectorAll('button');
+      btns.forEach(function(b) { b.contentEditable = false; });
+    }
 
     document.getElementById('bp-edit-btn').textContent = editMode ? '完成编辑' : '编辑文字';
     document.getElementById('bp-save-btn').style.display = editMode || varMode ? 'inline-block' : 'none';
