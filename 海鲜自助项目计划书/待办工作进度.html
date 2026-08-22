@@ -415,6 +415,12 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 </style>
 </head>
 <body>
+<nav class="site-nav" style="display:flex;align-items:center;gap:4px;background:#1a1a2e;padding:0 16px;height:44px;color:#fff;font-size:0.82rem;overflow-x:auto;white-space:nowrap;z-index:999;position:relative;">
+  <span style="font-weight:700;margin-right:12px;font-size:0.85rem;opacity:0.9;flex-shrink:0;">🦐 海鲜自助</span>
+  <a href="index.html" style="color:rgba(255,255,255,0.7);text-decoration:none;padding:4px 10px;border-radius:4px;transition:all 0.15s;">首页</a>
+  <a href="纯利计算器.html" style="color:rgba(255,255,255,0.7);text-decoration:none;padding:4px 10px;border-radius:4px;transition:all 0.15s;">纯利计算器</a>
+  <a href="待办工作进度.html" style="color:#fff;text-decoration:none;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.15);font-weight:600;">待办工作进度</a>
+</nav>
 <div class="container">
 
   <div class="header">
@@ -744,7 +750,7 @@ var DEFAULT_DATA = {
 var DATA_VERSION = 4; // 增: 版本4=新增实战落地待填数据分类（cat_16）
 
 // ==================== 状态管理 ====================
-var API_URL = '/api/todo';
+// 持久化方式：bp-saved-vars HTML标签（无需API服务器）
 var appData = null;
 var currentReportItem = null;
 var debounceTimer = null;
@@ -1302,24 +1308,25 @@ function reorderItems() {
   });
 }
 
-// ==================== 自动保存 ====================
+// ==================== 自动保存（bp-saved-vars HTML标签持久化） ====================
 function scheduleSave() {
   if (debounceTimer) clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(saveToServer, 1500);
+  debounceTimer = setTimeout(saveToVars, 1500);
 }
 
-function saveToServer() {
+function saveToVars() {
   if (!appData) return;
-  fetch(API_URL + '/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: appData })
-  }).then(function(r) { return r.json(); }).then(function(res) {
-    if (res.success) showToast('已自动保存');
-  }).catch(function(e) {
+  try {
+    var el = document.getElementById('bp-saved-vars');
+    if (el) {
+      var data = JSON.parse(el.textContent) || {};
+      data.todoData = appData;
+      el.textContent = JSON.stringify(data);
+      if (window.hasChanges !== undefined) window.hasChanges = true;
+    }
+  } catch(e) {
     console.error('Save failed:', e);
-    showToast('⚠️ 保存失败，请检查网络连接');
-  });
+  }
 }
 
 function showToast(msg) {
@@ -1331,37 +1338,32 @@ function showToast(msg) {
 
 // ==================== 加载数据 ====================
 function loadData() {
-  // Phase 1: 先渲染本地数据，用户立刻看到内容
-  appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
-  appData.data_version = DATA_VERSION;
-  migrateItemFields();
-  render();
-
-  // Phase 2: 后台异步加载服务器数据，同步最新状态
-  fetch(API_URL)
-    .then(function(r) { return r.json(); })
-    .then(function(res) {
-      if (res.data && res.data.categories && res.data.categories.length > 0) {
-        if (res.data.data_version === DATA_VERSION) {
-          appData = res.data;
+  // 从 bp-saved-vars 加载
+  try {
+    var el = document.getElementById('bp-saved-vars');
+    if (el) {
+      var data = JSON.parse(el.textContent);
+      if (data && data.todoData && data.todoData.categories && data.todoData.categories.length > 0) {
+        if (data.todoData.data_version === DATA_VERSION) {
+          appData = data.todoData;
         } else {
           console.log('数据版本不一致，使用最新 DEFAULT_DATA (v' + DATA_VERSION + ')');
           appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
           appData.data_version = DATA_VERSION;
-          saveToServer();
+          saveToVars();
         }
       } else {
         appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
         appData.data_version = DATA_VERSION;
-        saveToServer();
+        saveToVars();
       }
-      migrateItemFields();
-      render();
-    })
-    .catch(function(e) {
-      console.log('Load failed, using cached:', e);
-      // 本地数据已渲染，无需额外处理
-    });
+    }
+  } catch(e) {
+    appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    appData.data_version = DATA_VERSION;
+  }
+  migrateItemFields();
+  render();
 }
 
 // ==================== 字段迁移兼容（新增字段时自动填充默认值） ====================
@@ -1411,5 +1413,8 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+<!-- 持久化变量 -->
+<script id="bp-saved-vars" type="application/json">{"version":1,"todoData":{}}</script>
+<script src="editor.js"></script>
 </body>
 </html>

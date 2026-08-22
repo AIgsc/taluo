@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>纯利计算器 - 海鲜自助项目计划书</title>
+<style>
+  :root { --bg:#f5f6fa; --card:#fff; --text:#1a2a3a; --text-light:#6b7a8a; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; padding-bottom:80px; }
+  .container { max-width:1000px; margin:0 auto; padding:0 16px; }
+
+  /* ====== Nav ====== */
+  nav.site-nav { display:flex; align-items:center; gap:4px; background:#1a2a3a; padding:0 16px; height:44px; color:#fff; font-size:0.82rem; overflow-x:auto; white-space:nowrap; }
+  nav.site-nav .nav-brand { font-weight:700; margin-right:12px; font-size:0.85rem; opacity:0.9; flex-shrink:0; }
+  nav.site-nav a { color:rgba(255,255,255,0.7); text-decoration:none; padding:4px 10px; border-radius:4px; transition:all 0.15s; }
+  nav.site-nav a:hover { background:rgba(255,255,255,0.1); color:#fff; }
+  nav.site-nav a.active { color:#fff; background:rgba(255,255,255,0.15); font-weight:600; }
+
+  /* ====== Header ====== */
+  .page-header { padding:24px 0 16px; }
+  .page-header h1 { font-size:1.4rem; margin-bottom:4px; }
+  .page-header p { font-size:0.82rem; color:var(--text-light); }
+
+  /* ====== Tab ====== */
+  .calc-tabs { display:flex; gap:0; margin:0 0 16px; border-bottom:2px solid #eee; }
+  .calc-tab { padding:10px 20px; cursor:pointer; font-weight:600; font-size:0.9rem; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; color:var(--text-light); }
+  .calc-tab:hover { color:var(--text); }
+  .calc-tab.active { color:#2e86c1; border-bottom-color:#2e86c1; }
+  .calc-tab .tab-total { font-size:0.72rem; font-weight:400; opacity:0.7; margin-left:4px; }
+
+  /* ====== Grand Total ====== */
+  .grand-total { display:flex; gap:16px; padding:14px 18px; background:var(--card); border-radius:10px; margin-bottom:16px; border:1px solid #e8e8e8; justify-content:space-around; text-align:center; }
+  .grand-total .gt-item { flex:1; }
+  .grand-total .gt-label { font-size:0.75rem; color:var(--text-light); margin-bottom:2px; }
+  .grand-total .gt-value { font-size:1.1rem; font-weight:700; }
+  .grand-total .gt-value.positive { color:#27ae60; }
+  .grand-total .gt-value.negative { color:#c0392b; }
+
+  /* ====== Blocks ====== */
+  .calc-section { display:none; }
+  .calc-section.active { display:block; }
+  .pd-block { border-radius:10px; margin:12px 0; overflow:hidden; border:1px solid; }
+  .pd-block-title { padding:10px 14px; font-weight:600; font-size:0.9rem; color:#fff; display:flex; align-items:center; justify-content:space-between; }
+  .pd-block-title .pd-block-del { background:none;border:none;color:rgba(255,255,255,0.7);cursor:pointer;padding:2px 8px;font-size:0.75rem;border-radius:4px; }
+  .pd-block-title .pd-block-del:hover { background:rgba(255,255,255,0.15); color:#fff; }
+  .pd-item { display:flex; align-items:flex-start; gap:8px; padding:8px 14px 8px 20px; border-top:1px solid rgba(0,0,0,0.05); transition:background 0.15s; }
+  .pd-item:hover { background:rgba(0,0,0,0.02); }
+  .pd-item .pd-name { flex:1; font-size:0.85rem; line-height:1.4; cursor:pointer; border-bottom:1px dashed transparent; padding:0 2px; border-radius:2px; min-width:80px; }
+  .pd-item .pd-name:focus { outline:2px solid #5dade2; outline-offset:1px; background:rgba(93,173,226,0.05); }
+  .pd-item .pd-name .pd-notes { font-size:0.72rem; opacity:0.6; display:block; margin-top:1px; }
+  .pd-item .pd-val { font-weight:600; white-space:nowrap; cursor:pointer; border-bottom:1px dashed #8e44ad; min-width:40px; text-align:center; display:inline-block; color:#8e44ad; }
+  .pd-item .pd-val:focus { outline:2px solid #8e44ad; outline-offset:1px; border-radius:2px; background:#fff; }
+  .pd-item .pd-actions { display:flex; gap:2px; opacity:0; transition:opacity 0.15s; flex-shrink:0; }
+  .pd-item:hover .pd-actions { opacity:1; }
+  .pd-item .pd-actions button { background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;font-size:0.75rem;transition:all 0.15s; }
+  .pd-item .pd-actions .pd-del:hover { background:rgba(192,57,43,0.1); color:#c0392b; }
+  .pd-add-area { padding:10px 14px; border-top:1px dashed rgba(0,0,0,0.08); }
+  .pd-add-btn { display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:1px dashed;border-radius:6px;background:none;cursor:pointer;font-size:0.78rem;opacity:0.7;transition:all 0.15s; }
+  .pd-add-btn:hover { opacity:1; }
+  .pd-add-form { display:none; margin-top:8px; padding:10px; border-radius:6px; background:rgba(0,0,0,0.02); }
+  .pd-add-form.open { display:block; }
+  .pd-add-form input, .pd-add-form textarea { width:100%; padding:6px 8px; border:1px solid; border-radius:4px; font-size:0.8rem; margin-bottom:6px; background:var(--card); color:var(--text); box-sizing:border-box; }
+  .pd-add-form .pd-form-actions { display:flex; gap:6px; margin-top:4px; }
+  .pd-add-form .pd-form-actions button { padding:5px 14px; border:none; border-radius:4px; cursor:pointer; font-size:0.78rem; font-weight:500; }
+  .pd-add-form .pd-form-actions .pd-form-submit { background:#27ae60; color:#fff; }
+  .pd-add-form .pd-form-actions .pd-form-cancel { background:rgba(0,0,0,0.05); }
+  .add-block-bar { margin-bottom:10px; }
+  .empty-msg { padding:16px; text-align:center; font-size:0.8rem; opacity:0.5; }
+
+  /* ====== Toast ====== */
+  #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#1a2a3a; color:#fff; padding:8px 20px; border-radius:8px; font-size:0.82rem; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:9999; }
+  #toast.show { opacity:0.9; }
+
+  @media (max-width:600px) {
+    .grand-total { flex-wrap:wrap; gap:8px; }
+    .grand-total .gt-item { min-width:40%; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <span class="nav-brand">🦐 海鲜自助</span>
+  <a href="index.html">首页</a>
+  <a href="纯利计算器.html" class="active">纯利计算器</a>
+  <a href="待办工作进度.html">待办工作进度</a>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>纯利计算器</h1>
+    <p>记录收入与支出，自动计算纯利。点击标题或数值可直接修改，自动保存到 HTML。</p>
+  </div>
+
+  <!-- 汇总 -->
+  <div class="grand-total" id="grand-total">
+    <div class="gt-item"><div class="gt-label">收入总计</div><div class="gt-value" id="gt-income" style="color:#27ae60;">0</div></div>
+    <div class="gt-item"><div class="gt-label">支出总计</div><div class="gt-value" id="gt-expense" style="color:#c0392b;">0</div></div>
+    <div class="gt-item"><div class="gt-label">纯利</div><div class="gt-value" id="gt-profit">0</div></div>
+  </div>
+
+  <!-- 标签页 -->
+  <div class="calc-tabs">
+    <div class="calc-tab active" data-section="income" onclick="CALC.switchTab('income')">💰 收入 <span class="tab-total" id="tab-income-total"></span></div>
+    <div class="calc-tab" data-section="expense" onclick="CALC.switchTab('expense')">💸 支出 <span class="tab-total" id="tab-expense-total"></span></div>
+  </div>
+
+  <!-- 收入区 -->
+  <div class="calc-section active" id="section-income">
+    <div class="add-block-bar">
+      <button class="pd-add-btn" onclick="CALC.showBlockForm('income')" style="color:#27ae60;border-color:#27ae60;font-size:0.85rem;padding:6px 14px;">➕ 添加收入板块</button>
+      <div class="pd-add-form" id="block-form-income">
+        <input type="text" id="block-title-income" placeholder="板块名称" style="margin-bottom:6px;">
+        <div class="pd-form-actions">
+          <button class="pd-form-submit" onclick="CALC.submitAddBlock('income')">✓ 确认添加</button>
+          <button class="pd-form-cancel" onclick="CALC.hideBlockForm('income')">取消</button>
+        </div>
+      </div>
+    </div>
+    <div id="income-blocks"></div>
+  </div>
+
+  <!-- 支出区 -->
+  <div class="calc-section" id="section-expense">
+    <div class="add-block-bar">
+      <button class="pd-add-btn" onclick="CALC.showBlockForm('expense')" style="color:#c0392b;border-color:#c0392b;font-size:0.85rem;padding:6px 14px;">➕ 添加支出板块</button>
+      <div class="pd-add-form" id="block-form-expense">
+        <input type="text" id="block-title-expense" placeholder="板块名称" style="margin-bottom:6px;">
+        <div class="pd-form-actions">
+          <button class="pd-form-submit" onclick="CALC.submitAddBlock('expense')">✓ 确认添加</button>
+          <button class="pd-form-cancel" onclick="CALC.hideBlockForm('expense')">取消</button>
+        </div>
+      </div>
+    </div>
+    <div id="expense-blocks"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- 持久化变量 -->
+<script id="bp-saved-vars" type="application/json">{"version":1,"calculatorData":{"income":{"blocks":[],"items":[]},"expense":{"blocks":[],"items":[]}}}</script>
+
+<script>
+// ==================== 纯利计算器 ====================
+(function() {
+  'use strict';
+  var today = new Date().toISOString().slice(0,10);
+
+  // 颜色轮换
+  var COLORS_INCOME = [
+    { icon:'💰', color:'#27ae60', bg:'#f0faf4' },
+    { icon:'📊', color:'#2ecc71', bg:'#f0faf6' },
+    { icon:'📈', color:'#1abc9c', bg:'#f0faf8' },
+    { icon:'💎', color:'#16a085', bg:'#f0faf8' },
+    { icon:'🏪', color:'#2e86c1', bg:'#f0f7fc' },
+    { icon:'🛒', color:'#2980b9', bg:'#f0f7fc' },
+  ];
+  var COLORS_EXPENSE = [
+    { icon:'💸', color:'#c0392b', bg:'#fff5f5' },
+    { icon:'📉', color:'#e74c3c', bg:'#fff5f5' },
+    { icon:'🏠', color:'#d35400', bg:'#fef8f0' },
+    { icon:'📦', color:'#e67e22', bg:'#fef8f0' },
+    { icon:'👥', color:'#8e44ad', bg:'#faf5ff' },
+    { icon:'🔧', color:'#34495e', bg:'#f5f6fa' },
+  ];
+
+  var CALC = {
+    data: { income: { blocks: [], items: [] }, expense: { blocks: [], items: [] } },
+    activeTab: 'income',
+
+    init: function() {
+      this.load();
+      this.render();
+    },
+
+    load: function() {
+      try {
+        var el = document.getElementById('bp-saved-vars');
+        if (el) {
+          var d = JSON.parse(el.textContent);
+          if (d && d.calculatorData) {
+            this.data = d.calculatorData;
+            if (!this.data.income) this.data.income = { blocks: [], items: [] };
+            if (!this.data.expense) this.data.expense = { blocks: [], items: [] };
+            return;
+          }
+        }
+      } catch(e) {}
+      this.data = { income: { blocks: [], items: [] }, expense: { blocks: [], items: [] } };
+    },
+
+    save: function() {
+      try {
+        var el = document.getElementById('bp-saved-vars');
+        if (el) {
+          var d = JSON.parse(el.textContent) || {};
+          d.calculatorData = this.data;
+          el.textContent = JSON.stringify(d);
+          if (window.hasChanges !== undefined) window.hasChanges = true;
+        }
+      } catch(e) {}
+    },
+
+    genId: function() { return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,4); },
+
+    // ====== 板块操作 ======
+    addBlock: function(section, title) {
+      var sec = this.data[section];
+      var colors = section === 'income' ? COLORS_INCOME : COLORS_EXPENSE;
+      var ci = sec.blocks.length % colors.length;
+      var c = colors[ci];
+      sec.blocks.push({ id: this.genId(), icon: c.icon, title: title || '新板块', color: c.color, bg: c.bg, isCustom: true });
+      this.save(); this.render();
+    },
+
+    deleteBlock: function(section, blockId) {
+      if (!confirm('确定删除此板块及其中所有项目？')) return;
+      var sec = this.data[section];
+      sec.items = sec.items.filter(function(it){ return it.blockId !== blockId; });
+      sec.blocks = sec.blocks.filter(function(b){ return b.id !== blockId; });
+      this.save(); this.render();
+    },
+
+    // ====== 项目操作 ======
+    addItem: function(section, blockId, title, value, notes) {
+      var sec = this.data[section];
+      sec.items.push({ id: this.genId(), blockId: blockId, title: title || '新项目', value: (value!==undefined&&value!==null) ? Number(value) : 0, notes: notes || '', dateUpdated: today });
+      this.save(); this.render();
+    },
+
+    deleteItem: function(section, itemId) {
+      this.data[section].items = this.data[section].items.filter(function(it){ return it.id !== itemId; });
+      this.save(); this.render();
+    },
+
+    updateItem: function(section, id, field, val) {
+      var items = this.data[section].items;
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === id) { items[i][field] = val; items[i].dateUpdated = today; break; }
+      }
+      this.save(); this.render();
+    },
+
+    // ====== 计算 ======
+    calcSectionTotal: function(section) {
+      var total = 0;
+      this.data[section].items.forEach(function(it){ total += Number(it.value) || 0; });
+      return total;
+    },
+
+    calcBlockTotal: function(section, blockId) {
+      var total = 0;
+      this.data[section].items.forEach(function(it){ if (it.blockId === blockId) total += Number(it.value) || 0; });
+      return total;
+    },
+
+    // ====== 标签页切换 ======
+    switchTab: function(section) {
+      this.activeTab = section;
+      document.querySelectorAll('.calc-tab').forEach(function(el){ el.classList.toggle('active', el.dataset.section === section); });
+      document.querySelectorAll('.calc-section').forEach(function(el){ el.classList.toggle('active', el.id === 'section-' + section); });
+      this.renderTotals();
+    },
+
+    // ====== 渲染 ======
+    render: function() {
+      this.renderSection('income', document.getElementById('income-blocks'));
+      this.renderSection('expense', document.getElementById('expense-blocks'));
+      this.renderTotals();
+      this.bindEditable();
+    },
+
+    renderSection: function(section, container) {
+      if (!container) return;
+      var sec = this.data[section];
+      var colors = section === 'income' ? COLORS_INCOME : COLORS_EXPENSE;
+      var html = '';
+      if (sec.blocks.length === 0) {
+        html += '<div class="empty-msg">暂无板块，点击上方「添加' + (section === 'income' ? '收入' : '支出') + '板块」</div>';
+      }
+      for (var b = 0; b < sec.blocks.length; b++) {
+        var blk = sec.blocks[b];
+        var items = sec.items.filter(function(it){ return it.blockId === blk.id; });
+        var blockTotal = this.calcBlockTotal(section, blk.id);
+        html += '<div class="pd-block" style="border-color:' + blk.color + ';background:' + blk.bg + ';">';
+        html += '<div class="pd-block-title" style="background:' + blk.color + ';">';
+        html += '<span>' + blk.icon + ' ' + blk.title + ' <span style="font-size:0.75rem;opacity:0.8;">' + this.formatNum(blockTotal) + '</span></span>';
+        html += '<button class="pd-block-del" onclick="CALC.deleteBlock(\'' + section + '\',\'' + blk.id + '\')" title="删除板块">✕</button>';
+        html += '</div>';
+        if (items.length === 0) {
+          html += '<div class="empty-msg">暂无数据，点击下方添加</div>';
+        } else {
+          for (var i = 0; i < items.length; i++) {
+            html += this.renderItem(items[i], section);
+          }
+        }
+        html += '<div class="pd-add-area">';
+        html += '<button class="pd-add-btn" onclick="CALC.showAddForm(\'' + section + '\',\'' + blk.id + '\')" style="color:' + blk.color + ';border-color:' + blk.color + ';">➕ 添加项目</button>';
+        html += '<div class="pd-add-form" id="form-' + section + '-' + blk.id + '">';
+        html += '<input type="text" id="title-' + section + '-' + blk.id + '" placeholder="项目名称">';
+        html += '<input type="text" id="value-' + section + '-' + blk.id + '" placeholder="金额" inputmode="decimal" style="margin-bottom:6px;">';
+        html += '<textarea id="notes-' + section + '-' + blk.id + '" placeholder="备注说明（可选）" rows="2"></textarea>';
+        html += '<div class="pd-form-actions">';
+        html += '<button class="pd-form-submit" onclick="CALC.submitAdd(\'' + section + '\',\'' + blk.id + '\')">✓ 确认添加</button>';
+        html += '<button class="pd-form-cancel" onclick="CALC.hideAddForm(\'' + section + '\',\'' + blk.id + '\')">取消</button>';
+        html += '</div></div></div></div>';
+      }
+      container.innerHTML = html;
+    },
+
+    renderItem: function(it, section) {
+      var valStr = this.formatNum(it.value);
+      var notesHtml = it.notes ? '<span class="pd-notes">' + it.notes + '</span>' : '';
+      var color = section === 'income' ? '#27ae60' : '#c0392b';
+      return '<div class="pd-item">' +
+        '<span class="pd-name" data-calc-edit="' + section + ':' + it.id + '" data-calc-field="title" contenteditable="true">' + it.title + notesHtml + '</span>' +
+        '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">' +
+          '<span class="pd-val" data-calc-edit="' + section + ':' + it.id + '" data-calc-field="value" contenteditable="true" style="color:' + color + ';border-color:' + color + ';">' + valStr + '</span>' +
+        '</div>' +
+        '<div class="pd-actions">' +
+          '<button class="pd-del" onclick="CALC.deleteItem(\'' + section + '\',\'' + it.id + '\')" title="删除">✕</button>' +
+        '</div></div>';
+    },
+
+    renderTotals: function() {
+      var incomeTotal = this.calcSectionTotal('income');
+      var expenseTotal = this.calcSectionTotal('expense');
+      var profit = incomeTotal - expenseTotal;
+      document.getElementById('gt-income').textContent = this.formatNum(incomeTotal);
+      document.getElementById('gt-expense').textContent = this.formatNum(expenseTotal);
+      var profitEl = document.getElementById('gt-profit');
+      profitEl.textContent = this.formatNum(Math.abs(profit));
+      profitEl.className = 'gt-value ' + (profit >= 0 ? 'positive' : 'negative');
+      if (profit < 0) profitEl.textContent = '-' + profitEl.textContent;
+      document.getElementById('tab-income-total').textContent = this.formatNum(incomeTotal);
+      document.getElementById('tab-expense-total').textContent = this.formatNum(expenseTotal);
+    },
+
+    bindEditable: function() {
+      var self = this;
+      document.querySelectorAll('[data-calc-edit]').forEach(function(el) {
+        var newEl = el.cloneNode(true);
+        el.parentNode.replaceChild(newEl, el);
+        newEl.addEventListener('blur', function() {
+          var parts = this.dataset.calcEdit.split(':');
+          var section = parts[0], id = parts[1], field = this.dataset.calcField;
+          var text = this.textContent.trim();
+          if (field === 'title') {
+            self.updateItem(section, id, field, text.split('\n')[0].trim());
+          } else {
+            var num = parseFloat(text.replace(/[^0-9.\-]/g, ''));
+            self.updateItem(section, id, field, isNaN(num) ? text : num);
+          }
+        });
+        newEl.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+      });
+    },
+
+    formatNum: function(n) {
+      if (n >= 10000) { var w = n / 10000; return w >= 10 ? Math.round(w) + '万' : w.toFixed(1) + '万'; }
+      return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    },
+
+    // ====== 表单操作 ======
+    showAddForm: function(section, blockId) { var f = document.getElementById('form-' + section + '-' + blockId); if (f) f.classList.add('open'); },
+    hideAddForm: function(section, blockId) {
+      var f = document.getElementById('form-' + section + '-' + blockId);
+      if (f) { f.classList.remove('open'); f.querySelectorAll('input,textarea').forEach(function(el){ el.value = ''; }); }
+    },
+    submitAdd: function(section, blockId) {
+      var title = document.getElementById('title-' + section + '-' + blockId).value.trim();
+      var value = document.getElementById('value-' + section + '-' + blockId).value.trim();
+      var notes = document.getElementById('notes-' + section + '-' + blockId).value.trim();
+      if (!title) { alert('请输入项目名称'); return; }
+      var numVal = parseFloat(value.replace(/[^0-9.\-]/g, ''));
+      this.addItem(section, blockId, title, isNaN(numVal) ? 0 : numVal, notes);
+      this.hideAddForm(section, blockId);
+    },
+    showBlockForm: function(section) { var f = document.getElementById('block-form-' + section); if (f) f.classList.add('open'); },
+    hideBlockForm: function(section) {
+      var f = document.getElementById('block-form-' + section);
+      if (f) { f.classList.remove('open'); var inp = document.getElementById('block-title-' + section); if (inp) inp.value = ''; }
+    },
+    submitAddBlock: function(section) {
+      var title = document.getElementById('block-title-' + section).value.trim();
+      if (!title) { alert('请输入板块名称'); return; }
+      this.addBlock(section, title);
+      this.hideBlockForm(section);
+    }
+  };
+
+  window.CALC = CALC;
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ CALC.init(); });
+  else CALC.init();
+})();
+</script>
+</body>
+</html>
