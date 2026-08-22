@@ -644,6 +644,9 @@
       'total_investment_raw': 'totalInvestment',
       'equipment_investment_plain': 'equipmentInvestment',
       'investor_term_plain': 'partnerTermMonths',
+      // 房东固定比例 / 手动纯利（可填空输入）
+      'landlord_share_pct': 'landlordSharePct',
+      'manual_dividend_base_display': 'manualDividendBase',
     },
 
     // ==================== 根据显示键获取输入键 ====================
