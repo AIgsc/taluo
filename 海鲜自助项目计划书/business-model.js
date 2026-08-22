@@ -32,7 +32,11 @@
       // 核心参数
       area: 2000,               // 总面积 ㎡
       price: 169,               // 人均定价 元
-      dailyRevenue: 60000,      // 日均核销营业额 元
+      // 周度营收 - 工作日低/周末高，周总营收保持 ~180万/月
+      monThuRev: 34983,         // 周一至周四日均营收 元（207人×169元）
+      friRev: 92891,            // 周五日均营收 元（550人×169元）
+      satRev: 92891,            // 周六日均营收 元
+      sunRev: 92891,            // 周日日均营收 元
       totalInvestment: 1000000, // 总投资 元
       equipmentInvestment: 700000, // 装修设备投资 元
 
@@ -78,8 +82,11 @@
 
       var i = BusinessModel.inputs;
 
+      // ========== 日均营收 = 4个单日加权平均 ==========
+      var dailyRevenue = (i.monThuRev * 4 + i.friRev + i.satRev + i.sunRev) / 7;
+
       // ========== 基础计算 ==========
-      var monthlyRevenue = Math.round(i.dailyRevenue * 30);
+      var monthlyRevenue = Math.round(dailyRevenue * 30);
       var foodCost = Math.round(monthlyRevenue * i.foodCostPct / 100);
       var marketingCost = Math.round(monthlyRevenue * i.marketingPct / 100);
       var cashTotalExpense = i.laborCost + foodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
@@ -220,10 +227,10 @@
       trial3Profit = trial3Profit - trial3Fee;
 
       // ========== 周度营收分解 ==========
-      var monThuDaily = i.dailyRevenue;
-      var friDaily = i.dailyRevenue;
-      var satDaily = i.dailyRevenue;
-      var sunDaily = i.dailyRevenue;
+      var monThuDaily = i.monThuRev;
+      var friDaily = i.friRev;
+      var satDaily = i.satRev;
+      var sunDaily = i.sunRev;
       var weeklyTotal = monThuDaily * 4 + friDaily + satDaily + sunDaily;
 
       var monThuCustomers = Math.round(monThuDaily / i.price);
@@ -276,8 +283,8 @@
         price_plain: i.price,
 
         // ===== 3. 营收 =====
-        daily_revenue: formatWan(i.dailyRevenue),
-        daily_revenue_plain: i.dailyRevenue,
+        daily_revenue: formatWan(Math.round(dailyRevenue)),
+        daily_revenue_plain: Math.round(dailyRevenue),
         monthly_revenue: formatWan(monthlyRevenue),
         monthly_revenue_num: formatNum(monthlyRevenue) + '元',
         monthly_revenue_raw: monthlyRevenue,
@@ -311,7 +318,7 @@
         weekly_total_wan: formatWan(weeklyTotal),
         weekly_total_plain: weeklyTotal,
 
-        monthly_summary: '月均4.3周 × ' + formatWan(weeklyTotal) + '/周 ≈ ' + formatWan(monthlyRevenue) + '/月（日均约' + formatWan(i.dailyRevenue) + '）',
+        monthly_summary: '月均4.3周 × ' + formatWan(weeklyTotal) + '/周 ≈ ' + formatWan(monthlyRevenue) + '/月（日均约' + formatWan(Math.round(dailyRevenue)) + '）',
 
         // ===== 4. 投资 =====
         total_investment: formatWan(i.totalInvestment),
@@ -397,7 +404,7 @@
         realistic_payback: realisticPayback + '个月（从开业算起）',
         realistic_payback_plain: realisticPayback,
         realistic_payback_from_investment: realisticPaybackFromInvestment + '个月（从出资日算起）',
-        realistic_payback_desc: '含2个月装修期+3个月试营业期，从开业第6个月起满额分红（回本前40%），约' + realisticPayback + '个月收回本金',
+        realistic_payback_desc: '含2个月装修期+3个月试营业期，从开业第6个月起满额分红（回本前40%），约' + realisticPayback + '个月从开业收回本金，约' + realisticPaybackFromInvestment + '个月从出资日算起',
 
         // ===== 投资人合伙期限 =====
         investor_term: i.partnerTermMonths + '个月',
@@ -537,7 +544,10 @@
     displayKeyMap: {
       'area': 'area',
       'price': 'price',
-      'daily_revenue': 'dailyRevenue',
+      'mon_thu_plain': 'monThuRev',
+      'fri_plain': 'friRev',
+      'sat_plain': 'satRev',
+      'sun_plain': 'sunRev',
       'total_investment': 'totalInvestment',
       'equipment_investment': 'equipmentInvestment',
       'food_cost_pct': 'foodCostPct',
