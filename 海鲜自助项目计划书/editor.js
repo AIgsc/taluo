@@ -294,16 +294,19 @@
       
       var result = await res.json();
       
-      // 新逻辑：始终先同步 HTML 到数据库，再根据版本号决定是否应用 DB 内容
-      // 1. 始终同步：确保数据库有最新代码内容，防止本地修改被覆盖
+      // 同步逻辑：
+      // 1. 始终同步：先把当前 HTML 推送到数据库，确保数据库有最新代码内容
+      // 2. 同步后返回，不再应用同步前获取的旧 DB 内容（会覆盖新代码）
+      // 3. 如果无需同步（source=db 且 sync_needed=false），则应用 DB 内容
       if (result.sync_needed) {
         await syncHtmlToDb();
+        // 同步后数据库已有最新内容，直接返回，保留当前 HTML 内容
+        return;
       }
-      // 2. 版本相同 → 数据库可能有用户编辑 → 应用 DB 内容
-      //    版本不同 → 代码最新 → 保留 HTML 内容（不应用 DB）
+
+      // 无需同步时：版本匹配，数据库可能有用户编辑内容 → 应用 DB 内容
       if (result.source === 'db' && result.content && typeof result.content === 'object') {
         applyContent(result.content);
-        // 应用数据库的模型变量
         if (result.model && typeof result.model === 'object') {
           var dbModel = window.BusinessModel;
           if (dbModel) {
