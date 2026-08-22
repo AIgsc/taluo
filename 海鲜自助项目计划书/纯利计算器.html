@@ -388,7 +388,7 @@
 
     renderItem: function(it, section) {
       var valStr = this.formatNum(it.value);
-      var notesHtml = it.notes ? '<span class="pd-notes">' + it.notes + '</span>' : '';
+      var notesHtml = it.notes ? '<span class="pd-notes" data-calc-edit="' + section + ':' + it.id + '" data-calc-field="notes" contenteditable="true">' + it.notes + '</span>' : '';
       var color = section === 'income' ? '#27ae60' : '#c0392b';
       return '<div class="pd-item">' +
         '<div style="flex:1;min-width:0;">' +
@@ -428,6 +428,8 @@
           var text = this.textContent.trim();
           if (field === 'title') {
             self.updateItem(section, id, field, text.split('\n')[0].trim());
+          } else if (field === 'notes') {
+            self.updateItem(section, id, field, text);
           } else {
             var num = parseFloat(text.replace(/[^0-9.\-]/g, ''));
             self.updateItem(section, id, field, isNaN(num) ? text : num);

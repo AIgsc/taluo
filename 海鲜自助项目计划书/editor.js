@@ -260,9 +260,9 @@
     // 如果路径以 / 开头或为空，默认使用旧路径兼容
     if (!pagePath || pagePath === '') pagePath = '海鲜自助项目计划书/index.html';
 
-    saveBtn.disabled = true;
-    saveBtn.textContent = '保存中...';
-    status.textContent = '';
+    if (saveBtn) saveBtn.disabled = true;
+    if (saveBtn) saveBtn.textContent = '保存中...';
+    if (status) status.textContent = '';
 
     try {
       var res = await fetch(API_URL + '/save-and-deploy', {
@@ -275,25 +275,22 @@
         var result = await res.json();
         hasChanges = false;
         if (result.github && !result.github.synced) {
-          status.textContent = '保存成功，但 GitHub 同步失败';
-          status.style.color = '#e67e22';
+          if (status) { status.textContent = '保存成功，但 GitHub 同步失败'; status.style.color = '#e67e22'; }
         } else {
-          status.textContent = '保存成功！已同步到 GitHub';
-          status.style.color = '#27ae60';
+          if (status) { status.textContent = '保存成功！已同步到 GitHub'; status.style.color = '#27ae60'; }
         }
       } else {
-        status.textContent = '保存失败，请重试';
-        status.style.color = '#e74c3c';
+        if (status) { status.textContent = '保存失败，请重试'; status.style.color = '#e74c3c'; }
       }
     } catch (e) {
-      status.textContent = '保存失败：网络错误';
-      status.style.color = '#e74c3c';
+      if (status) { status.textContent = '保存失败：网络错误'; status.style.color = '#e74c3c'; }
     } finally {
-      saveBtn.disabled = false;
-      saveBtn.textContent = '保存修改';
-      setTimeout(function() {
-        status.textContent = '';
-      }, 3000);
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存修改'; }
+      if (status) {
+        setTimeout(function() {
+          status.textContent = '';
+        }, 3000);
+      }
     }
   }
 
