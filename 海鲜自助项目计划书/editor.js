@@ -302,26 +302,30 @@
 
   // ==================== 初始化 ====================
   function init() {
-    createToolbar();
+    // 仅当页面存在 data-edit 元素时才创建编辑工具栏（纯利计算器等页面有自己的编辑机制）
+    var hasEditableText = document.querySelector('[data-edit]');
+    if (hasEditableText) {
+      createToolbar();
 
-    // 渲染 BusinessModel（从代码计算）
-    var model = window.BusinessModel;
-    if (model) {
-      model.render();
-    }
-
-    // 启用数据填空（正常模式下，数字可编辑）
-    enableAllDataModelEditing();
-
-    // 监听 data-edit 文字变化标记
-    document.addEventListener('input', function(e) {
-      if (e.target.closest && e.target.closest('[data-edit]')) {
-        if (!hasChanges && editMode) {
-          hasChanges = true;
-          document.getElementById('bp-status').textContent = '已修改，点击保存';
-        }
+      // 渲染 BusinessModel（从代码计算）
+      var model = window.BusinessModel;
+      if (model) {
+        model.render();
       }
-    });
+
+      // 启用数据填空（正常模式下，数字可编辑）
+      enableAllDataModelEditing();
+
+      // 监听 data-edit 文字变化标记
+      document.addEventListener('input', function(e) {
+        if (e.target.closest && e.target.closest('[data-edit]')) {
+          if (!hasChanges && editMode) {
+            hasChanges = true;
+            document.getElementById('bp-status').textContent = '已修改，点击保存';
+          }
+        }
+      });
+    }
   }
 
   if (document.readyState === 'loading') {
