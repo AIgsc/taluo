@@ -1,12 +1,7 @@
 {
   "name": "taluo",
   "version": "1.0.0",
-  "scripts": {
-    "sync:content": "node scripts/sync-content-to-db.js",
-    "sync:model": "node scripts/sync-default-model.js",
-    "sync:all": "node scripts/sync-content-to-db.js && node scripts/sync-default-model.js",
-    "sync:html": "node 海鲜自助项目计划书/sync-html.js"
-  },
+  "scripts": {},
   "dependencies": {
     "pg": "^8.13.0"
   }

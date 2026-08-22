@@ -255,6 +255,11 @@
     // 2. 获取完整 HTML
     var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
+    // 自动识别当前页面在 GitHub 上的文件路径
+    var pagePath = window.location.pathname.replace(/^\//, '');
+    // 如果路径以 / 开头或为空，默认使用旧路径兼容
+    if (!pagePath || pagePath === '') pagePath = '海鲜自助项目计划书/index.html';
+
     saveBtn.disabled = true;
     saveBtn.textContent = '保存中...';
     status.textContent = '';
@@ -263,7 +268,7 @@
       var res = await fetch(API_URL + '/save-and-deploy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ html: html })
+        body: JSON.stringify({ html: html, filePath: pagePath })
       });
 
       if (res.ok) {

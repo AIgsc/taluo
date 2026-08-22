@@ -264,7 +264,7 @@ module.exports = async (req, res) => {
     
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================
     if (req.method === 'POST' && path === '/api/business-plan/save-and-deploy') {
-      const { html } = req.body || {};
+      const { html, filePath } = req.body || {};
       if (!html || typeof html !== 'string') {
         return res.status(400).json({ error: 'HTML 内容不能为空' });
       }
@@ -274,12 +274,12 @@ module.exports = async (req, res) => {
       let ghResult = { synced: false, reason: 'token_not_found' };
       if (ghToken) {
         try {
-          await pushToGitHub(html, ghToken);
+          await pushToGitHub(html, filePath, ghToken);
           ghResult = { synced: true };
-          console.log('GitHub 同步成功');
+          console.log('GitHub 同步成功:', filePath);
         } catch (e) {
           ghResult = { synced: false, reason: e.message };
-          console.error('GitHub 同步失败:', e.message);
+          console.error('GitHub 同步失败:', filePath, e.message);
         }
       } else {
         console.log('未配置 GH_TOKEN，跳过 GitHub 同步');
@@ -1066,10 +1066,9 @@ function githubRequest(method, path, token, body) {
   });
 }
 
-async function pushToGitHub(html, token) {
+async function pushToGitHub(html, filePath, token) {
   var owner = 'AIgsc';
   var repo = 'taluo';
-  var filePath = '海鲜自助项目计划书/index.html';
   var encodedPath = filePath.split('/').map(function(s) { return encodeURIComponent(s); }).join('/');
   var apiPath = '/repos/' + owner + '/' + repo + '/contents/' + encodedPath;
 
