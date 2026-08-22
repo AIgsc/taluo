@@ -1,21 +1,19 @@
 /**
- * 海鲜自助项目计划书 - 在线编辑功能 v4
- * 双向同步：本地代码 ↔ 数据库 ↔ 前台页面
+ * 海鲜自助项目计划书 - 在线编辑功能 v5
+ * 纯前端编辑 + GitHub 直推（无数据库）
  * 
- * 核心逻辑（基于 CODE_VERSION，不再使用哈希）：
- * 1. 页面加载 → 先用代码渲染 → 调 API 对比版本号
- * 2. 版本号不同 → 代码最新 → 保留 HTML 内容，同步到数据库
- * 3. 版本号相同 → 代码未变 → 数据库可能有用户编辑 → 应用数据库内容
- * 4. 用户保存 → 写数据库 → 闭环
+ * 核心逻辑：
+ * 1. 页面加载 → HTML 就是最新内容（Vercel 部署）
+ * 2. 用户编辑 → 点保存 → 推送到 GitHub → Vercel 自动部署
+ * 3. 刷新页面 → 看到 Vercel 部署的最新 HTML
  * 
- * 开发者修改代码后，需递增 HTML 中的 window.CODE_VERSION
+ * 不再使用数据库，不再对比版本号，不再有覆盖问题
  */
 
 (function() {
   'use strict';
 
   var API_URL = window.BP_API_URL || '/api/business-plan';
-  var CODE_VERSION = window.CODE_VERSION || '0';
   var editMode = false;
   var varMode = false;
   var hasChanges = false;
@@ -278,84 +276,7 @@
     return data;
   }
 
-  // ==================== 从数据库加载内容 ====================
-  // 
-  // 新逻辑（基于 CODE_VERSION）：
-  // - 发送 CODE_VERSION 到 API
-  // - API 对比 DB 中存储的 code_version
-  // - 版本不同 → 代码最新 → 同步 HTML 到数据库，不应用 DB 内容
-  // - 版本相同 → 代码未变 → 数据库可能有用户编辑 → 应用 DB 内容
-  //
-  async function loadContent() {
-    try {
-      var url = API_URL + '?code_version=' + encodeURIComponent(CODE_VERSION);
-      var res = await fetch(url);
-      if (!res.ok) return;
-      
-      var result = await res.json();
-      
-      // 核心逻辑：每次页面加载都把当前 HTML 同步到数据库，不应用旧 DB 内容
-      // 编辑器的保存功能会同时更新 DB 和 GitHub HTML，所以 HTML 始终是最新的
-      // 应用旧 DB 内容会导致本地代码修改被数据库旧内容覆盖
-      await syncHtmlToDb();
-      // 同步完成，保留当前 HTML 内容，不应用旧 DB 内容
-    } catch (e) {
-      // 静默处理
-    }
-  }
-
-  // ==================== 应用内容到页面 ====================
-  function applyContent(data) {
-    if (!data || typeof data !== 'object') return;
-    var keys = Object.keys(data);
-    // 安全检查：所有值都为空时不覆盖
-    var hasContent = false;
-    for (var i = 0; i < keys.length; i++) {
-      if (data[keys[i]] && data[keys[i]].trim()) {
-        hasContent = true;
-        break;
-      }
-    }
-    if (!hasContent) return;
-    keys.forEach(function(key) {
-      var el = document.querySelector('[data-edit="' + key + '"]');
-      if (el && data[key]) {
-        el.innerHTML = data[key];
-      }
-    });
-  }
-
-  // ==================== 后台同步 HTML 到数据库 ====================
-  // 当代码版本更新时，把当前 HTML 内容推送到数据库
-  async function syncHtmlToDb() {
-    try {
-      var content = collectContent();
-      var keys = Object.keys(content);
-      var hasContent = false;
-      for (var i = 0; i < keys.length; i++) {
-        if (content[keys[i]] && content[keys[i]].trim()) {
-          hasContent = true;
-          break;
-        }
-      }
-      if (!hasContent) return;
-      
-      var model = window.BusinessModel ? window.BusinessModel.getInputs() : null;
-      await fetch(API_URL + '/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          content: content, 
-          code_version: CODE_VERSION, 
-          model: model 
-        })
-      });
-    } catch (e) {
-      // 静默处理
-    }
-  }
-
-  // ==================== 保存内容到数据库 ====================
+  // ==================== 保存内容到 GitHub ====================
   async function saveContent() {
     var content = collectContent();
     var saveBtn = document.getElementById('bp-save-btn');
@@ -380,7 +301,7 @@
     status.textContent = '';
 
     try {
-      var body = { content: content, code_version: CODE_VERSION };
+      var body = { content: content };
       if (modelInputs) {
         body.model = modelInputs;
       }
@@ -398,7 +319,7 @@
           status.textContent = '保存成功，但 GitHub 同步失败';
           status.style.color = '#e67e22';
         } else {
-          status.textContent = '保存成功！已同步到数据库';
+          status.textContent = '保存成功！已同步到 GitHub';
           status.style.color = '#27ae60';
         }
         if (varMode) {
@@ -424,14 +345,11 @@
   function init() {
     createToolbar();
 
-    // 第一步：渲染 BusinessModel（从代码计算）
+    // 渲染 BusinessModel（从代码计算）
     var model = window.BusinessModel;
     if (model) {
       model.render();
     }
-
-    // 第二步：从数据库加载（对比版本号决定是否应用用户编辑）
-    loadContent();
 
     // 监听编辑变化
     document.addEventListener('input', function(e) {
@@ -440,13 +358,6 @@
           hasChanges = true;
           document.getElementById('bp-status').textContent = '已修改，点击保存';
         }
-      }
-    });
-
-    // 页面从缓存恢复时重新加载
-    window.addEventListener('pageshow', function(e) {
-      if (e.persisted) {
-        loadContent();
       }
     });
   }

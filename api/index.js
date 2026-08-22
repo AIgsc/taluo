@@ -123,22 +123,6 @@ async function ensureTables() {
     )
   `);
   await db.query(`
-    CREATE TABLE IF NOT EXISTS business_plan_content (
-      id SERIAL PRIMARY KEY,
-      section_key VARCHAR(255) NOT NULL UNIQUE,
-      content TEXT NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `);
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS business_plan_model (
-      id SERIAL PRIMARY KEY,
-      model_key VARCHAR(255) NOT NULL UNIQUE,
-      value TEXT NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    )
-  `);
-  await db.query(`
     CREATE TABLE IF NOT EXISTS todo_progress (
       id SERIAL PRIMARY KEY,
       data JSONB NOT NULL DEFAULT '{}',
@@ -278,106 +262,6 @@ module.exports = async (req, res) => {
       return res.json({ token, userId: user.id, username });
     }
     
-    // ==================== 商业计划书内容 API（无需登录） ====================
-    if (req.method === 'GET' && path === '/api/business-plan') {
-
-      // 接收前端传来的代码版本号
-      const codeVersion = req.query.code_version || '';
-      console.log('[API GET] 收到 code_version:', codeVersion);
-
-      // 1. 查询数据库中的内容
-      const result = await db.query(
-        'SELECT section_key, content FROM business_plan_content ORDER BY section_key'
-      );
-      const dbContent = {};
-      result.rows.forEach(function(row) {
-        dbContent[row.section_key] = row.content;
-      });
-      console.log('[API GET] DB 内容条数:', Object.keys(dbContent).length);
-
-      // 2. 查询数据库中的代码版本号
-      const versionResult = await db.query(
-        'SELECT value FROM business_plan_model WHERE model_key = $1',
-        ['code_version']
-      );
-      const dbCodeVersion = versionResult.rows.length > 0 ? versionResult.rows[0].value : null;
-      console.log('[API GET] DB 中记录的 code_version:', dbCodeVersion);
-
-      // 3. 对比版本号决定内容来源
-      // 版本不同 → 代码最新 → source='html'，需要同步
-      // 版本相同 → 代码未变 → source='db'，应用数据库内容
-      let source = (codeVersion && codeVersion === dbCodeVersion) ? 'db' : 'html';
-      // 安全检查：如果数据库内容为空，强制返回 html（防止清空页面）
-      if (source === 'db' && Object.keys(dbContent).length === 0) {
-        source = 'html';
-      }
-      // 始终同步：无论版本是否匹配，只要页面加载就把当前 HTML 推送到数据库
-      // 确保数据库始终有最新代码内容，防止本地修改被数据库旧内容覆盖
-      let syncNeeded = codeVersion !== '';
-      console.log('[API GET] 判断结果: source=' + source + ', sync_needed=' + syncNeeded);
-
-      // 4. 加载模型输入变量
-      let model = null;
-      const modelResult = await db.query(
-        'SELECT value FROM business_plan_model WHERE model_key = $1',
-        ['model_inputs']
-      );
-      if (modelResult.rows.length > 0) {
-        try {
-          model = JSON.parse(modelResult.rows[0].value);
-        } catch (e) {
-          model = null;
-        }
-      }
-
-      return res.json({ content: dbContent, model: model, source: source, sync_needed: syncNeeded });
-    }
-
-    // ==================== 商业计划书 - 后台同步：HTML 内容推送到数据库 ====================
-    if (req.method === 'POST' && path === '/api/business-plan/sync') {
-      const { content, code_version, model } = req.body || {};
-      if (!content || typeof content !== 'object') {
-        return res.status(400).json({ error: '内容数据不能为空' });
-      }
-
-      const keys = Object.keys(content);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const val = content[key];
-        if (typeof val === 'string') {
-          await db.query(
-            `INSERT INTO business_plan_content (section_key, content, updated_at)
-             VALUES ($1, $2, NOW())
-             ON CONFLICT (section_key) DO UPDATE SET
-               content = $2, updated_at = NOW()`,
-            [key, val]
-          );
-        }
-      }
-
-      if (code_version) {
-        await db.query(
-          `INSERT INTO business_plan_model (model_key, value, updated_at)
-           VALUES ($1, $2, NOW())
-           ON CONFLICT (model_key) DO UPDATE SET
-             value = $2, updated_at = NOW()`,
-          ['code_version', code_version]
-        );
-      }
-
-      if (model && typeof model === 'object') {
-        await db.query(
-          `INSERT INTO business_plan_model (model_key, value, updated_at)
-           VALUES ($1, $2, NOW())
-           ON CONFLICT (model_key) DO UPDATE SET
-             value = $2, updated_at = NOW()`,
-          ['model_inputs', JSON.stringify(model)]
-        );
-      }
-
-      return res.json({ success: true, count: keys.length });
-    }
-
     // ==================== 商业计划书 - 保存并部署到 GitHub ====================
     if (req.method === 'POST' && path === '/api/business-plan/save-and-deploy') {
       const { content, model, code_version } = req.body || {};
@@ -385,47 +269,13 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: '内容数据不能为空' });
       }
 
-      // 1. 保存内容到数据库
-      const keys = Object.keys(content);
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i];
-        const val = content[key];
-        if (typeof val === 'string') {
-          await db.query(
-            `INSERT INTO business_plan_content (section_key, content, updated_at)
-             VALUES ($1, $2, NOW())
-             ON CONFLICT (section_key) DO UPDATE SET
-               content = $2, updated_at = NOW()`,
-            [key, val]
-          );
-        }
-      }
-
-      // 2. 更新代码版本号
-      if (code_version) {
-        await db.query(
-          `INSERT INTO business_plan_model (model_key, value, updated_at)
-           VALUES ($1, $2, NOW())
-           ON CONFLICT (model_key) DO UPDATE SET
-             value = $2, updated_at = NOW()`,
-          ['code_version', code_version]
-        );
-      }
-
-      // 3. 保存模型输入变量到数据库
+      // 保存模型输入变量
       let savedModel = null;
       if (model && typeof model === 'object') {
         savedModel = model;
-        await db.query(
-          `INSERT INTO business_plan_model (model_key, value, updated_at)
-           VALUES ($1, $2, NOW())
-           ON CONFLICT (model_key) DO UPDATE SET
-             value = $2, updated_at = NOW()`,
-          ['model_inputs', JSON.stringify(model)]
-        );
       }
 
-      // 3. 同步到 GitHub（触发 Vercel 自动部署）
+      // 同步到 GitHub（触发 Vercel 自动部署）
       const ghToken = process.env.GH_TOKEN;
       let ghResult = { synced: false, reason: 'token_not_found' };
       if (ghToken) {
@@ -441,25 +291,7 @@ module.exports = async (req, res) => {
         console.log('未配置 GH_TOKEN，跳过 GitHub 同步');
       }
 
-      return res.json({ success: true, count: keys.length, github: ghResult });
-    }
-
-    // ==================== 商业计划书 - 同步代码默认变量到数据库（无需文本内容） ====================
-    if (req.method === 'POST' && path === '/api/business-plan/sync-inputs') {
-      const { model } = req.body || {};
-      if (!model || typeof model !== 'object') {
-        return res.status(400).json({ error: '模型输入变量不能为空' });
-      }
-
-      await db.query(
-        `INSERT INTO business_plan_model (model_key, value, updated_at)
-         VALUES ($1, $2, NOW())
-         ON CONFLICT (model_key) DO UPDATE SET
-           value = $2, updated_at = NOW()`,
-        ['model_inputs', JSON.stringify(model)]
-      );
-
-      return res.json({ success: true, model: model });
+      return res.json({ success: true, github: ghResult });
     }
 
     // ==================== 待办工作进度 ====================
