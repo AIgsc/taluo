@@ -532,6 +532,48 @@
       return false;
     },
 
+    // ==================== 显示键 -> 输入键映射 ====================
+    // data-model 属性值（显示键）可能和 inputs 的键名不一致，需要映射
+    displayKeyMap: {
+      'area': 'area',
+      'price': 'price',
+      'daily_revenue': 'dailyRevenue',
+      'total_investment': 'totalInvestment',
+      'equipment_investment': 'equipmentInvestment',
+      'food_cost_pct': 'foodCostPct',
+      'rent_plain': 'rent',
+      'labor_cost_plain': 'laborCost',
+      'misc_cost_plain': 'miscCost',
+      'utility_cost_plain': 'utilityCost',
+      'kitchen_staff_plain': 'kitchenStaff',
+      'kitchen_cost_plain': 'kitchenCost',
+      'front_staff_plain': 'frontStaff',
+      'front_cost_plain': 'frontCost',
+      'staff_count_plain': 'staffCount',
+      'table_count_plain': 'tableCount',
+      'service_fee_pct': 'serviceFeePct',
+      'operation_pct': 'operationPct',
+      'marketing_cost_pct': 'marketingPct',
+      'investor_dividend_pre_num': 'investorPctPrePayback',
+      'investor_dividend_post_num': 'investorPct',
+      'staff_initial_cost_wan': 'staffInitialCost',
+      'food_initial_cost_wan': 'foodInitialCost',
+      'total_investment_raw': 'totalInvestment',
+      'equipment_investment_plain': 'equipmentInvestment',
+      'investor_term_plain': 'partnerTermMonths',
+    },
+
+    // ==================== 根据显示键获取输入键 ====================
+    // 用于判断 data-model 元素是否可编辑（输入变量）
+    getInputKey: function(displayKey) {
+      // 先看是否直接是 inputs 的键
+      if (this.inputs[displayKey] !== undefined) return displayKey;
+      // 再看映射表
+      var mapped = this.displayKeyMap[displayKey];
+      if (mapped && this.inputs[mapped] !== undefined) return mapped;
+      return null;
+    },
+
     // ==================== 获取输入变量 ====================
     getInputs: function() {
       var out = {};
