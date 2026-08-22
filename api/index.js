@@ -1071,8 +1071,8 @@ async function pushToGitHub(html, filePath, token) {
   var repo = 'taluo';
 
   if (!filePath || typeof filePath !== 'string') {
-    // 降级兼容：旧版请求可能没有 filePath
-    filePath = '海鲜自助项目计划书/招商计划书.html';
+    // 缺少 filePath 时明确报错，绝不猜测默认文件，避免把内容写错文件
+    throw new Error('缺少 filePath 参数，无法确定推送目标文件');
   }
 
   // 兼容双重编码：浏览器 window.location.pathname 返回的是已 URL 编码的路径，

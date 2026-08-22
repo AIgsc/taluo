@@ -256,9 +256,13 @@
     var html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 
     // 自动识别当前页面在 GitHub 上的文件路径
+    // 注意：window.location.pathname 一定存在（打开页面必有路径），
+    // 不设置默认值，避免把内容推错文件
     var pagePath = window.location.pathname.replace(/^\//, '');
-    // 如果路径以 / 开头或为空，默认使用招商计划书.html（原 index.html 已重命名）
-    if (!pagePath || pagePath === '') pagePath = '海鲜自助项目计划书/招商计划书.html';
+    if (!pagePath || pagePath === '') {
+      if (status) { status.textContent = '保存失败：无法识别当前页面路径'; status.style.color = '#e74c3c'; }
+      return { ok: false, error: 'no_path' };
+    }
 
     if (saveBtn) saveBtn.disabled = true;
     if (saveBtn) saveBtn.textContent = '保存中...';
