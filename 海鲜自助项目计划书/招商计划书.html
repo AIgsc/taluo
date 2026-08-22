@@ -2475,7 +2475,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <strong>角色说明：</strong><br>
       • <strong>投资人：</strong>出资100万（装修设备70万+流动资金30万），回本前分可分配纯利40%（加速回本），回本后分10%（享纯收益），含装修+爬坡约13个月回本，3年累计回报约<span data-model="investor_total_3y_wan" contenteditable="false" class="">178万</span>（<span data-model="investor_roi_3y" contenteditable="false" class="">178%</span>）<br>
       • <strong>老板（门店运营方）：</strong>不投钱，负责后端运营管理（采购/后厨/前厅/品控/供应链/人员/证照），回本前月均纯利约16.3万，回本后月均约26.5万，3年总纯利约<span data-model="operator_total_3y_wan" contenteditable="false" class="">749万</span><br>
-      • <strong>房东：</strong>固定比例分红（默认12%，可填空调节10–15%），月均约<span data-model="landlord_monthly_income_wan" contenteditable="false" class="">4.1万</span>，3年共约<span data-model="landlord_total_3y_wan" contenteditable="false" class="">147万</span>（按36个月满额计算；实际前5个月装修+爬坡期无分红，31个月稳态分红约127万）<br>
+      • <strong>房东：</strong>固定比例分红（默认<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>，可填空调节10–15%），月均约<span data-model="landlord_monthly_income_wan" contenteditable="false" class="">4.1万</span>，3年共约<span data-model="landlord_total_3y_wan" contenteditable="false" class="">147万</span>（按36个月满额计算；实际前5个月装修+爬坡期无分红，31个月稳态分红约<span data-model="landlord_steady_31m_wan" contenteditable="false" class="">126万</span>）<br>
       <strong>三方各取所需，共同把项目做好，缺一不可。</strong>
     </div>
 
@@ -2500,15 +2500,15 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     </ul>
     <div class="highlight-box" style="border-left:4px solid #e74c3c;">
       <strong>📊 压力测试：客流下滑30%场景</strong><br>
-      若客流因淡季/竞争/突发因素下滑30%，月均营收降至约<strong>126万</strong>，影响如下：<br>
+      若客流因淡季/竞争/突发因素下滑30%，月均营收降至约<strong><span data-model="stress_revenue_wan" contenteditable="false" class="">126万</span></strong>，影响如下：<br>
       <table style="width:100%;margin-top:6px;font-size:0.85rem;">
         <thead><tr><th>指标</th><th style="text-align:right;">正常稳态</th><th style="text-align:right;">下滑30%</th><th style="text-align:right;">降幅</th></tr></thead>
         <tbody>
-          <tr><td>月均营收</td><td style="text-align:right;">180万</td><td style="text-align:right;color:#c0392b;">126万</td><td style="text-align:right;">-30%</td></tr>
-          <tr><td>可分配纯利</td><td style="text-align:right;"><span data-model="dividend_base_display" contenteditable="false" class="">339,680</span>元</td><td style="text-align:right;color:#c0392b;">10.99万</td><td style="text-align:right;">-68%</td></tr>
-          <tr><td>投资人分红（回本前40%）</td><td style="text-align:right;">13.59万</td><td style="text-align:right;color:#c0392b;">4.40万</td><td style="text-align:right;">-68%</td></tr>
-          <tr><td>房东分成（固定12%）</td><td style="text-align:right;">4.08万</td><td style="text-align:right;color:#c0392b;">1.32万</td><td style="text-align:right;">-68%</td></tr>
-          <tr><td>运营方纯利</td><td style="text-align:right;">16.30万</td><td style="text-align:right;color:#c0392b;">5.27万</td><td style="text-align:right;">-68%</td></tr>
+          <tr><td>月均营收</td><td style="text-align:right;"><span data-model="monthly_revenue" contenteditable="false" class="">180万</span></td><td style="text-align:right;color:#c0392b;"><span data-model="stress_revenue_wan" contenteditable="false" class="">126万</span></td><td style="text-align:right;">-30%</td></tr>
+          <tr><td>可分配纯利</td><td style="text-align:right;"><span data-model="dividend_base_display" contenteditable="false" class="">339,680</span>元</td><td style="text-align:right;color:#c0392b;"><span data-model="stress_dividend_base_wan" contenteditable="false" class="">10.99万</span></td><td style="text-align:right;"><span data-model="stress_drop_pct" contenteditable="false" class="">-68%</span></td></tr>
+          <tr><td>投资人分红（回本前40%）</td><td style="text-align:right;"><span data-model="ex_steady_investor_wan" contenteditable="false" class="">13.59万</span></td><td style="text-align:right;color:#c0392b;"><span data-model="stress_investor_wan" contenteditable="false" class="">4.40万</span></td><td style="text-align:right;"><span data-model="stress_drop_pct" contenteditable="false" class="">-68%</span></td></tr>
+          <tr><td>房东分成（固定<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>）</td><td style="text-align:right;"><span data-model="ex_steady_landlord_wan" contenteditable="false" class="">4.08万</span></td><td style="text-align:right;color:#c0392b;"><span data-model="stress_landlord_wan" contenteditable="false" class="">1.32万</span></td><td style="text-align:right;"><span data-model="stress_drop_pct" contenteditable="false" class="">-68%</span></td></tr>
+          <tr><td>运营方纯利</td><td style="text-align:right;"><span data-model="ex_steady_operator_wan" contenteditable="false" class="">16.30万</span></td><td style="text-align:right;color:#c0392b;"><span data-model="stress_operator_wan" contenteditable="false" class="">5.27万</span></td><td style="text-align:right;"><span data-model="stress_drop_pct" contenteditable="false" class="">-68%</span></td></tr>
         </tbody>
       </table>
       <p style="margin:6px 0 0 0;font-size:0.8rem;color:#666;">注：可分配纯利降幅大于营收降幅，因固定成本（人工21.56万）不随营收下降。若客流持续下滑，需启动成本压缩（缩减排班、暂停非必要推广），并触发30万流动资金安全垫。</p>
@@ -2571,10 +2571,10 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <div class="section-num">八</div>
       <h2>房东合作模式</h2>
     </div>
-    <p class="fs-085 color-gray" style="margin-bottom:12px;">固定比例分红 · 零固定租金 · 风险共担；默认12%（可填空调节10%–15%）</p>
+    <p class="fs-085 color-gray" style="margin-bottom:12px;">固定比例分红 · 零固定租金 · 风险共担；默认<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>（可填空调节10%–15%）</p>
     <ul class="info-list">
       <li><strong>合作方式：</strong>零固定房租，场地入股、风险共担，门店亏损当月房东无分成</li>
-      <li><strong>固定比例分红（可协商调节）：</strong>可分配纯利 × 固定比例（默认12%，建议区间10%–15%）；比例与纯利均支持手动填写，系统自动计算分红金额；门店亏损当月房东无分成，风险共担</li>
+      <li><strong>固定比例分红（可协商调节）：</strong>可分配纯利 × 固定比例（默认<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>，建议区间10%–15%）；比例与纯利均支持手动填写，系统自动计算分红金额；门店亏损当月房东无分成，风险共担</li>
       <li><strong>房东义务：</strong>负责场地合规、消防对接、物业协调</li>
     </ul>
     <div class="highlight-box green">
@@ -2588,14 +2588,14 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <strong>⑦ 剩余全部纯利归项目运营方</strong><br>
     </div>
     <div class="highlight-box" style="border-left:4px solid #f39c12;">
-      <strong>📌 场景示例（固定比例12%）：</strong>若当月可分配纯利为25万元，则：<br>
-      • 房东分成：25万 × 12% = <strong>3万元</strong><br>
-      • 投资人分红（回本前40%）：25万 × 40% = <strong>10万元</strong><br>
-      • 老板实得：25万 - 3万 - 10万 = <strong>12万元</strong><br>
+      <strong>📌 场景示例（固定比例<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>）：</strong>若当月可分配纯利为25万元，则：<br>
+      • 房东分成：25万 × <span data-model="landlord_pct_plain" contenteditable="false" class="">12</span>% = <strong><span data-model="ex25_landlord_wan" contenteditable="false" class="">3.00万元</span></strong><br>
+      • 投资人分红（回本前40%）：25万 × 40% = <strong><span data-model="ex25_investor_wan" contenteditable="false" class="">10.00万元</span></strong><br>
+      • 老板实得：25万 - <span data-model="ex25_landlord_wan" contenteditable="false" class="">3.00万</span> - <span data-model="ex25_investor_wan" contenteditable="false" class="">10.00万</span> = <strong><span data-model="ex25_operator_wan" contenteditable="false" class="">12.00万元</span></strong><br>
       若当月可分配纯利为<span data-model="dividend_base_display" contenteditable="false" class="">339,680</span>元（稳态月），则：<br>
-      • 房东分成：33.97万 × 12% = <strong>4.08万元</strong><br>
-      • 投资人分红（回本前40%）：33.97万 × 40% = <strong>13.59万元</strong><br>
-      • 老板实得：33.97万 - 4.08万 - 13.59万 = <strong>16.30万元</strong><br>
+      • 房东分成：33.97万 × <span data-model="landlord_pct_plain" contenteditable="false" class="">12</span>% = <strong><span data-model="ex_steady_landlord_wan" contenteditable="false" class="">4.08万元</span></strong><br>
+      • 投资人分红（回本前40%）：33.97万 × 40% = <strong><span data-model="ex_steady_investor_wan" contenteditable="false" class="">13.59万元</span></strong><br>
+      • 老板实得：33.97万 - <span data-model="ex_steady_landlord_wan" contenteditable="false" class="">4.08万</span> - <span data-model="ex_steady_investor_wan" contenteditable="false" class="">13.59万</span> = <strong><span data-model="ex_steady_operator_wan" contenteditable="false" class="">16.30万元</span></strong><br>
       <span style="color:#888;font-size:0.85rem;">→ 淡季各方同步让利，风险共担；旺季各方共享收益，真正实现利益绑定。固定比例简单透明，比例可随经营阶段协商微调。</span>
     </div>
     <div class="highlight-box" style="border-left:4px solid #c0392b;font-size:0.85rem;">
@@ -2724,7 +2724,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <h2>整体落地执行计划</h2>
     </div>
     <ol class="step-list">
-      <li><strong>房东签约定稿</strong> — 零固定租金+净利润×12%分成模式锁定</li>
+      <li><strong>房东签约定稿</strong> — 零固定租金+净利润×<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>分成模式锁定</li>
       <li><strong>投资人确认项目</strong> — 锁定投资与分红机制</li>
       <li><strong>施工队进场</strong> — 按70万预算完成全套装修+开业采购</li>
       <li><strong>设备进场安装</strong> — 空调、排风、新风、桌椅、门脸全部到位</li>
@@ -2848,7 +2848,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <li><strong>弥补往期亏损：</strong>如有亏损，先弥补再分红</li>
       <li><strong>投资人分红（回本前40%）：</strong>投资人累计分红未达100万本金前，按可分配纯利的40%加速回本</li>
       <li><strong>投资人分红（回本后10%）：</strong>本金收回后，按可分配纯利的10%享受纯收益，直至36个月期满</li>
-      <li><strong>房东分成（固定比例，默认12%）：</strong>可分配纯利 × 固定比例（可填空调节，建议10%–15%）</li>
+      <li><strong>房东分成（固定比例，默认<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>）：</strong>可分配纯利 × 固定比例（可填空调节，建议10%–15%）</li>
       <li><strong>剩余全部：</strong>归门店老板（运营方）所有</li>
     </ol>
     <div class="sub-title-sm">当月具体分账明细（月销<span data-model="monthly_revenue" contenteditable="false" class="">180万</span>稳定状态，可分配纯利口径）</div>
@@ -2863,7 +2863,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
           <tr style="background:#d5f5e3;"><td><strong>⑤ 月度可分配纯利（三方分红统一基数）</strong></td><td style="text-align:right;color:#1a8a3a;font-weight:700;"><strong><span data-model="dividend_base_num" contenteditable="false" class="">339680</span></strong></td></tr>
           <tr><td colspan="2" style="padding:4px 8px;font-size:0.8rem;color:#888;background:#fafafa;">—— 三方分红（全部以可分配纯利为基数） ——</td></tr>
           <tr><td>⑥ 投资人分红（回本前，分可分配纯利40%）</td><td style="text-align:right;color:#1a8a3a;"><span data-model="investor_dividend" contenteditable="false" class="">135,872元</span></td></tr>
-          <tr><td>⑦ 房东分成（固定比例，默认12%）</td><td style="text-align:right;"><span data-model="landlord_dividend" contenteditable="false" class="">40,762元</span></td></tr>
+          <tr><td>⑦ 房东分成（固定比例，默认<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>）</td><td style="text-align:right;"><span data-model="landlord_dividend" contenteditable="false" class="">40,762元</span></td></tr>
           <tr class="total-row"><td><strong>⑧ 门店老板（运营方）月度实得净利润</strong></td><td style="text-align:right;color:#1a8a3a;"><strong><span data-model="operator_income" contenteditable="false" class="">163,046元</span></strong></td></tr>
         </tbody>
       </table>
@@ -2872,9 +2872,9 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       <strong>📌 利润基数定义（写进合同）：</strong><br>
       「可分配纯利」= 总营业额 − 全部运营成本(人工/食材/水电/杂费) − 抖音服务商费用(<span data-model="service_fee_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">4%</span>) − 运营部门费用(<span data-model="operation_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">4%</span>)<br>
       8%流量费已包含抖音服务商和运营部门全部营销支出，属于开店刚性成本，不由老板个人承担。<br>
-      投资人分红基数 = 可分配纯利；房东分成基数 = 可分配纯利 × 固定比例（默认12%，可填空调节10%–15%）。<br>
+      投资人分红基数 = 可分配纯利；房东分成基数 = 可分配纯利 × 固定比例（默认<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>，可填空调节10%–15%）。<br>
       <span style="color:#c0392b;">⚠️ 三方必须统一使用同一个「可分配纯利」定义，否则结算时各执一词，产生纠纷。</span><br>
-      <span style="color:#2e86c1;">📌 稳态可分配纯利≈<span data-model="dividend_base_num" contenteditable="false" class="">339680</span>元，回本前投资人分40%≈<span data-model="investor_dividend_num" contenteditable="false" class="">135872</span>元，房东固定12%≈<span data-model="landlord_dividend_num" contenteditable="false" class="">40762</span>元，运营方≈<span data-model="operator_income_num" contenteditable="false" class="">163046</span>元。</span>
+      <span style="color:#2e86c1;">📌 稳态可分配纯利≈<span data-model="dividend_base_num" contenteditable="false" class="">339680</span>元，回本前投资人分40%≈<span data-model="investor_dividend_num" contenteditable="false" class="">135872</span>元，房东固定<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>≈<span data-model="landlord_dividend_num" contenteditable="false" class="">40762</span>元，运营方≈<span data-model="operator_income_num" contenteditable="false" class="">163046</span>元。</span>
     </div>
     <div class="highlight-box" style="border-left:4px solid #c0392b;font-size:0.85rem;">
       <strong>📌 财务透明与防跳档机制（写进合同）：</strong><br><br>
@@ -3024,7 +3024,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
 
         <div class="metric">
           <span class="label">月均分成收入</span>
-          <span class="value large">约<span data-model="landlord_monthly_income_wan" contenteditable="false" class="">4.1万</span>（固定12%）</span>
+          <span class="value large">约<span data-model="landlord_monthly_income_wan" contenteditable="false" class="">4.1万</span>（固定<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>）</span>
         </div>
         <div class="metric">
           <span class="label">分成规则</span>
@@ -3081,7 +3081,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     <div class="highlight-box" style="margin-top:20px;background:#f0f8fc;">
       <strong>📌 快速决策参考：</strong><br>
       • <strong>投资人视角：</strong>100万投入，3年回报约<span data-model="investor_total_3y_wan" contenteditable="false" class="">178万</span>，年均收益约59万（第1年<span data-model="investor_year1_dividend_wan" contenteditable="false" class="">95万</span>/第2年<span data-model="investor_year2_dividend_wan" contenteditable="false" class="">42万</span>/第3年<span data-model="investor_year3_dividend_wan" contenteditable="false" class="">41万</span>）。回本前分40%加速回本，最快约13个月收回本金，之后享10%纯收益。适合追求高收益、能接受餐饮实体投资周期的财务投资人。<br>
-      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，固定比例分红（默认12%，可填10–15%），月均约<span data-model="landlord_monthly_income_wan" contenteditable="false" class="">4.1万</span>，3年共约<span data-model="landlord_total_3y_wan" contenteditable="false" class="">147万</span>（按36个月满额计算；实际前5个月装修+爬坡期无分红，31个月稳态分红约127万）。适合持有商业物业、愿共担风险的资产方。<br>
+      • <strong>房东视角：</strong>零风险提供场地，无固定租金压力，固定比例分红（默认<span data-model="landlord_share_pct" contenteditable="true" class="bp-data-editable" inputmode="decimal">12%</span>，可填10–15%），月均约<span data-model="landlord_monthly_income_wan" contenteditable="false" class="">4.1万</span>，3年共约<span data-model="landlord_total_3y_wan" contenteditable="false" class="">147万</span>（按36个月满额计算；实际前5个月装修+爬坡期无分红，31个月稳态分红约<span data-model="landlord_steady_31m_wan" contenteditable="false" class="">126万</span>）。适合持有商业物业、愿共担风险的资产方。<br>
       • <strong>老板视角：</strong>无需出资，承担后端运营管理，3年可获纯利约<span data-model="operator_total_3y_wan" contenteditable="false" class="">749万</span>。适合有餐饮运营经验、能调动供应链资源的项目组织者。
     </div>
   

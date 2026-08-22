@@ -128,6 +128,27 @@
       // ========== 房东：固定比例分成（默认12%，可填空调节10-15%） ==========
       var landlordDividend = Math.round(dividendBase * i.landlordSharePct / 100);
 
+      // ========== 场景示例（淡季25万假设基数，随比例联动重算） ==========
+      var ex25Landlord = Math.round(250000 * i.landlordSharePct / 100);
+      var ex25Investor = Math.round(250000 * i.investorPctPrePayback / 100);
+      var ex25Operator = 250000 - ex25Landlord - ex25Investor;
+
+      // ========== 建议区间示例（10%/15%）与稳态31个月房东分红 ==========
+      var exLandlordLow = Math.round(dividendBase * 10 / 100);
+      var exLandlordHigh = Math.round(dividendBase * 15 / 100);
+      var landlordSteady31m = Math.round(landlordDividend * 31);
+
+      // ========== 压力测试（客流下滑30%，随营收/比例/手动纯利联动重算） ==========
+      var stressRevenue = Math.round(monthlyRevenue * 0.7);
+      var stressFoodCost = Math.round(stressRevenue * i.foodCostPct / 100 * (1 + i.foodWastePct / 100));
+      var stressCashExpense = actualLaborCost + stressFoodCost + i.rent + marketingCost + i.miscCost + i.utilityCost;
+      var stressFee = Math.round(stressRevenue * i.serviceFeePct / 100) + Math.round(stressRevenue * i.operationPct / 100);
+      var stressDividendBase = stressRevenue - stressCashExpense - stressFee;
+      var stressInvestor = Math.round(stressDividendBase * i.investorPctPrePayback / 100);
+      var stressLandlord = Math.round(stressDividendBase * i.landlordSharePct / 100);
+      var stressOperator = stressDividendBase - stressInvestor - stressLandlord;
+      var stressDropPct = dividendBase > 0 ? Math.round((1 - stressDividendBase / dividendBase) * 100) : 0;
+
       // ========== 回本前 vs 回本后 三方分账 ==========
       // 回本前（稳态）：投资人40%，房东固定比例，老板剩余
       var operatorIncomePre = dividendBase - investorPrePayback - landlordDividend;
@@ -451,6 +472,29 @@
         landlord_share_pct_num: i.landlordSharePct,
         landlord_pct_low: '10%',
         landlord_pct_high: '15%',
+        // 场景示例（随比例联动）
+        landlord_pct_plain: i.landlordSharePct,
+        ex25_landlord_wan: (ex25Landlord / 10000).toFixed(2) + '万',
+        ex25_landlord_num: ex25Landlord,
+        ex25_investor_wan: (ex25Investor / 10000).toFixed(2) + '万',
+        ex25_operator_wan: (ex25Operator / 10000).toFixed(2) + '万',
+        ex_steady_landlord_wan: (landlordDividend / 10000).toFixed(2) + '万',
+        ex_steady_landlord_num: landlordDividend,
+        ex_steady_investor_wan: (investorPrePayback / 10000).toFixed(2) + '万',
+        ex_steady_operator_wan: (operatorIncomePre / 10000).toFixed(2) + '万',
+        // 建议区间示例（10%/15%）与稳态31个月房东分红
+        ex_landlord_low_wan: (exLandlordLow / 10000).toFixed(2) + '万',
+        ex_landlord_high_wan: (exLandlordHigh / 10000).toFixed(2) + '万',
+        landlord_steady_31m_wan: (landlordSteady31m / 10000).toFixed(0) + '万',
+        // 压力测试（客流下滑30%，随营收/比例/手动纯利联动重算）
+        dividend_base_wan: (dividendBase / 10000).toFixed(2) + '万',
+        stress_revenue_wan: (stressRevenue / 10000).toFixed(0) + '万',
+        stress_dividend_base_wan: (stressDividendBase / 10000).toFixed(2) + '万',
+        stress_dividend_base_num: stressDividendBase,
+        stress_investor_wan: (stressInvestor / 10000).toFixed(2) + '万',
+        stress_landlord_wan: (stressLandlord / 10000).toFixed(2) + '万',
+        stress_operator_wan: (stressOperator / 10000).toFixed(2) + '万',
+        stress_drop_pct: '-' + stressDropPct + '%',
 
         // 老板（运营方）
         operator_income: formatNum(operatorIncomePre) + '元',
