@@ -294,27 +294,11 @@
       
       var result = await res.json();
       
-      // 同步逻辑：
-      // 1. 始终同步：先把当前 HTML 推送到数据库，确保数据库有最新代码内容
-      // 2. 同步后返回，不再应用同步前获取的旧 DB 内容（会覆盖新代码）
-      // 3. 如果无需同步（source=db 且 sync_needed=false），则应用 DB 内容
-      if (result.sync_needed) {
-        await syncHtmlToDb();
-        // 同步后数据库已有最新内容，直接返回，保留当前 HTML 内容
-        return;
-      }
-
-      // 无需同步时：版本匹配，数据库可能有用户编辑内容 → 应用 DB 内容
-      if (result.source === 'db' && result.content && typeof result.content === 'object') {
-        applyContent(result.content);
-        if (result.model && typeof result.model === 'object') {
-          var dbModel = window.BusinessModel;
-          if (dbModel) {
-            dbModel.setInputs(result.model);
-          }
-        }
-      }
-      // source 字段不存在（旧版 API）→ 不处理，保留 HTML 内容
+      // 核心逻辑：每次页面加载都把当前 HTML 同步到数据库，不应用旧 DB 内容
+      // 编辑器的保存功能会同时更新 DB 和 GitHub HTML，所以 HTML 始终是最新的
+      // 应用旧 DB 内容会导致本地代码修改被数据库旧内容覆盖
+      await syncHtmlToDb();
+      // 同步完成，保留当前 HTML 内容，不应用旧 DB 内容
     } catch (e) {
       // 静默处理
     }
