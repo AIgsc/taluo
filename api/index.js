@@ -1075,6 +1075,10 @@ async function pushToGitHub(html, filePath, token) {
     filePath = '海鲜自助项目计划书/招商计划书.html';
   }
 
+  // 兼容双重编码：浏览器 window.location.pathname 返回的是已 URL 编码的路径，
+  // 先解码再重新编码，避免二次编码导致 404
+  try { filePath = decodeURIComponent(filePath); } catch(e) {}
+
   var encodedPath = filePath.split('/').map(function(s) { return encodeURIComponent(s); }).join('/');
   var apiPath = '/repos/' + owner + '/' + repo + '/contents/' + encodedPath;
 
