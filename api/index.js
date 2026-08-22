@@ -311,7 +311,9 @@ module.exports = async (req, res) => {
       if (source === 'db' && Object.keys(dbContent).length === 0) {
         source = 'html';
       }
-      let syncNeeded = source === 'html' && codeVersion !== '';
+      // 始终同步：无论版本是否匹配，只要页面加载就把当前 HTML 推送到数据库
+      // 确保数据库始终有最新代码内容，防止本地修改被数据库旧内容覆盖
+      let syncNeeded = codeVersion !== '';
       console.log('[API GET] 判断结果: source=' + source + ', sync_needed=' + syncNeeded);
 
       // 4. 加载模型输入变量

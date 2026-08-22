@@ -294,13 +294,14 @@
       
       var result = await res.json();
       
-      // source='html' → 版本不同，代码最新 → 同步 HTML 到数据库
-      // source='db'   → 版本相同，代码未变 → 应用数据库内容（用户编辑）
-      if (result.source === 'html' && result.sync_needed) {
-        // 代码最新：把当前 HTML 内容推送到数据库
-        syncHtmlToDb();
-      } else if (result.source === 'db' && result.content && typeof result.content === 'object') {
-        // 代码未变：数据库有用户编辑的内容，应用到页面
+      // 新逻辑：始终先同步 HTML 到数据库，再根据版本号决定是否应用 DB 内容
+      // 1. 始终同步：确保数据库有最新代码内容，防止本地修改被覆盖
+      if (result.sync_needed) {
+        await syncHtmlToDb();
+      }
+      // 2. 版本相同 → 数据库可能有用户编辑 → 应用 DB 内容
+      //    版本不同 → 代码最新 → 保留 HTML 内容（不应用 DB）
+      if (result.source === 'db' && result.content && typeof result.content === 'object') {
         applyContent(result.content);
         // 应用数据库的模型变量
         if (result.model && typeof result.model === 'object') {
