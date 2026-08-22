@@ -276,7 +276,7 @@
         hasChanges = false;
         if (result.github && !result.github.synced) {
           if (status) { status.textContent = '保存成功，但 GitHub 同步失败'; status.style.color = '#e67e22'; }
-          return { ok: false, error: 'github_sync_failed' };
+          return { ok: false, error: 'github_sync_failed', reason: result.github.reason || '未知错误' };
         } else {
           if (status) { status.textContent = '保存成功！已同步到 GitHub'; status.style.color = '#27ae60'; }
           return { ok: true };
@@ -287,7 +287,7 @@
       }
     } catch (e) {
       if (status) { status.textContent = '保存失败：网络错误'; status.style.color = '#e74c3c'; }
-      return { ok: false, error: 'network_error' };
+      return { ok: false, error: 'network_error', reason: e.message };
     } finally {
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存修改'; }
       if (status) {
@@ -318,9 +318,12 @@
         btn.style.background = '#27ae60';
         btn.style.boxShadow = '0 4px 16px rgba(39,174,96,0.35)';
       } else {
-        btn.innerHTML = '✗ 推送失败';
+        var reason = ret && ret.reason ? ret.reason : '';
+        btn.innerHTML = '✗ 推送失败' + (reason ? '!' : '');
+        if (reason) btn.title = reason;
         btn.style.background = '#c0392b';
         btn.style.boxShadow = '0 4px 16px rgba(192,57,43,0.35)';
+        console.error('推送失败:', reason);
       }
       setTimeout(function() {
         btn.innerHTML = '📤 推送';
