@@ -7,7 +7,8 @@
  *
  * V2 核心变更（2026-08-22）：
  * - 投资人：回本前分可分配纯利40%，回本后分10%
- * - 房东：超额累进分成（30万以内10%/超出部分20%）
+ * - 房东：固定比例分成（默认12%，可填空调节10-15%），替代原超额累进（30万内10%/超出20%）
+ * - 可分配纯利支持手动填写覆盖（manualDividendBase），房东比例可手动调节（landlordSharePct）
  * - 8%明确为流量获客刚性成本（服务商4%+运营部门4%），非老板个人收益
  * - 角色拆分：抖音服务商（前端获客）vs 门店老板（后端管理）
  */
@@ -56,6 +57,8 @@
       investorPctPrePayback: 40, // 投资人分红 - 回本前 %
       investorPct: 10,          // 投资人分红 - 回本后 %
       partnerTermMonths: 36,    // 投资人合伙期限（月）
+      landlordSharePct: 12,     // 房东分成 - 固定比例 %（可填空调节，建议10-15%）
+      manualDividendBase: 0,    // 手动填写可分配纯利（元），填0则自动按营收测算
 
       // 扩展参数
       tableCount: 120,          // 桌数
@@ -112,26 +115,23 @@
       var serviceFee = Math.round(monthlyRevenue * i.serviceFeePct / 100);
       var operationFee = Math.round(monthlyRevenue * i.operationPct / 100);
       var totalFee = serviceFee + operationFee;
-      // 分红基数 = 现金净利润 - 两费
+      // 分红基数 = 现金净利润 - 两费；支持手动填写覆盖自动测算
       var dividendBase = cashNetProfit - totalFee;
+      if (i.manualDividendBase > 0) {
+        dividendBase = Math.round(i.manualDividendBase);
+      }
 
       // ========== 投资人分红计算（回本前40%/回本后10%） ==========
       var investorPrePayback = Math.round(dividendBase * i.investorPctPrePayback / 100); // 40%
       var investorPostPayback = Math.round(dividendBase * i.investorPct / 100);         // 10%
 
-      // ========== 房东：超额累进分成（30万以内10%/超出部分20%） ==========
-      var landlordThreshold = 300000;
-      var landlordDividend;
-      if (dividendBase <= landlordThreshold) {
-        landlordDividend = Math.round(dividendBase * 10 / 100);
-      } else {
-        landlordDividend = Math.round(landlordThreshold * 10 / 100) + Math.round((dividendBase - landlordThreshold) * 20 / 100);
-      }
+      // ========== 房东：固定比例分成（默认12%，可填空调节10-15%） ==========
+      var landlordDividend = Math.round(dividendBase * i.landlordSharePct / 100);
 
       // ========== 回本前 vs 回本后 三方分账 ==========
-      // 回本前（稳态）：投资人40%，房东超额累进，老板剩余
+      // 回本前（稳态）：投资人40%，房东固定比例，老板剩余
       var operatorIncomePre = dividendBase - investorPrePayback - landlordDividend;
-      // 回本后（稳态）：投资人10%，房东超额累进，老板剩余
+      // 回本后（稳态）：投资人10%，房东固定比例，老板剩余
       var operatorIncomePost = dividendBase - investorPostPayback - landlordDividend;
 
       // ========== 投资人真实回本周期（含装修期+爬坡期） ==========
@@ -429,6 +429,8 @@
         dividend_base: formatNum(dividendBase) + '元',
         dividend_base_num: dividendBase,
         dividend_base_display: formatNum(dividendBase),
+        dividend_base_auto_num: cashNetProfit - totalFee,
+        manual_dividend_base_display: i.manualDividendBase > 0 ? formatNum(i.manualDividendBase) + '元' : '自动测算',
 
         // 投资人分红（回本前40%/回本后10%）
         investor_dividend: formatNum(investorPrePayback) + '元',
@@ -441,14 +443,14 @@
         investor_pct_pre: '40%',
         investor_pct_post: '10%',
 
-        // 房东：超额累进分成（30万以内10%/超出部分20%）
+        // 房东：固定比例分成（默认12%，可填空调节10-15%）
         landlord_dividend: formatNum(landlordDividend) + '元',
         landlord_dividend_num: landlordDividend,
-        landlord_pct: '超额累进（30万以内10% / 超出部分20%）',
-        landlord_threshold: formatNum(landlordThreshold) + '元',
-        landlord_threshold_num: landlordThreshold,
-        landlord_pct_low: '10%（30万以内部分）',
-        landlord_pct_high: '20%（超出30万部分）',
+        landlord_pct: '固定分红' + i.landlordSharePct + '%（可填空调节）',
+        landlord_share_pct: i.landlordSharePct + '%',
+        landlord_share_pct_num: i.landlordSharePct,
+        landlord_pct_low: '10%',
+        landlord_pct_high: '15%',
 
         // 老板（运营方）
         operator_income: formatNum(operatorIncomePre) + '元',
