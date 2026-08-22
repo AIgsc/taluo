@@ -324,21 +324,15 @@
         if (dynStyles[si].parentNode) dynStyles[si].parentNode.removeChild(dynStyles[si]);
       }
     }
-    // 2.2 移除编辑工具栏与编辑态残留
-    var dynEls = docClone.querySelectorAll('#bp-toolbar, .bp-editing');
+    // 2.2 移除编辑工具栏、编辑态残留与推送按钮
+    //    推送按钮是运行时由 bpShowPushButton() 动态创建的，页面加载后会重建。
+    //    若把它序列化进 HTML，每次推送都会残留一个硬编码按钮（历史污染的根源），
+    //    故推送时必须一并剔除，只留动态创建逻辑。
+    var dynEls = docClone.querySelectorAll('#bp-toolbar, .bp-editing, #bp-push-btn');
     for (var ei = 0; ei < dynEls.length; ei++) {
       if (dynEls[ei].parentNode) dynEls[ei].parentNode.removeChild(dynEls[ei]);
     }
-    // 2.3 推送按钮复位为正常状态（不把"推送中..."写进线上 HTML）
-    var cloneBtn = docClone.querySelector('#bp-push-btn');
-    if (cloneBtn) {
-      cloneBtn.innerHTML = '📤 推送';
-      cloneBtn.style.background = '#2e86c1';
-      cloneBtn.style.boxShadow = '0 4px 16px rgba(46,134,193,0.35)';
-      cloneBtn.style.pointerEvents = 'auto';
-      cloneBtn.style.opacity = '1';
-    }
-    // 2.4 移除浏览器扩展注入的垃圾节点（如 xl-chrome-ext 下载条）
+    // 2.3 移除浏览器扩展注入的垃圾节点（如 xl-chrome-ext 下载条）
     var extEls = docClone.querySelectorAll('[id^="xl_chrome_ext"], [class*="xl-chrome-ext"]');
     for (var xi = 0; xi < extEls.length; xi++) {
       if (extEls[xi].parentNode) extEls[xi].parentNode.removeChild(extEls[xi]);
