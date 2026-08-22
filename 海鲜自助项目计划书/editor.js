@@ -223,13 +223,17 @@
       var savedVars = document.getElementById('bp-saved-vars');
       if (savedVars) {
         var practicalData = [];
-        if (window.PD && window.PD.items) practicalData = window.PD.items;
-        savedVars.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData });
+        var customBlocks = [];
+        if (window.PD) {
+          if (window.PD.items) practicalData = window.PD.items;
+          if (window.PD.customBlocks) customBlocks = window.PD.customBlocks;
+        }
+        savedVars.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData, customBlocks: customBlocks });
       } else {
         var script = document.createElement('script');
         script.id = 'bp-saved-vars';
         script.type = 'application/json';
-        script.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData });
+        script.textContent = JSON.stringify({ version: 1, inputs: inputs, practicalData: practicalData, customBlocks: customBlocks });
         document.body.appendChild(script);
       }
     }

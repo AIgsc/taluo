@@ -3181,7 +3181,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     { id:'pd_l4_04', block:'level4', title:'核心设备二手残值参考', value:0, notes:'海鲜池/冷库/空调等大件设备二手回收市场价，用于清算场景本金兜底测算', dateUpdated:today },
   ];
 
-  // ---------- 板块定义 ----------
+  // ---------- 板块定义（固定4个预设板块） ----------
   var BLOCKS = [
     { id:'level1', icon:'🔴', title:'一、一级核心数据：签约前必须核实', color:'#c0392b', bg:'#fff5f5' },
     { id:'level2', icon:'🟠', title:'二、二级核心数据：筹备期必须落实', color:'#e67e22', bg:'#fffaf0' },
@@ -3189,9 +3189,22 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     { id:'level4', icon:'⚪', title:'四、隐性核心数据（最容易被忽略）', color:'#8e44ad', bg:'#faf5ff' },
   ];
 
+  // 自定义板块的颜色轮换
+  var CUSTOM_COLORS = [
+    { icon:'📁', color:'#2c3e50', bg:'#f5f6fa' },
+    { icon:'📊', color:'#16a085', bg:'#f0faf8' },
+    { icon:'📋', color:'#2980b9', bg:'#f0f7fc' },
+    { icon:'🔖', color:'#d35400', bg:'#fef8f0' },
+    { icon:'📌', color:'#7f8c8d', bg:'#f8f8f8' },
+    { icon:'📎', color:'#34495e', bg:'#f5f6fa' },
+    { icon:'📐', color:'#1abc9c', bg:'#f0faf8' },
+    { icon:'📑', color:'#e67e22', bg:'#fef8f0' },
+  ];
+
   // ---------- 核心管理器 ----------
   var PD = {
-    items: [],
+    items: [],          // 所有数据项
+    customBlocks: [],   // 用户自定义板块
     init: function() {
       this.load();
       this.render();
@@ -3201,6 +3214,13 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
         var el = document.getElementById('bp-saved-vars');
         if (el) {
           var data = JSON.parse(el.textContent);
+          // 加载自定义板块
+          if (data && data.customBlocks && Array.isArray(data.customBlocks)) {
+            this.customBlocks = data.customBlocks;
+          } else {
+            this.customBlocks = [];
+          }
+          // 加载数据项
           if (data && data.practicalData && Array.isArray(data.practicalData)) {
             var saved = data.practicalData;
             var merged = {};
@@ -3212,6 +3232,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
         }
       } catch(e) {}
       this.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+      this.customBlocks = [];
     },
     save: function() {
       try {
@@ -3219,6 +3240,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
         if (el) {
           var data = JSON.parse(el.textContent) || {};
           data.practicalData = this.items;
+          data.customBlocks = this.customBlocks;
           el.textContent = JSON.stringify(data);
           if (window.hasChanges !== undefined) window.hasChanges = true;
         }
@@ -3226,6 +3248,26 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
     },
     genId: function() { return 'pd_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2,4); },
     getItems: function(blockId) { return this.items.filter(function(it){ return it.block === blockId; }); },
+    // ====== 板块操作 ======
+    getAllBlocks: function() {
+      var all = BLOCKS.slice();
+      this.customBlocks.forEach(function(cb){ all.push(cb); });
+      return all;
+    },
+    addBlock: function(title) {
+      var ci = this.customBlocks.length % CUSTOM_COLORS.length;
+      var c = CUSTOM_COLORS[ci];
+      var block = { id: this.genId(), icon: c.icon, title: title || '新板块', color: c.color, bg: c.bg, isCustom: true };
+      this.customBlocks.push(block);
+      this.save(); this.render();
+    },
+    deleteBlock: function(blockId) {
+      if (!confirm('确定删除此板块及其中所有数据？')) return;
+      this.items = this.items.filter(function(it){ return it.block !== blockId; });
+      this.customBlocks = this.customBlocks.filter(function(b){ return b.id !== blockId; });
+      this.save(); this.render();
+    },
+    // ====== 项目操作 ======
     addItem: function(blockId, title, value, notes) {
       this.items.push({ id: this.genId(), block: blockId, title: title || '新项目', value: (value!==undefined&&value!==null) ? Number(value) : 0, notes: notes || '', dateUpdated: today });
       this.save(); this.render();
@@ -3240,15 +3282,32 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       }
       this.save(); this.render();
     },
+    // ====== 渲染 ======
     render: function() {
       var container = document.getElementById('pd-container');
       if (!container) return;
+      var allBlocks = this.getAllBlocks();
       var html = '';
-      for (var b = 0; b < BLOCKS.length; b++) {
-        var blk = BLOCKS[b];
+      // 添加板块按钮
+      html += '<div style="margin-bottom:10px;">';
+      html += '<button class="pd-add-btn" onclick="PD.showBlockForm()" style="color:#8e44ad;border-color:#8e44ad;font-size:0.85rem;padding:6px 14px;">➕ 添加板块</button>';
+      html += '<div class="pd-add-form" id="pd-block-form">';
+      html += '<input type="text" id="pd-block-title" placeholder="板块名称（如：五、设备采购清单）" style="margin-bottom:6px;">';
+      html += '<div class="pd-form-actions">';
+      html += '<button class="pd-form-submit" onclick="PD.submitAddBlock()">✓ 确认添加</button>';
+      html += '<button class="pd-form-cancel" onclick="PD.hideBlockForm()">取消</button>';
+      html += '</div></div></div>';
+      // 渲染每个板块
+      for (var b = 0; b < allBlocks.length; b++) {
+        var blk = allBlocks[b];
         var items = this.getItems(blk.id);
         html += '<div class="pd-block" style="border-color:' + blk.color + ';background:' + blk.bg + ';">';
-        html += '<div class="pd-block-title" style="background:' + blk.color + ';">' + blk.icon + ' ' + blk.title + '</div>';
+        html += '<div class="pd-block-title" style="background:' + blk.color + ';display:flex;align-items:center;justify-content:space-between;">';
+        html += '<span>' + blk.icon + ' ' + blk.title + '</span>';
+        if (blk.isCustom) {
+          html += '<button class="pd-block-del" onclick="PD.deleteBlock(\'' + blk.id + '\')" title="删除板块" style="background:none;border:none;color:rgba(255,255,255,0.7);cursor:pointer;padding:2px 8px;font-size:0.75rem;border-radius:4px;">✕</button>';
+        }
+        html += '</div>';
         if (items.length === 0) {
           html += '<div style="padding:16px;text-align:center;font-size:0.8rem;opacity:0.5;">暂无数据，点击下方添加</div>';
         } else {
@@ -3291,9 +3350,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
           var id = this.dataset.pdEdit;
           var field = this.dataset.pdField;
           var text = this.textContent.trim();
-          // 去除可能混入的子元素文本（如 notes）
           if (field === 'title') {
-            // 只取第一行文本作为标题
             self.updateItem(id, field, text.split('\n')[0].trim());
           } else {
             var num = parseFloat(text.replace(/[^0-9.\-]/g, ''));
@@ -3307,6 +3364,7 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       if (n >= 10000) { var w = n / 10000; return w >= 10 ? Math.round(w) + '万' : w.toFixed(1) + '万'; }
       return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     },
+    // ====== 表单操作 ======
     showAddForm: function(blockId) { var f = document.getElementById('pd-form-' + blockId); if (f) f.classList.add('open'); },
     hideAddForm: function(blockId) {
       var f = document.getElementById('pd-form-' + blockId);
@@ -3320,6 +3378,17 @@ document.addEventListener('DOMContentLoaded',function(){if(sessionStorage.getIte
       var numVal = parseFloat(value.replace(/[^0-9.\-]/g, ''));
       this.addItem(blockId, title, isNaN(numVal) ? 0 : numVal, notes);
       this.hideAddForm(blockId);
+    },
+    showBlockForm: function() { var f = document.getElementById('pd-block-form'); if (f) f.classList.add('open'); },
+    hideBlockForm: function() {
+      var f = document.getElementById('pd-block-form');
+      if (f) { f.classList.remove('open'); var inp = document.getElementById('pd-block-title'); if (inp) inp.value = ''; }
+    },
+    submitAddBlock: function() {
+      var title = document.getElementById('pd-block-title').value.trim();
+      if (!title) { alert('请输入板块名称'); return; }
+      this.addBlock(title);
+      this.hideBlockForm();
     }
   };
 
@@ -3340,5 +3409,5 @@ window.CODE_VERSION = '20260822-001';
 </script>
 <script src="business-model.js"></script>
 <!-- 持久化变量值：保存时更新，加载时 BusinessModel 读取 -->
-<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":2000,"price":169,"monRev":35100,"tueRev":35100,"wedRev":35100,"thuRev":35100,"friRev":93200,"satRev":93200,"sunRev":93200,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000,"actualRenovationCost":700000,"workingCapitalAlert":100000,"investorCumDividend":0,"prepLaborCost":120000,"openingMarketingBudget":50000,"foodWastePct":3,"licenseCost":30000,"weekendPartTimeCost":30000,"socialInsuranceBase":5000},"practicalData":[]}</script>
+<script id="bp-saved-vars" type="application/json">{"version":1,"inputs":{"area":2000,"price":169,"monRev":35100,"tueRev":35100,"wedRev":35100,"thuRev":35100,"friRev":93200,"satRev":93200,"sunRev":93200,"totalInvestment":1000000,"equipmentInvestment":700000,"foodCostPct":48,"rent":0,"laborCost":215600,"marketingPct":0,"miscCost":60000,"serviceFeePct":4,"operationPct":4,"investorPctPrePayback":40,"investorPct":10,"partnerTermMonths":36,"tableCount":120,"seatsPerTable":2.8,"staffCount":38,"utilityCost":60000,"kitchenStaff":22,"kitchenCost":105000,"frontStaff":16,"frontCost":75000,"staffInitialCost":200000,"foodInitialCost":100000,"actualRenovationCost":700000,"workingCapitalAlert":100000,"investorCumDividend":0,"prepLaborCost":120000,"openingMarketingBudget":50000,"foodWastePct":3,"licenseCost":30000,"weekendPartTimeCost":30000,"socialInsuranceBase":5000},"practicalData":[],"customBlocks":[]}</script>
 <script src="editor.js"></script></body></html>
