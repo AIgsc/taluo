@@ -45,7 +45,7 @@
       '#bp-toolbar .bp-btn-save:hover{background:#1e8449;}' +
       '#bp-toolbar .bp-status{font-size:11px;color:rgba(255,255,255,0.7);margin-left:4px;}' +
       '.bp-editing{outline:2px dashed #5dade2 !important;outline-offset:2px !important;border-radius:4px !important;cursor:text !important;user-select:text !important;-webkit-user-select:text !important;-webkit-touch-callout:default !important;color:#1a1a2e !important;caret-color:#1a1a2e !important;}' +
-      '.cover.bp-editing{color:#1a1a2e !important;caret-color:#1a1a2e !important;}' +
+      '.cover.bp-editing, .cover.bp-editing h1, .cover.bp-editing .subtitle, .cover.bp-editing .info, .cover.bp-editing .info strong, .cover.bp-editing .badge, .cover.bp-editing .version, .cover.bp-editing .divider{color:#1a1a2e !important;caret-color:#1a1a2e !important;}.cover.bp-editing .divider{background:rgba(0,0,0,0.2) !important;}.cover.bp-editing h1{text-shadow:none !important;}' +
       '.bp-editing:hover{background:rgba(93,173,226,0.05) !important;}' +
       '.bp-saving{opacity:0.5;pointer-events:none;}' +
       /* 数据填空可编辑样式 */
