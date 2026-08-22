@@ -19,6 +19,13 @@
 
   // ==================== 创建浮动工具栏 ====================
   function createToolbar() {
+    // 清理可能残留的旧工具栏（推送后的 HTML 里可能已含一个 #bp-toolbar），
+    // 否则会出现两个同 id 的工具栏，按钮监听绑定错乱、点击失效
+    var oldToolbars = document.querySelectorAll('#bp-toolbar');
+    for (var i = 0; i < oldToolbars.length; i++) {
+      if (oldToolbars[i].parentNode) oldToolbars[i].parentNode.removeChild(oldToolbars[i]);
+    }
+
     var bar = document.createElement('div');
     bar.id = 'bp-toolbar';
     bar.innerHTML =
@@ -83,14 +90,20 @@
     if (cover) {
       cover.appendChild(bar);
     } else {
-      // 无封面容器时，工具栏追加到 body 顶部。
-      // 此时 absolute 定位相对视口会落在页面顶部，容易被固定的顶部导航栏遮挡，
-      // 因此改用 fixed 定位并放到导航栏下方、提高 z-index，保证始终可见可点。
-      document.body.insertBefore(bar, document.body.firstChild);
-      bar.style.position = 'fixed';
-      bar.style.top = '52px';
-      bar.style.right = '16px';
-      bar.style.zIndex = '1000';
+      // 无封面容器时：把工具栏放进文档流，放在页面第一个 h1 上方，
+      // 不悬浮、不固定，避免被顶部导航栏遮挡、也避免按钮状态错乱
+      var firstH1 = document.querySelector('h1');
+      if (firstH1) {
+        firstH1.parentNode.insertBefore(bar, firstH1);
+      } else {
+        document.body.insertBefore(bar, document.body.firstChild);
+      }
+      bar.style.position = 'static';
+      bar.style.top = 'auto';
+      bar.style.right = 'auto';
+      bar.style.zIndex = 'auto';
+      bar.style.marginBottom = '8px';
+      bar.style.justifyContent = 'flex-end';
     }
 
     document.getElementById('bp-edit-btn').addEventListener('click', toggleEdit);
@@ -218,10 +231,34 @@
     });
   }
 
+  // ==================== 复位编辑状态 ====================
+  // 推送前把 DOM 恢复为"正常阅读"状态，避免把 contenteditable="true" / bp-editing
+  // 等编辑态写进线上 HTML，否则推上去的页面按钮/文字状态错乱、按钮点击失效
+  function resetEditState() {
+    editMode = false;
+    var els = document.querySelectorAll('[data-edit]');
+    els.forEach(function(el) {
+      el.contentEditable = false;
+      el.classList.remove('bp-editing');
+    });
+    // 数据填空恢复正常可编辑（编辑文字模式下是锁定状态）
+    enableAllDataModelEditing();
+    var editBtn = document.getElementById('bp-edit-btn');
+    if (editBtn) editBtn.textContent = '编辑文字';
+    var saveBtn = document.getElementById('bp-save-btn');
+    if (saveBtn) saveBtn.style.display = 'none';
+    var status = document.getElementById('bp-status');
+    if (status) status.textContent = '';
+  }
+
   // ==================== 保存内容到 GitHub（直接推送完整 HTML） ====================
   async function saveContent() {
     var saveBtn = document.getElementById('bp-save-btn');
     var status = document.getElementById('bp-status');
+
+    // 0. 推送前复位编辑状态：保证推上去的是"正常阅读"状态的页面，
+    //    编辑状态 / 完成编辑状态点击保存，按钮都应正常工作
+    resetEditState();
 
     // 1. 将当前变量值嵌入 HTML（持久化，下次加载时读取）
     var savedVars = document.getElementById('bp-saved-vars');
@@ -359,6 +396,10 @@
     var hasEditableText = document.querySelector('[data-edit]');
     if (hasEditableText) {
       createToolbar();
+
+      // 归一化页面状态：即使线上 HTML 残留编辑态（contenteditable=true / bp-editing），
+      // 加载后也恢复为正常阅读状态，保证按钮可用
+      resetEditState();
 
       // 渲染 BusinessModel（从代码计算）
       var model = window.BusinessModel;
