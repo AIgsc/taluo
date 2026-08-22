@@ -309,6 +309,15 @@
       var diningArea = Math.round(i.area * 0.475);
       var tableAreaDetail = (Math.round(diningArea / i.tableCount * 10) / 10);
 
+      // ========== 附加展示派生字段 ==========
+      var dailyCustomers = Math.round(weeklyCustomers / 7);
+      var peakCapacity = Math.round(i.tableCount * 4); // 4人/桌满座口径
+      var laborWelfare = Math.round(i.laborCost - i.kitchenCost - i.frontCost); // 其他福利
+      var investorFirst7m = Math.round(investorPrePayback * 7);   // 第6-12月7个月回本前累计
+      var investorPost23m = Math.round(investorPostPayback * 23); // 回本后23个月累计
+      var investorAvgYearly = Math.round(investorTotalReturn3y / 3);
+      var buybackPrice = Math.round(investorPostPayback * 18 * 0.5); // 第18个月回购价
+
       // ========== 构建输出 ==========
       this.values = {
         // ===== 1. 面积 =====
@@ -317,6 +326,7 @@
         area_dining: diningArea + '㎡（47.5%）',
         area_serving: Math.round(i.area * 0.15) + '㎡（15%）',
         area_kitchen: Math.round(i.area * 0.2) + '㎡（20%）',
+        area_kitchen_plain: Math.round(i.area * 0.2),
         area_storage: Math.round(i.area * 0.1) + '㎡（10%）',
         area_lobby: Math.round(i.area * 0.04) + '㎡（4%）',
         area_restroom: Math.round(i.area * 0.035) + '㎡（3.5%）',
@@ -495,6 +505,24 @@
         stress_landlord_wan: (stressLandlord / 10000).toFixed(2) + '万',
         stress_operator_wan: (stressOperator / 10000).toFixed(2) + '万',
         stress_drop_pct: '-' + stressDropPct + '%',
+
+        // ===== 附加展示派生（随输入联动） =====
+        daily_customers: dailyCustomers + '人',
+        daily_customers_plain: dailyCustomers,
+        seats_per_table: i.seatsPerTable + '人/桌',
+        seats_per_table_plain: i.seatsPerTable,
+        peak_capacity: peakCapacity + '人',
+        peak_capacity_plain: peakCapacity,
+        labor_cost_wan: (i.laborCost / 10000).toFixed(2) + '万',
+        labor_welfare_plain: formatNum(laborWelfare),
+        investor_dividend_pre_wan: (investorPrePayback / 10000).toFixed(1) + '万',
+        investor_dividend_post_wan: (investorPostPayback / 10000).toFixed(1) + '万',
+        investor_first7m_wan: (investorFirst7m / 10000).toFixed(1) + '万',
+        investor_post_23m_wan: (investorPost23m / 10000).toFixed(0) + '万',
+        investor_avg_yearly_wan: (investorAvgYearly / 10000).toFixed(0) + '万',
+        buyback_price: formatNum(buybackPrice) + '元',
+        buyback_price_num: buybackPrice,
+        realistic_payback_from_investment_plain: realisticPaybackFromInvestment,
 
         // 老板（运营方）
         operator_income: formatNum(operatorIncomePre) + '元',
